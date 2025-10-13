@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de Procedimento Técnico</title>
     <style>
+        /* (Estilos CSS permanecem os mesmos) */
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
         .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         h1 { color: #333; text-align: center; }
@@ -12,13 +13,11 @@
         .form-group { display: flex; flex-direction: column; }
         .form-group-full { grid-column: 1 / 3; }
         label { margin-bottom: 5px; font-weight: bold; color: #555; }
-        /* input[type="time"] fará aparecer o seletor de relógio */
         input[type="time"], textarea, select, input[type="text"] { padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
         textarea { resize: vertical; min-height: 100px; }
         button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; grid-column: 1 / 3; margin-top: 10px; font-size: 16px; }
         button:hover { background-color: #0056b3; }
         
-        /* Estilo do link de consulta (Mais destacado) */
         .nav-link { 
             display: block; 
             text-align: center; 
@@ -80,5 +79,16 @@
             <button type="submit">Registrar Procedimento</button>
         </form>
     </div>
+
+    <script>
+        document.getElementById('hora_inicio').addEventListener('click', function(e) {
+            e.preventDefault(); 
+            this.focus(); // Força o foco, o que geralmente abre o seletor
+        });
+        document.getElementById('hora_termino').addEventListener('click', function(e) {
+            e.preventDefault();
+            this.focus(); // Força o foco, o que geralmente abre o seletor
+        });
+    </script>
 </body>
 </html>
