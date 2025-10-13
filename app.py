@@ -3,9 +3,9 @@ from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 import os
 
-# --- Opções de Postos de Trabalho ---
+# --- Opções de Postos de Trabalho (CORRIGIDO) ---
 POSTOS = [
-    "Andradina Assis", "Avaré", "Bauru", "Birigui", "Botucatu",
+    "Andradina", "Assis", "Avaré", "Bauru", "Birigui", "Botucatu",
     "Dracena", "Itapetininga", "Itu", "Jahu", "Marília",
     "Ourinhos", "Penápolis", "Presidente Prudente", "Tatuí", "Tupã"
 ]
@@ -13,9 +13,8 @@ POSTOS = [
 app = Flask(__name__)
 
 # --- Configuração do Banco de Dados ---
-# 1. Tenta usar a variável de ambiente DATABASE_URL (para Render/PostgreSQL).
-# 2. Se não encontrar (ambiente local), usa o SQLite.
-# A função .replace é necessária para compatibilidade com o Render/SQLAlchemy.
+# Tenta usar a variável de ambiente DATABASE_URL (para Render/PostgreSQL).
+# Se não encontrar (ambiente local), usa o SQLite.
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///site.db').replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -25,12 +24,10 @@ db = SQLAlchemy(app)
 class Registro(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     posto = db.Column(db.String(50), nullable=False)
-    # A data é armazenada como texto no formato DD/MM/AAAA
     data = db.Column(db.String(10), nullable=False) 
     hora_inicio = db.Column(db.String(5), nullable=False)
     hora_termino = db.Column(db.String(5), nullable=False)
     procedimento = db.Column(db.Text, nullable=False)
-    # Coluna de registro para ordenação
     timestamp_registro = db.Column(db.DateTime, default=datetime.utcnow) 
 
     def __repr__(self):
@@ -46,7 +43,6 @@ def formulario_registro():
     """
     Exibe o formulário de registro e salva novos dados no banco de dados.
     """
-    # Formato DD/MM/AAAA para exibição e armazenamento
     data_de_hoje = datetime.now().strftime('%d/%m/%Y')
     
     if request.method == 'POST':
@@ -59,7 +55,7 @@ def formulario_registro():
         # Cria e salva o novo registro
         novo_registro = Registro(
             posto=posto,
-            data=data_de_hoje,  # Usa a data atual
+            data=data_de_hoje,
             hora_inicio=hora_inicio,
             hora_termino=hora_termino,
             procedimento=procedimento
@@ -114,5 +110,4 @@ def consultar_registro():
     )
 
 if __name__ == '__main__':
-    # Rodar localmente (usará o SQLite)
     app.run(debug=True)
