@@ -4,7 +4,6 @@ from flask_sqlalchemy import SQLAlchemy
 import os
 import io
 import pandas as pd
-from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Font, Alignment, PatternFill
 from openpyxl import Workbook
 import io
@@ -18,7 +17,7 @@ POSTOS = [
 
 app = Flask(__name__)
 
-# --- Configuração do Banco de Dados ---
+# --- Configuração do Banco de Dados (Pronto para Render/PostgreSQL) ---
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///site.db').replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -28,9 +27,7 @@ db = SQLAlchemy(app)
 class Registro(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     posto = db.Column(db.String(50), nullable=False)
-    # NOVO CAMPO
-    computador_coleta = db.Column(db.String(3), nullable=False) 
-    # Fim NOVO CAMPO
+    computador_coleta = db.Column(db.String(3), nullable=False) # NOVO CAMPO
     data = db.Column(db.String(10), nullable=False) 
     hora_inicio = db.Column(db.String(5), nullable=False)
     hora_termino = db.Column(db.String(5), nullable=False)
@@ -40,13 +37,11 @@ class Registro(db.Model):
     def __repr__(self):
         return f"Registro('{self.posto}', '{self.data}', '{self.hora_inicio}')"
 
-# Cria as tabelas do banco de dados (AVISO: Pode ser necessário recriar as tabelas no Render, 
-# se o banco já existir, para que a coluna 'computador_coleta' seja adicionada. 
-# Se o banco for novo, db.create_all() funciona.)
+# Cria as tabelas do banco de dados (crucial para o primeiro deploy em um DB vazio)
 with app.app_context():
     db.create_all()
 
-# Função auxiliar para aplicar filtros (sem alterações)
+# Função auxiliar para aplicar filtros (usada na consulta e exportação)
 def aplicar_filtros(query, filtro_posto, filtro_data_html):
     if filtro_posto and filtro_posto != 'Todos':
         query = query.filter(Registro.posto == filtro_posto)
@@ -61,24 +56,24 @@ def aplicar_filtros(query, filtro_posto, filtro_data_html):
             
     return query.order_by(Registro.timestamp_registro.desc())
 
-# --- Rota 1: Registro de Novo Procedimento (COM NOVO CAMPO) ---
+# --- Rota 1: Registro de Novo Procedimento ---
 @app.route('/', methods=['GET', 'POST'])
 def formulario_registro():
     """
-    Exibe o formulário de registro e salva novos dados no banco de dados.
+    Exibe o formulário de registro e salva novos dados.
     """
     data_de_hoje = datetime.now().strftime('%d/%m/%Y')
     
     if request.method == 'POST':
         posto = request.form.get('posto')
-        computador_coleta = request.form.get('computador_coleta') # NOVO
+        computador_coleta = request.form.get('computador_coleta')
         hora_inicio = request.form.get('hora_inicio')
         hora_termino = request.form.get('hora_termino')
         procedimento = request.form.get('procedimento')
         
         novo_registro = Registro(
             posto=posto,
-            computador_coleta=computador_coleta, # NOVO
+            computador_coleta=computador_coleta,
             data=data_de_hoje,
             hora_inicio=hora_inicio,
             hora_termino=hora_termino,
@@ -95,7 +90,7 @@ def formulario_registro():
         data_de_hoje=data_de_hoje
     )
 
-# --- Rota 2: Consulta de Registros Antigos (Sem Alterações) ---
+# --- Rota 2: Consulta de Registros Antigos ---
 @app.route('/consultar', methods=['GET'])
 def consultar_registro():
     """
@@ -117,7 +112,7 @@ def consultar_registro():
         filtro_data=filtro_data_html
     )
     
-# --- Rota 3: Exportar para XLSX (ATUALIZADA COM FORMATO CONDICIONAL) ---
+# --- Rota 3: Exportar para XLSX com Formatação Customizada ---
 @app.route('/exportar', methods=['GET'])
 def exportar_registros():
     filtro_posto = request.args.get('posto')
@@ -140,7 +135,7 @@ def exportar_registros():
             
         dados.append({
             'Posto': r.posto,
-            'Computador da coleta?': r.computador_coleta, # NOVO CAMPO
+            'Computador da coleta?': r.computador_coleta, 
             'Data': data_obj,
             'Início': r.hora_inicio,
             'Término': r.hora_termino,
@@ -165,51 +160,54 @@ def exportar_registros():
 
     # Fontes e Alinhamento
     header_font = Font(size=16, bold=True, color="000000")
-    header_alignment = Alignment(horizontal='center', vertical='center', wrapText=True)
+    header_alignment = Alignment(horizontal='center', vertical='center') 
     
     data_font = Font(size=12, color="000000") 
     data_font_bold = Font(size=12, bold=True, color="000000") # Negrito para a nova coluna
     data_alignment = Alignment(horizontal='center', vertical='top')
-    procedimento_alignment = Alignment(horizontal='left', vertical='top', wrapText=True)
+    procedimento_alignment = Alignment(horizontal='left', vertical='top', wrapText=True) # Quebra de linha aqui
 
     # --- 4. Aplicar Estilos de Cabeçalho e Largura de Coluna ---
     
     col_config = {
         'Posto': 15,
-        'Computador da coleta?': 18, # Largura ajustada para o novo título
+        'Computador da coleta?': 18, 
         'Data': 15,
         'Início': 12,
         'Término': 12,
         'Procedimento Realizado': 60
     }
     
-    # Itera sobre as colunas da planilha e aplica Largura e Estilo de Cabeçalho
     for i, col_name in enumerate(df.columns):
         col_letter = sheet.cell(row=1, column=i+1).column_letter
         
+        # A. Largura
         sheet.column_dimensions[col_letter].width = col_config.get(col_name, 15)
         
+        # B. Estilo de Cabeçalho
         header_cell = sheet.cell(row=1, column=i+1)
         header_cell.font = header_font
         header_cell.fill = FILL_GRAY
         header_cell.alignment = header_alignment
 
-
     # --- 5. Aplicar Estilos e Formatos ao Corpo da Planilha (Dados) ---
     
-    # Itera sobre todas as células de dados (começa na linha 2)
+    DEFAULT_ROW_HEIGHT = 15
+    sheet.default_row_dimension.height = DEFAULT_ROW_HEIGHT 
+
     for row_idx, row in enumerate(sheet.iter_rows(min_row=2, max_col=len(df.columns))):
         
-        # Obter o valor da coluna 'Computador da coleta?' desta linha
-        # A nova coluna está no índice 1 (coluna B)
-        valor_coleta = row[1].value 
+        valor_coleta = row[1].value # Coluna 'Computador da coleta?'
+        
+        # Define a altura da linha para o padrão (será sobrescrita se necessário)
+        sheet.row_dimensions[row_idx + 2].height = DEFAULT_ROW_HEIGHT 
 
         for col_idx, cell in enumerate(row):
             col_name = df.columns[col_idx]
             
             # A. Formatação base (Tamanho 12 e Centralizado)
-            cell.alignment = data_alignment
-            cell.font = data_font # Padrão (será sobrescrito na coluna 'coleta')
+            cell.alignment = data_alignment 
+            cell.font = data_font 
             
             # B. Formatação Condicional e Estilo da Coluna 'Computador da coleta?'
             if col_name == 'Computador da coleta?':
@@ -219,14 +217,16 @@ def exportar_registros():
                 elif valor_coleta == 'Não':
                     cell.fill = FILL_RED
             
-            # C. Formatos Específicos (Manter formatação de data/hora)
+            # C. Formatos Específicos (Data e Hora)
             elif col_name == 'Data':
                 cell.number_format = 'DD/MM/YYYY' 
             elif col_name in ['Início', 'Término']:
                 cell.number_format = 'HH:MM'
+            
+            # D. ESTILO ESPECÍFICO PARA PROCEDIMENTO REALIZADO
             elif col_name == 'Procedimento Realizado':
-                cell.alignment = procedimento_alignment 
-                sheet.row_dimensions[row_idx + 2].height = 40
+                cell.alignment = procedimento_alignment # Aplica wrapText=True
+                sheet.row_dimensions[row_idx + 2].height = 40 # Aumenta a altura
 
 
     # 6. Salvar e Retornar
