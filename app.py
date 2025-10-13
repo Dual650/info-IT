@@ -42,8 +42,8 @@ with app.app_context():
 # --- CONSTANTE para Resumo ---
 RESUMO_MAX_CARACTERES = 70 
 
-# Função auxiliar para aplicar filtros
-def aplicar_filtros(query, filtro_posto, filtro_data_html):
+# Função auxiliar para aplicar filtros (ATUALIZADA)
+def aplicar_filtros(query, filtro_posto, filtro_data_html, filtro_coleta):
     if filtro_posto and filtro_posto != 'Todos':
         query = query.filter(Registro.posto == filtro_posto)
             
@@ -54,10 +54,16 @@ def aplicar_filtros(query, filtro_posto, filtro_data_html):
             query = query.filter(Registro.data == data_formatada)
         except ValueError:
             pass
+
+    # Lógica do NOVO FILTRO (Coleta de Imagem)
+    if filtro_coleta and filtro_coleta != 'Todos':
+        # Valor no DB é armazenado em caixa alta ("SIM" ou "NÃO")
+        coleta_db_value = filtro_coleta.upper() 
+        query = query.filter(Registro.computador_coleta == coleta_db_value)
             
     return query.order_by(Registro.timestamp_registro.desc())
 
-# --- Rota 1: Registro de Novo Procedimento ---
+# --- Rota 1: Registro de Novo Procedimento (Inalterada) ---
 @app.route('/', methods=['GET', 'POST'])
 def formulario_registro():
     data_de_hoje = datetime.now().strftime('%d/%m/%Y')
@@ -82,34 +88,37 @@ def formulario_registro():
 
         return redirect(url_for('formulario_registro'))
 
+    # Esta rota espera o template 'index.html'
     return render_template(
         'index.html', 
         postos=POSTOS, 
         data_de_hoje=data_de_hoje
     )
 
-# --- Rota 2: Consulta de Registros Antigos ---
+# --- Rota 2: Consulta de Registros Antigos (ATUALIZADA) ---
 @app.route('/consultar', methods=['GET'])
 def consultar_registro():
     filtro_posto = request.args.get('posto')
     filtro_data_html = request.args.get('data')
+    filtro_coleta = request.args.get('coleta') # Novo filtro adicionado
 
-    # Note que passamos uma variável vazia para evitar erros se o template base não existir
     return render_template(
         'consultar.html', 
         postos=POSTOS, 
         filtro_posto=filtro_posto or 'Todos', 
-        filtro_data=filtro_data_html
+        filtro_data=filtro_data_html,
+        filtro_coleta=filtro_coleta or 'Todos' # Passa o novo filtro
     )
 
-# --- Rota: Retorna os dados em JSON para o JavaScript ---
+# --- Rota: Retorna os dados em JSON para o JavaScript (ATUALIZADA) ---
 @app.route('/registros_json', methods=['GET'])
 def registros_json():
     filtro_posto = request.args.get('posto')
     filtro_data_html = request.args.get('data')
-    
+    filtro_coleta = request.args.get('coleta') # Novo filtro
+
     query = Registro.query
-    query = aplicar_filtros(query, filtro_posto, filtro_data_html)
+    query = aplicar_filtros(query, filtro_posto, filtro_data_html, filtro_coleta)
     registros = query.all()
 
     registros_formatados = []
@@ -134,17 +143,19 @@ def registros_json():
     return jsonify(registros_formatados)
 
 
-# --- Rota 3: Exportar para XLSX (VERSÃO FINAL E OTIMIZADA) ---
+# --- Rota 3: Exportar para XLSX (FINAL E ESTÁVEL) ---
 @app.route('/exportar', methods=['GET'])
 def exportar_registros():
     filtro_posto = request.args.get('posto')
     filtro_data_html = request.args.get('data')
+    filtro_coleta = request.args.get('coleta') # Novo filtro
 
     query = Registro.query
-    query = aplicar_filtros(query, filtro_posto, filtro_data_html)
+    query = aplicar_filtros(query, filtro_posto, filtro_data_html, filtro_coleta)
     registros = query.all()
 
     if not registros:
+        # Redireciona de volta para a consulta se não houver dados, para evitar erro 500
         return redirect(url_for('consultar_registro'))
 
     # 1. Preparar os dados para o DataFrame (Conversão de tipos para Formatação Excel)
@@ -182,7 +193,7 @@ def exportar_registros():
 
     df = pd.DataFrame(dados)
 
-    # 2. Configurar o Writer e o Workbook
+    # 2. Configurar o Writer e o Workbook (xlsxwriter)
     output = io.BytesIO()
     
     try:
@@ -193,37 +204,33 @@ def exportar_registros():
             
             # --- DEFINIÇÃO DOS FORMATOS (xlsxwriter) ---
             
-            # 1. Formato de Cabeçalho (Tam 14, Negrito, Centralizado, Bordas, Cinza Claro)
             header_format = workbook.add_format({
                 'bold': True, 'font_size': 14, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'bg_color': '#D3D3D3'
             })
             
-            # 2. Formato de Dados Padrão (Tam 12, Centralizado, Bordas)
             default_data_format = workbook.add_format({
                 'font_size': 12, 'align': 'center', 'valign': 'vcenter', 'border': 1
             })
             
-            # 3. Formato de Data (DD/MM/YYYY)
             date_format = workbook.add_format({
                 'font_size': 12, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'num_format': 'dd/mm/yyyy'
             })
             
-            # 4. Formato de Hora (HH:MM - 24h)
             time_format = workbook.add_format({
                 'font_size': 12, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'num_format': 'hh:mm'
             })
 
-            # 5. Formato para SIM (Verde, Negrito)
+            # Formato SIM (Verde, Negrito)
             sim_format = workbook.add_format({
                 'font_size': 12, 'bold': True, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'bg_color': '#C6EFCE'
             })
             
-            # 6. Formato para NÃO (Vermelho, Negrito)
+            # Formato NÃO (Vermelho, Negrito)
             nao_format = workbook.add_format({
                 'font_size': 12, 'bold': True, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'bg_color': '#FFC7CE'
             })
 
-            # 7. Formato Procedimento (Texto Puro, Quebra de Linha, Esquerda)
+            # Formato Procedimento (Texto Puro, Quebra de Linha, Esquerda)
             proc_format = workbook.add_format({
                 'font_size': 12, 'align': 'left', 'valign': 'top', 'border': 1, 'text_wrap': True, 'num_format': '@'
             })
