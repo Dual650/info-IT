@@ -13,14 +13,13 @@
         .form-group { display: flex; flex-direction: column; }
         label { margin-bottom: 5px; font-weight: bold; color: #555; }
         input[type="date"], select { padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        /* Alterado para um botão normal para evitar submissão dupla */
         #btn-buscar { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
         #btn-buscar:hover { background-color: #1e7e34; }
 
         table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
         th { background-color: #f2f2f2; color: #333; }
-        .procedimento-col { max-width: 300px; /* Reduz a largura para caber o resumo */ }
+        .procedimento-col { max-width: 300px; }
         .nav-link { display: block; text-align: center; margin-bottom: 20px; }
         
         .export-button-container { text-align: right; margin-top: 15px; }
@@ -36,11 +35,13 @@
         .export-button:hover {
             background-color: #138496;
         }
-        .loading { 
+        /* A mensagem de carregamento e sem registros deve ocupar um espaço fixo para evitar reflow */
+        .status-message { 
             text-align: center; 
             color: #6c757d; 
             margin-top: 20px; 
             font-style: italic;
+            min-height: 20px; /* Garante que o elemento tenha uma altura mínima mesmo quando vazio */
         }
     </style>
 </head>
@@ -81,7 +82,7 @@
             </button>
         </div>
 
-        <p class="loading" id="loading-message">Carregando dados...</p>
+        <p class="status-message" id="status-message">Carregando dados...</p>
         
         <table>
             <thead>
@@ -98,8 +99,6 @@
                 </tbody>
         </table>
 
-        <p id="no-records-message" style="text-align: center; display: none;">Nenhum registro encontrado com os filtros selecionados.</p>
-        
     </div>
 
     <script>
@@ -107,8 +106,7 @@
         const DATA_INPUT = document.getElementById('data');
         const TABELA_CORPO = document.getElementById('tabela-corpo');
         const REGISTRO_COUNT = document.getElementById('registro-count');
-        const LOADING_MESSAGE = document.getElementById('loading-message');
-        const NO_RECORDS_MESSAGE = document.getElementById('no-records-message');
+        const STATUS_MESSAGE = document.getElementById('status-message'); // Elemento unificado
 
         let intervalId = null;
 
@@ -135,9 +133,15 @@
         /**
          * Busca os registros na API e atualiza a tabela.
          */
-        async function fetchRegistros() {
-            LOADING_MESSAGE.style.display = 'block';
-            NO_RECORDS_MESSAGE.style.display = 'none';
+        async function fetchRegistros(isInitialLoad = false) {
+            
+            // Exibir mensagem de carregamento apenas na carga inicial
+            if (isInitialLoad) {
+                STATUS_MESSAGE.textContent = 'Carregando dados...';
+            } else {
+                // Oculta a mensagem em carregamentos subsequentes para evitar o flicker
+                STATUS_MESSAGE.textContent = ''; 
+            }
 
             const url = buildQueryUrl();
             
@@ -150,10 +154,8 @@
                 renderTable(registros);
             } catch (error) {
                 console.error("Erro ao buscar registros:", error);
-                // Opcional: mostrar uma mensagem de erro na tela
-            } finally {
-                LOADING_MESSAGE.style.display = 'none';
-            }
+                STATUS_MESSAGE.textContent = 'Erro ao carregar dados.';
+            } 
         }
 
         /**
@@ -164,19 +166,22 @@
             REGISTRO_COUNT.textContent = registros.length;
 
             if (registros.length === 0) {
-                NO_RECORDS_MESSAGE.style.display = 'block';
+                STATUS_MESSAGE.textContent = 'Nenhum registro encontrado com os filtros selecionados.';
                 return;
             }
+            
+            // Limpa a mensagem de status se houver dados
+            STATUS_MESSAGE.textContent = '';
 
             registros.forEach(registro => {
                 const row = TABELA_CORPO.insertRow();
                 
-                // Adiciona o estilo de cor de fundo condicional
+                // Formatação condicional de cor
                 let coletaStyle = '';
                 if (registro.computador_coleta === 'Sim') {
-                    coletaStyle = 'style="background-color: #C6EFCE;"'; // Verde claro
+                    coletaStyle = 'style="background-color: #C6EFCE;"'; 
                 } else if (registro.computador_coleta === 'Não') {
-                    coletaStyle = 'style="background-color: #FFC7CE;"'; // Vermelho claro
+                    coletaStyle = 'style="background-color: #FFC7CE;"'; 
                 }
                 
                 row.innerHTML = `
@@ -191,7 +196,7 @@
         }
 
         /**
-         * Função para exportar para Excel. Usa os mesmos filtros, mas chama a rota /exportar.
+         * Função para exportar para Excel.
          */
         function exportarExcel() {
             let exportUrl = '{{ url_for("exportar_registros") }}';
@@ -220,13 +225,14 @@
          */
         function initPolling() {
             // 1. Busca inicial ao carregar a página
-            fetchRegistros();
+            fetchRegistros(true); // Passa 'true' para mostrar a mensagem de carregamento
             
-            // 2. Inicia o polling (atualização a cada 5 segundos)
+            // 2. Inicia o polling (Atualização a cada 60 segundos = 1 minuto)
             if (intervalId) {
-                clearInterval(intervalId); // Limpa qualquer polling anterior
+                clearInterval(intervalId);
             }
-            intervalId = setInterval(fetchRegistros, 5000); // Atualiza a cada 5 segundos
+            // 60000 milissegundos = 1 minuto
+            intervalId = setInterval(fetchRegistros, 60000); 
 
             // 3. Ao mudar o filtro, buscar imediatamente
             POSTO_SELECT.addEventListener('change', fetchRegistros);
@@ -236,7 +242,6 @@
         // Inicia a aplicação na página de consulta
         document.addEventListener('DOMContentLoaded', initPolling);
         
-        // Expor a função globalmente para o botão (melhor do que no HTML)
         window.fetchRegistros = fetchRegistros;
         window.exportarExcel = exportarExcel;
         
