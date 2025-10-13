@@ -150,6 +150,17 @@ textarea {
     color: #0056b3;
 }
 
+/* Botão de Exclusão (Perigo) - EM MASSA (estilo compacto) */
+.btn-acao.btn-danger {
+    background-color: #dc3545 !important; 
+    color: white !important;
+    border-color: #dc3545 !important;
+}
+.btn-acao.btn-danger:hover {
+    background-color: #c82333 !important; 
+    border-color: #bd2130 !important;
+}
+
 /* Botão de Exclusão Individual (mais discreto) */
 .btn-danger-individual {
     background-color: #fff;
@@ -324,36 +335,4 @@ textarea {
     border: 1px solid #eee;
     font-size: 1.0em;
     line-height: 1.4;
-}
-
-/* ========================================= */
-/* ESTILOS DA SEÇÃO DE PERIGO (Exclusão em Massa) */
-/* ========================================= */
-
-.secao-perigo {
-    margin-top: 40px;
-    padding: 20px;
-    border: 3px dashed #dc3545; /* Vermelho forte */
-    background-color: #fff0f0; /* Fundo mais claro */
-    border-radius: 8px;
-    text-align: center;
-}
-
-.secao-perigo p {
-    font-size: 1.1em;
-    color: #a71d2a;
-    margin-bottom: 15px;
-}
-
-/* Botão de Risco */
-.btn-risco {
-    background-color: #dc3545; /* Vermelho */
-    border-color: #dc3545;
-    font-size: 1.2em;
-    padding: 12px 25px;
-}
-
-.btn-risco:hover {
-    background-color: #c82333;
-    border-color: #bd2130;
 }
