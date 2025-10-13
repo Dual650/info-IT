@@ -7,8 +7,6 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    
-    <script src="{{ url_for('static', filename='consultar.js') }}"></script>
 </head>
 <body>
     <div class="container">
@@ -33,7 +31,7 @@
                 </a>
                 
                 <div class="icones-consulta">
-                    <a id="btnExportar" href="{{ url_for('exportar_registros', posto=request.args.get('posto', 'Todos'), data=request.args.get('data', ''), coleta=request.args.get('coleta', 'Todos')) }}" title="Exportar para Excel" class="btn-acao">
+                    <a id="btnExportar" href="#" title="Exportar para Excel" class="btn-acao">
                         <i class="fas fa-file-excel" style="color: green;"></i>
                     </a>
                     
@@ -51,7 +49,7 @@
             </div>
         </div>
 
-        <form method="GET" class="filtro-container">
+        <form id="filtroForm" method="GET" class="filtro-container">
             <div class="filtro-item">
                 <label for="posto">Filtrar por Posto:</label>
                 <select id="posto" name="posto" class="form-control">
@@ -77,7 +75,7 @@
             </div>
 
             <div class="botoes-filtro">
-                <button type="submit" class="btn-primary">
+                <button type="button" id="btnFiltrar" class="btn-primary">
                     <i class="fas fa-filter"></i> Filtrar
                 </button>
                 <a href="{{ url_for('consultar_registro') }}" class="btn-primary" style="background-color: #6c757d;">
@@ -116,67 +114,13 @@
     </div>
 
     <script>
-        // Função que precisa do acesso ao Jinja/url_for para gerar URLs
-        function carregarRegistros() {
-            const posto = $('#posto').val();
-            const data = $('#data').val();
-            const coleta = $('#coleta').val();
-            const $tbody = $('#tabelaRegistros tbody');
-            const $avisoVazio = $('#avisoVazio');
-
-            $tbody.empty();
-            $avisoVazio.hide();
-            $('#tabelaRegistros').show();
-            
-            // Reconstroi o URL de exportação com os filtros atuais
-            const exportUrl = "{{ url_for('exportar_registros') }}";
-            $('#btnExportar').attr('href', `${exportUrl}?posto=${posto}&data=${data}&coleta=${coleta}`);
-
-            $.getJSON("{{ url_for('registros_json') }}", { posto: posto, data: data, coleta: coleta }, function(registros) {
-                if (registros.length === 0) {
-                    $avisoVazio.show();
-                    $('#tabelaRegistros').hide();
-                    return;
-                }
-
-                $.each(registros, function(i, registro) {
-                    const coletaClass = registro.computador_coleta === 'SIM' ? 'coleta-negrito' : '';
-                    
-                    // Cria o URL de exclusão individual usando Flask/Jinja
-                    const deleteUrl = "{{ url_for('apagar_registro', id=0) }}".replace('0', registro.id);
-                    
-                    // Monta o formulário de exclusão individual
-                    const deleteForm = `
-                        <form method="POST" action="${deleteUrl}" onsubmit="return confirm('Tem certeza que deseja apagar o Registro ${registro.id}?');" style="display:inline;">
-                            <button type="submit" class="btn-acao btn-danger-individual" title="Apagar Registro Individual">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </form>
-                    `;
-                    
-                    const row = $(`
-                        <tr data-procedimento="${registro.procedimento_completo.replace(/"/g, '&quot;')}" data-registro-id="${registro.id}">
-                            <td>${registro.id}</td>
-                            <td>${registro.posto}</td>
-                            <td class="${coletaClass}">${registro.computador_coleta}</td>
-                            <td>${registro.data}</td>
-                            <td>${registro.hora_inicio}</td>
-                            <td>${registro.hora_termino}</td>
-                            <td class="procedimento-resumo">${registro.procedimento_resumo}</td>
-                            <td>${deleteForm}</td>
-                        </tr>
-                    `);
-                    $tbody.append(row);
-                });
-            }).fail(function() {
-                alert("Erro ao carregar os dados.");
-            });
-        }
-
-        // Chamada da função de carregamento ao carregar a página
-        $(document).ready(function() {
-            carregarRegistros();
-        });
+        // VARS GLOBAIS: Passando URLs do Flask para o JavaScript externo
+        const URLS = {
+            registrosJson: "{{ url_for('registros_json') }}",
+            apagarRegistro: "{{ url_for('apagar_registro', id=0) }}".replace('0', ''), // URL base com placeholder
+            exportarRegistros: "{{ url_for('exportar_registros') }}"
+        };
     </script>
+    <script src="{{ url_for('static', filename='consultar.js') }}"></script>
 </body>
 </html>
