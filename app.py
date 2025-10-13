@@ -4,7 +4,9 @@ from flask_sqlalchemy import SQLAlchemy
 import os
 import io
 import pandas as pd
-# Não é mais necessário importar componentes do openpyxl
+# Importa o módulo de formatação do xlsxwriter
+# (embora não seja chamado diretamente, o pandas usa o xlsxwriter)
+# from openpyxl.styles import Font, Alignment, PatternFill # Removido para usar xlsxwriter
 import io
 
 # --- Opções de Postos de Trabalho ---
@@ -134,7 +136,7 @@ def registros_json():
     return jsonify(registros_formatados)
 
 
-# --- Rota 3: Exportar para XLSX (COMPLETA COM FORMATAÇÃO xlsxwriter) ---
+# --- Rota 3: Exportar para XLSX (VERSÃO FINAL E OTIMIZADA) ---
 @app.route('/exportar', methods=['GET'])
 def exportar_registros():
     filtro_posto = request.args.get('posto')
@@ -254,7 +256,7 @@ def exportar_registros():
                 'align': 'left',
                 'valign': 'top',
                 'border': 1,
-                'text_wrap': True 
+                'text_wrap': True # CRUCIAL para a quebra de linha
             })
             
             # --- APLICAÇÃO DOS FORMATOS ---
@@ -271,12 +273,12 @@ def exportar_registros():
             
             for col_num, col_name in enumerate(df.columns):
                 width = col_widths.get(col_name, 15)
-                # Aplica o formato de cabeçalho na linha 0 (cabeçalho)
+                # Escreve o cabeçalho com o formato
                 sheet.write(0, col_num, col_name, header_format)
                 # Define a largura das colunas
                 sheet.set_column(col_num, col_num, width) 
-
-            # Iterar sobre os dados (começando na linha 1) e aplicar formatação de linha
+                
+            # Mapeamento de índices de colunas
             col_data_idx = df.columns.get_loc('Data')
             col_inicio_idx = df.columns.get_loc('Início')
             col_termino_idx = df.columns.get_loc('Término')
@@ -284,8 +286,11 @@ def exportar_registros():
             col_proc_idx = df.columns.get_loc('Procedimento Realizado')
             col_posto_idx = df.columns.get_loc('Posto')
             
+            
             for row_num, row_data in df.iterrows():
                 row_xlsx = row_num + 1 # Linha real no Excel (após o cabeçalho)
+                
+                # NENHUM set_row(height) AQUI. O Excel fará o Autofit quando instruído pelo usuário.
                 
                 # 1. Aplicação dos formatos de Data e Hora
                 sheet.write(row_xlsx, col_data_idx, row_data['Data'], date_format)
@@ -299,16 +304,15 @@ def exportar_registros():
                 
                 # 3. Aplicação do formato Procedimento (Quebra de Linha)
                 sheet.write(row_xlsx, col_proc_idx, row_data['Procedimento Realizado'], proc_format)
-                sheet.set_row(row_xlsx, 60) # Aumenta a altura da linha para acomodar a quebra de texto
                 
-                # 4. Aplicação do formato padrão para o Posto
+                # 4. Aplicação do formato padrão para Posto e demais colunas
                 sheet.write(row_xlsx, col_posto_idx, row_data['Posto'], default_data_format)
-                # Garantir que as outras colunas não formatadas sejam escritas com o formato padrão
                 
-                # Preenche células vazias com formato padrão (opcional, mas seguro)
                 for col_idx, col_name in enumerate(df.columns):
+                     # Aplica o formato padrão para colunas que não são data, hora, coleta ou procedimento
                      if col_idx not in [col_data_idx, col_inicio_idx, col_termino_idx, col_coleta_idx, col_proc_idx, col_posto_idx]:
                         sheet.write(row_xlsx, col_idx, row_data[col_name], default_data_format)
+
 
     except Exception as e:
         print(f"Erro CRÍTICO na exportação: {e}")
