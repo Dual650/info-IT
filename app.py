@@ -94,6 +94,7 @@ def consultar_registro():
     filtro_posto = request.args.get('posto')
     filtro_data_html = request.args.get('data')
 
+    # Note que passamos uma variável vazia para evitar erros se o template base não existir
     return render_template(
         'consultar.html', 
         postos=POSTOS, 
@@ -153,13 +154,11 @@ def exportar_registros():
         inicio_obj = r.hora_inicio
         termino_obj = r.hora_termino
         
-        # Converte Data (DD/MM/YYYY string para objeto date)
         try:
             data_obj = datetime.strptime(r.data, '%d/%m/%Y').date()
         except ValueError:
             pass
             
-        # Converte Hora (HH:MM string para objeto time)
         try:
             inicio_obj = datetime.strptime(r.hora_inicio, '%H:%M').time()
         except ValueError:
@@ -170,29 +169,23 @@ def exportar_registros():
         except ValueError:
             pass 
 
-        # Assegura que SIM/NÃO está em caixa alta para a exibição no Excel
         coleta_status = r.computador_coleta.upper() 
 
         dados.append({
             'Posto': r.posto,
-            # Coluna alterada: 'Computador da coleta?' para 'Coleta de imagem?'
             'Coleta de imagem?': coleta_status,  
-            'Data': data_obj, # Objeto date
-            # Colunas alteradas: 'Início' e 'Término' para 'Horário de Início' e 'Horário de Término'
-            'Horário de Início': inicio_obj, # Objeto time
-            'Horário de Término': termino_obj, # Objeto time
-            'Procedimento Realizado': r.procedimento # Texto Completo
+            'Data': data_obj,
+            'Horário de Início': inicio_obj, 
+            'Horário de Término': termino_obj,
+            'Procedimento Realizado': r.procedimento
         })
 
-    # Renomeando as colunas do DataFrame para corresponder aos títulos finais
     df = pd.DataFrame(dados)
-    # Pandas automaticamente mantém a capitalização das chaves do dicionário
 
     # 2. Configurar o Writer e o Workbook
     output = io.BytesIO()
     
     try:
-        # Usa o Pandas com o engine 'xlsxwriter'
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, index=False, sheet_name='Registros Técnicos')
             workbook = writer.book
@@ -202,79 +195,44 @@ def exportar_registros():
             
             # 1. Formato de Cabeçalho (Tam 14, Negrito, Centralizado, Bordas, Cinza Claro)
             header_format = workbook.add_format({
-                'bold': True,
-                'font_size': 14,
-                'align': 'center',
-                'valign': 'vcenter',
-                'border': 1,
-                'bg_color': '#D3D3D3'
+                'bold': True, 'font_size': 14, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'bg_color': '#D3D3D3'
             })
             
             # 2. Formato de Dados Padrão (Tam 12, Centralizado, Bordas)
             default_data_format = workbook.add_format({
-                'font_size': 12,
-                'align': 'center',
-                'valign': 'vcenter',
-                'border': 1
+                'font_size': 12, 'align': 'center', 'valign': 'vcenter', 'border': 1
             })
             
             # 3. Formato de Data (DD/MM/YYYY)
             date_format = workbook.add_format({
-                'font_size': 12,
-                'align': 'center',
-                'valign': 'vcenter',
-                'border': 1,
-                'num_format': 'dd/mm/yyyy'
+                'font_size': 12, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'num_format': 'dd/mm/yyyy'
             })
             
             # 4. Formato de Hora (HH:MM - 24h)
             time_format = workbook.add_format({
-                'font_size': 12,
-                'align': 'center',
-                'valign': 'vcenter',
-                'border': 1,
-                'num_format': 'hh:mm'
+                'font_size': 12, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'num_format': 'hh:mm'
             })
 
-            # 5. Formato para SIM (Verde, Negrito, Centralizado) - NOVO: bold=True
+            # 5. Formato para SIM (Verde, Negrito)
             sim_format = workbook.add_format({
-                'font_size': 12,
-                'bold': True, # Negrito
-                'align': 'center',
-                'valign': 'vcenter',
-                'border': 1,
-                'bg_color': '#C6EFCE' # Verde Claro
+                'font_size': 12, 'bold': True, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'bg_color': '#C6EFCE'
             })
             
-            # 6. Formato para NÃO (Vermelho, Negrito, Centralizado) - NOVO: bold=True
+            # 6. Formato para NÃO (Vermelho, Negrito)
             nao_format = workbook.add_format({
-                'font_size': 12,
-                'bold': True, # Negrito
-                'align': 'center',
-                'valign': 'vcenter',
-                'border': 1,
-                'bg_color': '#FFC7CE' # Vermelho Claro
+                'font_size': 12, 'bold': True, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'bg_color': '#FFC7CE'
             })
 
-            # 7. Formato Procedimento (Texto Puro, Quebra de Linha, Alinhado à esquerda)
+            # 7. Formato Procedimento (Texto Puro, Quebra de Linha, Esquerda)
             proc_format = workbook.add_format({
-                'font_size': 12,
-                'align': 'left',
-                'valign': 'top',
-                'border': 1,
-                'text_wrap': True,
-                'num_format': '@' # CRUCIAL: Define a célula como formato TEXTO puro
+                'font_size': 12, 'align': 'left', 'valign': 'top', 'border': 1, 'text_wrap': True, 'num_format': '@'
             })
             
             # --- APLICAÇÃO DOS FORMATOS ---
             
             col_widths = {
-                'Posto': 15,
-                'Coleta de imagem?': 18, 
-                'Data': 15,
-                'Horário de Início': 15,
-                'Horário de Término': 15,
-                'Procedimento Realizado': 60
+                'Posto': 15, 'Coleta de imagem?': 18, 'Data': 15,
+                'Horário de Início': 15, 'Horário de Término': 15, 'Procedimento Realizado': 60
             }
             
             for col_num, col_name in enumerate(df.columns):
@@ -282,7 +240,6 @@ def exportar_registros():
                 sheet.write(0, col_num, col_name, header_format)
                 sheet.set_column(col_num, col_num, width) 
                 
-            # Mapeamento de índices de colunas
             col_data_idx = df.columns.get_loc('Data')
             col_inicio_idx = df.columns.get_loc('Horário de Início')
             col_termino_idx = df.columns.get_loc('Horário de Término')
@@ -294,20 +251,15 @@ def exportar_registros():
             for row_num, row_data in df.iterrows():
                 row_xlsx = row_num + 1 
                 
-                # 1. Aplicação dos formatos de Data e Hora
                 sheet.write(row_xlsx, col_data_idx, row_data['Data'], date_format)
                 sheet.write(row_xlsx, col_inicio_idx, row_data['Horário de Início'], time_format)
                 sheet.write(row_xlsx, col_termino_idx, row_data['Horário de Término'], time_format)
                 
-                # 2. Aplicação do formato Condicional (Coleta de imagem?)
-                coleta_value = row_data['Coleta de imagem?'] # Já está em caixa alta
+                coleta_value = row_data['Coleta de imagem?']
                 coleta_format = sim_format if coleta_value == 'SIM' else nao_format
                 sheet.write(row_xlsx, col_coleta_idx, coleta_value, coleta_format)
                 
-                # 3. Aplicação do formato Procedimento (Texto Puro, Quebra de Linha)
                 sheet.write(row_xlsx, col_proc_idx, row_data['Procedimento Realizado'], proc_format)
-                
-                # 4. Aplicação do formato padrão
                 sheet.write(row_xlsx, col_posto_idx, row_data['Posto'], default_data_format)
                 
                 for col_idx, col_name in enumerate(df.columns):
