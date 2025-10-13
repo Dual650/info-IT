@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify
-from datetime import datetime
+from datetime import datetime, time # Importar time e datetime
 from flask_sqlalchemy import SQLAlchemy
 import os
 import io
@@ -42,7 +42,7 @@ with app.app_context():
     db.create_all()
 
 # --- CONSTANTE para Resumo ---
-RESUMO_MAX_CARACTERES = 70 # Limite de caracteres para o resumo na tela
+RESUMO_MAX_CARACTERES = 70 
 
 # Função auxiliar para aplicar filtros
 def aplicar_filtros(query, filtro_posto, filtro_data_html):
@@ -106,9 +106,6 @@ def consultar_registro():
 # --- ROTA JSON: Retorna os dados para o JavaScript (Com Resumo) ---
 @app.route('/registros_json', methods=['GET'])
 def registros_json():
-    """
-    Retorna os registros filtrados em formato JSON, com o procedimento resumido.
-    """
     filtro_posto = request.args.get('posto')
     filtro_data_html = request.args.get('data')
     
@@ -119,7 +116,6 @@ def registros_json():
     registros_formatados = []
     for r in registros:
         
-        # Lógica de Resumo do Procedimento
         procedimento_completo = r.procedimento
         procedimento_resumo = procedimento_completo
         if len(procedimento_completo) > RESUMO_MAX_CARACTERES:
@@ -138,7 +134,7 @@ def registros_json():
     return jsonify(registros_formatados)
 
 
-# --- Rota 3: Exportar para XLSX (Usa texto COMPLETO e lógica de Formatação) ---
+# --- Rota 3: Exportar para XLSX (CORREÇÃO DEFENSIVA DE TIPOS) ---
 @app.route('/exportar', methods=['GET'])
 def exportar_registros():
     filtro_posto = request.args.get('posto')
@@ -155,19 +151,29 @@ def exportar_registros():
     dados = []
     for r in registros:
         data_obj = r.data
+        hora_inicio_obj = r.hora_inicio
+        hora_termino_obj = r.hora_termino
+        
+        # Tentativa de conversão de Data
         try:
-            # Tenta converter a string DD/MM/AAAA para um objeto datetime.date para o Excel
             data_obj = datetime.strptime(r.data, '%d/%m/%Y').date()
         except ValueError:
-            pass # Mantém a string se a conversão falhar (Dados inconsistentes no DB)
+            pass 
             
+        # Tentativa de conversão de Hora para objeto datetime.time (Correção Defensiva)
+        try:
+            hora_inicio_obj = datetime.strptime(r.hora_inicio, '%H:%M').time()
+            hora_termino_obj = datetime.strptime(r.hora_termino, '%H:%M').time()
+        except ValueError:
+            pass 
+
         dados.append({
             'Posto': r.posto,
             'Computador da coleta?': r.computador_coleta, 
-            'Data': data_obj, 
-            'Início': r.hora_inicio, 
-            'Término': r.hora_termino, 
-            'Procedimento Realizado': r.procedimento # <--- TEXTO ORIGINAL COMPLETO AQUI
+            'Data': data_obj, # datetime.date ou string
+            'Início': hora_inicio_obj, # datetime.time ou string
+            'Término': hora_termino_obj, # datetime.time ou string
+            'Procedimento Realizado': r.procedimento # Texto Completo
         })
 
     df = pd.DataFrame(dados)
@@ -238,10 +244,9 @@ def exportar_registros():
                     cell.fill = FILL_RED
             
             elif col_name == 'Data':
-                # Aplica o formato DD/MM/YYYY
                 cell.number_format = 'DD/MM/YYYY' 
             elif col_name in ['Início', 'Término']:
-                # Aplica o formato de Hora
+                # O formato HH:MM só funcionará se o valor da célula for um datetime.time (ou float)
                 cell.number_format = 'HH:MM'
             
             elif col_name == 'Procedimento Realizado':
