@@ -2,30 +2,56 @@
 /* ESTILOS GLOBAIS E DE FORMULÁRIO */
 /* ========================================= */
 
-/* Estilos Base para Formalidade */
 body {
     font-family: Arial, sans-serif;
-    background-color: #f4f7f6; /* Fundo cinza claro */
+    background-color: #f4f7f6;
     color: #333;
 }
 
 h1, h2, h3 {
-    color: #004080; /* Azul escuro formal */
+    color: #004080;
 }
 
-/* Container da Index - Max-width: mantido em 900px */
+/* Containers Padronizados (Index e Consulta) */
+.container {
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1); 
+    margin: 20px auto;
+}
 .container-index { 
     max-width: 900px; 
-    margin: auto; 
-    background: #fff; 
-    padding: 20px; 
     border-radius: 8px; 
-    box-shadow: 0 0 10px rgba(0,0,0,0.1); /* Sombra igual a da consulta */
+}
+.container:not(.container-index) { /* Para a página de consulta */
+    max-width: 95%;
 }
 
-/* Estilos de Formulário (Formal) - USADO TANTO EM INDEX QUANTO EM CONSULTAR */
+/* Flash Messages */
+.flashes {
+    list-style: none;
+    padding: 10px 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+.flashes li {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+.danger, .warning {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Estilos de Formulário (Inputs, Selects, Textareas) */
 .form-control {
-    padding: 10px; /* Aumentado de 8px para 10px para melhor toque */
+    padding: 10px;
     border: 1px solid #ced4da;
     border-radius: 4px;
     box-sizing: border-box;
@@ -33,82 +59,138 @@ h1, h2, h3 {
     width: 100%;
 }
 .disabled-input {
-    background-color: #e9ecef !important; /* Cor mais formal para campo desabilitado */
+    background-color: #e9ecef !important;
 }
-
 label { 
     margin-bottom: 5px; 
     font-weight: bold; 
-    color: #495057; /* Cor mais escura e formal */
+    color: #495057; 
 }
 textarea { 
     resize: vertical; 
     min-height: 100px; 
 }
 
-/* Botão Primário (Filtrar/Registrar) */
+/* Botão Primário (Azul) */
 .btn-primary {
-    padding: 10px 15px; /* Ajustado para 10px */
+    padding: 10px 15px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
     text-decoration: none;
-    text-align: center;
     transition: background-color 0.3s;
-    height: auto; /* Permite que o botão se estenda se o texto for grande */
     background-color: #007bff; 
     color: white;
     display: inline-flex; 
     align-items: center;
+    justify-content: center;
     gap: 5px;
+    line-height: 1; 
 }
 .btn-primary:hover {
     background-color: #0056b3;
 }
 
 /* ========================================= */
-/* ESTRUTURA E NAVEGAÇÃO DA INDEX.HTML */
+/* ESTRUTURA HEADER (Index e Consulta) */
 /* ========================================= */
 
-/* Cabeçalho da Index - Agora usa a mesma classe do cabeçalho da consulta */
-.header-index {
-    border-bottom: 2px solid #007bff; /* Linha de divisão azul */
+.header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; 
+    margin-bottom: 20px;
     padding-bottom: 10px;
-    margin-bottom: 25px;
+    border-bottom: 2px solid #eee;
 }
 
-/* Botão de Consulta (Ajustado para ser um "Botão de Ação" discreto) */
+.header-index {
+    border-bottom: 2px solid #007bff;
+}
+
+/* Contêiner das Ações (Botões/Ícones) */
+.header-acoes {
+    display: flex;
+    align-items: center;
+    gap: 15px; 
+}
+
+/* Botão de Ação (Base para Ícones de Exportar/Imprimir/Excluir) */
+.btn-acao {
+    background: none;
+    border: 1px solid #ccc;
+    padding: 5px 8px; 
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    color: #333;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 5px;
+    font-size: 1.0em;
+}
+.btn-acao:hover {
+    background-color: #e9e9e9;
+}
+
+/* Botão de Consulta (na Index) */
 .btn-consulta {
-    /* Herda o estilo do .btn-acao (borda cinza, fundo branco, padding pequeno) */
     background-color: #fff;
-    color: #004080; /* Azul escuro para destacar o link */
-    padding: 8px 12px; /* Um pouco maior que os ícones de ação */
-    border: 1px solid #007bff; /* Borda azul */
+    color: #004080; 
+    padding: 8px 12px;
+    border: 1px solid #007bff;
     font-weight: bold;
-    font-size: 0.9em;
+    font-size: 0.95em;
 }
 .btn-consulta:hover {
-    background-color: #f0f8ff; /* Fundo azul bem claro no hover */
+    background-color: #f0f8ff;
     color: #0056b3;
 }
 
-/* Estilo do Formulário (Grid) */
+/* Botão de Exclusão (Perigo) - EM MASSA */
+.btn-acao.btn-danger {
+    background-color: #dc3545 !important; 
+    color: white !important;
+    border-color: #dc3545 !important;
+}
+.btn-acao.btn-danger:hover {
+    background-color: #c82333 !important; 
+    border-color: #bd2130 !important;
+}
+
+/* Botão de Exclusão Individual (mais discreto) */
+.btn-danger-individual {
+    background-color: #fff;
+    color: #dc3545;
+    border: 1px solid #dc3545;
+    padding: 5px 10px;
+}
+.btn-danger-individual:hover {
+    background-color: #f8d7da;
+}
+
+
+/* ========================================= */
+/* ESTILOS DA INDEX.HTML (Formulário) */
+/* ========================================= */
+
 .form-registro { 
     display: grid; 
     grid-template-columns: 1fr 1fr; 
-    gap: 20px; /* Aumentado de 15px para 20px para mais espaçamento */
-    padding: 20px; /* Aumentado de 10px para 20px */
-    border: 1px solid #ddd; /* Borda mais discreta */
+    gap: 20px; 
+    padding: 20px; 
+    border: 1px solid #ddd; 
     border-radius: 5px; 
-    background-color: #f9f9f9; /* Fundo cinza claro para o bloco de formulário */
+    background-color: #f9f9f9; 
 }
 
 .form-group-full { 
     grid-column: 1 / 3; 
 }
 
-/* Estilo do Botão de Registrar no formulário */
 .form-registro .btn-primary { 
     grid-column: 1 / 3; 
     margin-top: 10px; 
@@ -117,69 +199,9 @@ textarea {
 
 
 /* ========================================= */
-/* ESTILOS DA PÁGINA CONSULTAR.HTML (Inalterados, apenas reordenados) */
+/* ESTILOS DA CONSULTAR.HTML (Filtro e Tabela) */
 /* ========================================= */
 
-.container {
-    max-width: 95%;
-    margin: 20px auto;
-    padding: 20px;
-    background-color: #fff;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1); 
-}
-
-/* Cabeçalho da Consulta (usa a mesma base .header-section) */
-.header-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: center; 
-    margin-bottom: 20px;
-    border-bottom: 2px solid #eee;
-    padding-bottom: 10px;
-}
-
-/* Contêiner das Ações (Botão Voltar + Ícones de Impressão) */
-.header-acoes {
-    display: flex;
-    align-items: center;
-    gap: 15px; 
-}
-
-/* Botão Voltar/Registrar Procedimento na CONSULTA */
-.btn-voltar {
-    height: auto;
-    padding: 8px 15px;
-    text-decoration: none; 
-}
-
-/* Ícones de Ação (Exportar/Imprimir) */
-.icones-consulta {
-    display: flex;
-    align-items: center;
-}
-
-.btn-acao {
-    background: none;
-    border: 1px solid #ccc;
-    padding: 5px 8px; 
-    cursor: pointer;
-    border-radius: 4px;
-    transition: background-color 0.3s;
-    color: #333;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: 5px;
-}
-.btn-acao:hover {
-    background-color: #e9e9e9;
-}
-.btn-acao i {
-    font-size: 1.0em; 
-}
-
-/* Estilos do Filtro */
 .filtro-container {
     display: flex;
     flex-wrap: wrap; 
@@ -194,16 +216,123 @@ textarea {
 .filtro-item {
     display: flex;
     flex-direction: column;
+    min-width: 180px;
 }
 .botoes-filtro {
     align-self: flex-end; 
+    display: flex;
+    gap: 10px;
+}
+.aviso-vazio {
+    text-align: center;
+    color: #6c757d;
+    padding: 30px;
+    border: 1px dashed #ced4da;
+    border-radius: 5px;
+    margin-top: 20px;
 }
 
+
 /* Estilos da Tabela */
-#tabelaRegistros {
-    /* ... (Estilos da tabela) */
+.tabela-wrapper {
+    overflow-x: auto;
 }
+#tabelaRegistros {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    min-width: 800px;
+}
+
+#tabelaRegistros th,
+#tabelaRegistros td {
+    text-align: center;
+    vertical-align: middle;
+    padding: 10px;
+    border: 1px solid #dee2e6; 
+    font-size: 14px;
+}
+#tabelaRegistros th {
+    background-color: #e9ecef; 
+    font-weight: bold;
+    color: #495057;
+}
+
 #tabelaRegistros tbody tr {
     cursor: pointer;
 }
-/* ... (outros estilos de tabela e modal) */
+#tabelaRegistros tbody tr:hover {
+    background-color: #f0f0f0; 
+}
+
+/* Estilo para destaque de "Sim" na coluna Coleta */
+.coleta-negrito {
+    font-weight: bold;
+    color: #007bff;
+}
+
+/* Estilo para Resumo de Procedimento */
+.procedimento-header {
+    width: 35%; 
+}
+#tabelaRegistros .procedimento-resumo {
+    text-align: left;
+    max-width: 350px; 
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap; 
+}
+
+
+/* ========================================= */
+/* ESTILOS DO MODAL (Pop-up de Procedimento) */
+/* ========================================= */
+
+.modal {
+    display: none; 
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 8px;
+    position: relative;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+.close-button:hover,
+.close-button:focus {
+    color: #333;
+    text-decoration: none;
+    cursor: pointer;
+}
+.modal-procedimento-content {
+    white-space: pre-wrap;
+    word-wrap: break-word; 
+    background-color: #f8f9fa; 
+    padding: 15px; 
+    border-radius: 5px;
+    border: 1px solid #eee;
+    font-size: 1.0em;
+    line-height: 1.4;
+}
