@@ -1,1 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Registros Técnicos</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
+        .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1, h2 { color: #333; text-align: center; }
+        
+        /* Estilos do Formulário de Filtro */
+        .filter-form { display: flex; gap: 20px; align-items: flex-end; justify-content: center; margin-bottom: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 4px; background-color: #f9f9f9; }
+        .form-group { display: flex; flex-direction: column; }
+        label { margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="date"], select { padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #1e7e34; }
 
+        /* Estilos da Tabela de Resultados */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
+        th { background-color: #f2f2f2; color: #333; }
+        .procedimento-col { max-width: 400px; overflow-wrap: break-word; }
+        .nav-link { display: block; text-align: center; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Consulta de Registros Técnicos</h1>
+
+        <div class="nav-link">
+            <a href="{{ url_for('formulario_registro') }}" style="color: #007bff; text-decoration: none; font-weight: bold;">
+                &laquo; Voltar para o Formulário de Registro
+            </a>
+        </div>
+
+        <form method="GET" class="filter-form" action="{{ url_for('consultar_registro') }}">
+            <div class="form-group">
+                <label for="posto">Posto de Trabalho:</label>
+                <select id="posto" name="posto">
+                    <option value="Todos">Todos os Postos</option>
+                    {% for posto in postos %}
+                    <option value="{{ posto }}" {% if filtro_posto == posto %}selected{% endif %}>{{ posto }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="data">Data do Procedimento:</label>
+                <input type="date" id="data" name="data" value="{{ filtro_data or '' }}">
+            </div>
+
+            <button type="submit">Buscar Registros</button>
+        </form>
+
+        <h2>Resultados da Busca</h2>
+        
+        {% if registros %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Posto</th>
+                        <th>Data</th>
+                        <th>Início</th>
+                        <th>Término</th>
+                        <th>Procedimento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for registro in registros %}
+                    <tr>
+                        <td>{{ registro.posto }}</td>
+                        <td>{{ registro.data }}</td>
+                        <td>{{ registro.hora_inicio }}</td>
+                        <td>{{ registro.hora_termino }}</td>
+                        <td class="procedimento-col">{{ registro.procedimento }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p style="text-align: center;">Nenhum registro encontrado com os filtros selecionados. Preencha o formulário e clique em Buscar.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
