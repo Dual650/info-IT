@@ -35,12 +35,6 @@
                         <i class="fas fa-file-excel" style="color: green;"></i>
                     </a>
                     
-                    <form id="formApagarTudo" method="POST" action="{{ url_for('apagar_todos_registros') }}" style="display: inline-block;">
-                        <button type="submit" id="btnApagarTudo" title="Apagar TODOS os Registros (IRREVERSÍVEL)" class="btn-acao btn-danger">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </form>
-
                     <a href="#" onclick="window.print()" title="Imprimir Consulta" class="btn-acao">
                         <i class="fas fa-print"></i>
                     </a>
@@ -103,7 +97,23 @@
             </table>
         </div>
         <p id="avisoVazio" class="aviso-vazio" style="display:none;">Nenhum registro encontrado para os filtros selecionados.</p>
-    </div>
+        
+        <div class="secao-perigo">
+            <p><strong>Área de Risco:</strong> Use esta função com extrema cautela. Requer senha de confirmação.</p>
+            <form id="formApagarTudo" method="POST" action="{{ url_for('apagar_todos_registros') }}">
+                
+                <input type="hidden" name="senha_confirmacao" id="senhaConfirmacao" value="">
+                
+                <input type="hidden" name="posto_filtro_hidden" id="postoFiltroHidden" value="{{ filtro_posto }}">
+                <input type="hidden" name="data_filtro_hidden" id="dataFiltroHidden" value="{{ filtro_data }}">
+                <input type="hidden" name="coleta_filtro_hidden" id="coletaFiltroHidden" value="{{ filtro_coleta }}">
+
+                <button type="submit" id="btnApagarTudo" title="Apagar TODOS os Registros (IRREVERSÍVEL)" class="btn-primary btn-risco">
+                    <i class="fas fa-exclamation-triangle"></i> APAGAR TODOS OS DADOS
+                </button>
+            </form>
+        </div>
+        </div>
 
     <div id="procedimentoModal" class="modal">
         <div class="modal-content">
@@ -117,7 +127,7 @@
         // VARS GLOBAIS: Passando URLs do Flask para o JavaScript externo
         const URLS = {
             registrosJson: "{{ url_for('registros_json') }}",
-            apagarRegistro: "{{ url_for('apagar_registro', id=0) }}".replace('0', ''), // URL base com placeholder
+            apagarRegistro: "{{ url_for('apagar_registro', id=0) }}".replace('0', ''), 
             exportarRegistros: "{{ url_for('exportar_registros') }}"
         };
     </script>
