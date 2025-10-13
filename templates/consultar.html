@@ -2,38 +2,89 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Consultar Registros Técnicos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Registros Técnicos</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        /* Adiciona a centralização para o conteúdo do formulário de filtro */
+        /* Estilos específicos desta página para o layout */
+        .container {
+            max-width: 95%; /* Aumenta a largura para tabelas grandes */
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1); /* Sombra para um visual mais formal */
+        }
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
         .filtro-container {
             display: flex;
+            flex-wrap: wrap; /* Permite quebras em telas menores */
             gap: 15px;
             align-items: flex-end;
             margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
         }
-        .icones-consulta {
-            /* Alinha os ícones à direita para ficarem mais próximos da tabela */
+        .filtro-item {
             display: flex;
-            gap: 10px;
-            float: right;
-            margin-bottom: 15px; /* Espaço entre os ícones e a tabela */
+            flex-direction: column;
+        }
+        .btn-acao {
+            background: none;
+            border: 1px solid #ccc;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            color: #333;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px; /* Altura fixa para alinhar com os botões de filtro */
+        }
+        .btn-acao:hover {
+            background-color: #e9e9e9;
+        }
+        .btn-acao i {
+            font-size: 1.2em;
         }
         /* Estilos de impressão */
         @media print {
-            .filtro-container, .navbar, .icones-consulta {
-                display: none; /* Esconde filtros e botões na impressão */
+            .filtro-container, .header-section, .btn-primary, .btn-secondary, .icones-consulta {
+                display: none; 
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Consulta de Registros</h1>
+        
+        <div class="header-section">
+            <h2>Consulta de Registros Técnicos</h2>
+            <div class="icones-consulta">
+                <a href="#" onclick="window.print()" title="Imprimir Consulta" class="btn-acao">
+                    <i class="fas fa-print"></i>
+                </a>
+                <a id="btnExportar" href="#" title="Exportar para Excel" class="btn-acao">
+                    <i class="fas fa-file-excel" style="color: green;"></i>
+                </a>
+            </div>
+        </div>
         
         <form method="GET" action="{{ url_for('consultar_registro') }}" class="filtro-container">
-            <div>
+            
+            <div class="filtro-item">
                 <label for="posto">Posto:</label>
                 <select name="posto" id="posto" class="form-control">
                     <option value="Todos">Todos</option>
@@ -42,51 +93,58 @@
                     {% endfor %}
                 </select>
             </div>
-            <div>
+            
+            <div class="filtro-item">
+                <label for="coleta">Coleta de imagem?:</label>
+                <select name="coleta" id="coleta" class="form-control">
+                    <option value="Todos" {% if filtro_coleta == 'Todos' %}selected{% endif %}>Todos</option>
+                    <option value="SIM" {% if filtro_coleta == 'SIM' %}selected{% endif %}>SIM</option>
+                    <option value="NÃO" {% if filtro_coleta == 'NÃO' %}selected{% endif %}>NÃO</option>
+                </select>
+            </div>
+
+            <div class="filtro-item">
                 <label for="data">Data:</label>
                 <input type="date" name="data" id="data" class="form-control" value="{{ filtro_data or '' }}">
             </div>
-            <button type="submit" class="btn btn-primary">Filtrar</button>
-            <a href="{{ url_for('consultar_registro') }}" class="btn btn-secondary">Limpar Filtros</a>
+            
+            <div class="filtro-item" style="flex-direction: row; gap: 10px;">
+                <button type="submit" class="btn-primary">Filtrar</button>
+                <a href="{{ url_for('consultar_registro') }}" class="btn-secondary">Limpar</a>
+            </div>
         </form>
 
-        <div class="icones-consulta">
-            <a href="#" onclick="window.print()" title="Imprimir Consulta" class="btn btn-sm btn-light">
-                <i class="fas fa-print"></i> Imprimir
-            </a>
-            <a id="btnExportar" href="#" title="Exportar para Excel" class="btn btn-sm btn-success">
-                <i class="fas fa-file-excel"></i> Exportar
-            </a>
+        <div class="table-responsive">
+            <table id="tabelaRegistros">
+                <thead>
+                    <tr>
+                        <th>Posto</th>
+                        <th>Coleta de imagem?</th>
+                        <th>Data</th>
+                        <th>Horário de Início</th>
+                        <th>Horário de Término</th>
+                        <th>Procedimento Realizado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
         </div>
-        <div style="clear: both;"></div> <table id="tabelaRegistros">
-            <thead>
-                <tr>
-                    <th>Posto</th>
-                    <th>Coleta de imagem?</th>
-                    <th>Data</th>
-                    <th>Início</th>
-                    <th>Término</th>
-                    <th>Procedimento Realizado</th>
-                </tr>
-            </thead>
-            <tbody>
-                </tbody>
-        </table>
 
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
             // Função para carregar os dados via AJAX
             function carregarRegistros() {
                 const posto = $('#posto').val();
                 const data = $('#data').val();
-                
-                $.getJSON("{{ url_for('registros_json') }}", { posto: posto, data: data })
+                const coleta = $('#coleta').val();
+
+                $.getJSON("{{ url_for('registros_json') }}", { posto: posto, data: data, coleta: coleta })
                 .done(function(registros) {
                     const tbody = $('#tabelaRegistros tbody');
-                    tbody.empty(); // Limpa registros existentes
+                    tbody.empty();
 
                     if (registros.length === 0) {
                         tbody.append('<tr><td colspan="6">Nenhum registro encontrado.</td></tr>');
@@ -94,10 +152,18 @@
                     }
 
                     registros.forEach(function(r) {
+                        // Aplica cor de fundo baseada no status de coleta para o SIM/NÃO
+                        let coleta_class = '';
+                        if (r.computador_coleta.toUpperCase() === 'SIM') {
+                            coleta_class = 'coleta-sim';
+                        } else if (r.computador_coleta.toUpperCase() === 'NÃO') {
+                            coleta_class = 'coleta-nao';
+                        }
+                        
                         const row = `
                             <tr>
                                 <td>${r.posto}</td>
-                                <td>${r.computador_coleta.toUpperCase()}</td>
+                                <td class="${coleta_class}">${r.computador_coleta.toUpperCase()}</td>
                                 <td>${r.data}</td>
                                 <td>${r.hora_inicio}</td>
                                 <td>${r.hora_termino}</td>
@@ -117,15 +183,18 @@
                 e.preventDefault();
                 const posto = $('#posto').val();
                 const data = $('#data').val();
+                const coleta = $('#coleta').val(); 
                 let url = "{{ url_for('exportar_registros') }}";
                 
-                // Anexa os filtros atuais à URL de exportação
                 const params = new URLSearchParams();
                 if (posto && posto !== 'Todos') {
                     params.append('posto', posto);
                 }
                 if (data) {
                     params.append('data', data);
+                }
+                if (coleta && coleta !== 'Todos') { 
+                    params.append('coleta', coleta);
                 }
                 
                 if (params.toString()) {
