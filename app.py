@@ -19,7 +19,6 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'uma_chave_secreta_muito_forte_e_dificil' # Adicionado para usar 'flash'
 
 # --- Configuração do Banco de Dados (Pronto para Render/PostgreSQL) ---
-# Usando .replace para compatibilidade com SQLAlchemy 2.0 e URLs do Heroku/Render
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///site.db').replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -107,7 +106,6 @@ def formulario_registro():
 # --- Rota 2: Consulta de Registros Antigos ---
 @app.route('/consultar', methods=['GET'])
 def consultar_registro():
-    # Os filtros são lidos aqui, mas o processamento dos dados é feito na rota JSON
     filtro_posto = request.args.get('posto')
     filtro_data_html = request.args.get('data')
     filtro_coleta = request.args.get('coleta')
@@ -153,11 +151,7 @@ def registros_json():
     return jsonify(registros_formatados)
 
 
-# ==========================================================
-# --- NOVAS ROTAS DE EXCLUSÃO (Individual e em Massa) ---
-# ==========================================================
-
-# --- Rota 3: Apagar um Registro Individual (POST) ---
+# --- Rota: Apagar um Registro Individual (POST) ---
 @app.route('/apagar/<int:id>', methods=['POST'])
 def apagar_registro(id):
     registro_a_apagar = Registro.query.get_or_404(id)
@@ -173,12 +167,27 @@ def apagar_registro(id):
     return redirect(url_for('consultar_registro'))
 
 
-# --- Rota 4: Apagar TODOS os Registros (CRÍTICO - POST) ---
+# --- Rota: Apagar TODOS os Registros (CRÍTICO - POST com Senha) ---
 @app.route('/apagar_todos', methods=['POST'])
 def apagar_todos_registros():
+    # 1. Verifica a Senha
+    senha_digitada = request.form.get('senha_confirmacao')
+    SENHA_MESTRA = "PPT.123" # Senha Mestra
+
+    if senha_digitada != SENHA_MESTRA:
+        flash('ERRO: Senha incorreta. A exclusão em massa foi cancelada.', 'danger')
+        
+        # Tenta retornar para a consulta preservando os filtros
+        filtro_posto = request.form.get('posto_filtro_hidden')
+        filtro_data = request.form.get('data_filtro_hidden')
+        filtro_coleta = request.form.get('coleta_filtro_hidden')
+        
+        url_retorno = url_for('consultar_registro', posto=filtro_posto, data=filtro_data, coleta=filtro_coleta)
+        return redirect(url_retorno)
+
+
+    # 2. Executa a Exclusão se a senha estiver correta
     try:
-        # Comando do SQLAlchemy para apagar todos os registros da tabela Registro
-        # Retorna o número de linhas deletadas
         num_registros_apagados = db.session.query(Registro).delete()
         db.session.commit()
         
@@ -190,7 +199,7 @@ def apagar_todos_registros():
         return redirect(url_for('consultar_registro'))
 
 
-# --- Rota 5: Exportar para XLSX (FINAL E ESTÁVEL) ---
+# --- Rota: Exportar para XLSX (FINAL E ESTÁVEL) ---
 @app.route('/exportar', methods=['GET'])
 def exportar_registros():
     filtro_posto = request.args.get('posto')
