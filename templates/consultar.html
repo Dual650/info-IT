@@ -1,198 +1,231 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta de Registros Técnicos</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Consulta de Registros</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
         
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                {% for category, message in messages %}
+                    <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
         <div class="header-section">
             <div class="header-titulo">
                 <h2>Consulta de Registros Técnicos</h2>
             </div>
             <div class="header-acoes">
-                <a href="{{ url_for('formulario_registro') }}" class="btn-primary btn-voltar">
+                <a href="{{ url_for('formulario_registro') }}" class="btn-primary btn-voltar" title="Ir para a página de registro">
                     <i class="fas fa-arrow-left"></i> Registrar Procedimento
                 </a>
                 
                 <div class="icones-consulta">
+                    <a id="btnExportar" href="{{ url_for('exportar_registros', posto=request.args.get('posto', 'Todos'), data=request.args.get('data', ''), coleta=request.args.get('coleta', 'Todos')) }}" title="Exportar para Excel" class="btn-acao">
+                        <i class="fas fa-file-excel" style="color: green;"></i>
+                    </a>
+                    
+                    <form id="formApagarTudo" method="POST" action="{{ url_for('apagar_todos_registros') }}" style="display: inline-block;">
+                        <button type="submit" id="btnApagarTudo" title="Apagar TODOS os Registros (IRREVERSÍVEL)" class="btn-acao btn-danger">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </form>
+
                     <a href="#" onclick="window.print()" title="Imprimir Consulta" class="btn-acao">
                         <i class="fas fa-print"></i>
                     </a>
-                    <a id="btnExportar" href="#" title="Exportar para Excel" class="btn-acao">
-                        <i class="fas fa-file-excel" style="color: green;"></i>
-                    </a>
+                    
                 </div>
             </div>
         </div>
-        
-        <form method="GET" action="{{ url_for('consultar_registro') }}" class="filtro-container">
-            
+
+        <form method="GET" class="filtro-container">
             <div class="filtro-item">
-                <label for="posto">Posto:</label>
-                <select name="posto" id="posto" class="form-control">
-                    <option value="Todos">Todos</option>
+                <label for="posto">Filtrar por Posto:</label>
+                <select id="posto" name="posto" class="form-control">
+                    <option value="Todos">Todos os Postos</option>
                     {% for posto in postos %}
-                        <option value="{{ posto }}" {% if filtro_posto == posto %}selected{% endif %}>{{ posto }}</option>
+                    <option value="{{ posto }}" {% if posto == filtro_posto %}selected{% endif %}>{{ posto }}</option>
                     {% endfor %}
                 </select>
             </div>
             
             <div class="filtro-item">
-                <label for="coleta">Coleta de imagem?:</label>
-                <select name="coleta" id="coleta" class="form-control">
-                    <option value="Todos" {% if filtro_coleta == 'Todos' %}selected{% endif %}>Todos</option>
-                    <option value="SIM" {% if filtro_coleta == 'SIM' %}selected{% endif %}>SIM</option>
-                    <option value="NÃO" {% if filtro_coleta == 'NÃO' %}selected{% endif %}>NÃO</option>
+                <label for="coleta">Computador Coleta?:</label>
+                <select id="coleta" name="coleta" class="form-control">
+                    <option value="Todos">Todos</option>
+                    <option value="Sim" {% if filtro_coleta.lower() == 'sim' %}selected{% endif %}>Sim</option>
+                    <option value="Não" {% if filtro_coleta.lower() == 'não' %}selected{% endif %}>Não</option>
                 </select>
             </div>
-
-            <div class="filtro-item">
-                <label for="data">Data:</label>
-                <input type="date" name="data" id="data" class="form-control" value="{{ filtro_data or '' }}">
-            </div>
             
-            <div class="filtro-item botoes-filtro">
-                <button type="submit" class="btn-primary">Filtrar</button>
+            <div class="filtro-item">
+                <label for="data">Filtrar por Data:</label>
+                <input type="date" id="data" name="data" value="{{ filtro_data }}" class="form-control">
+            </div>
+
+            <div class="botoes-filtro">
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-filter"></i> Filtrar
+                </button>
+                <a href="{{ url_for('consultar_registro') }}" class="btn-primary" style="background-color: #6c757d;">
+                    <i class="fas fa-redo"></i> Limpar Filtros
+                </a>
             </div>
         </form>
 
-        <div class="table-responsive">
+        <div class="tabela-wrapper">
             <table id="tabelaRegistros">
                 <thead>
                     <tr>
+                        <th>ID</th>
                         <th>Posto</th>
-                        <th>Coleta de imagem?</th>
+                        <th>Coleta?</th>
                         <th>Data</th>
-                        <th>Horário de Início</th>
-                        <th>Horário de Término</th>
-                        <th>Procedimento Realizado</th>
+                        <th>Início</th>
+                        <th>Término</th>
+                        <th class="procedimento-header">Procedimento (Resumo)</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     </tbody>
             </table>
         </div>
-
+        <p id="avisoVazio" class="aviso-vazio" style="display:none;">Nenhum registro encontrado para os filtros selecionados.</p>
     </div>
 
-    <div class="modal fade" id="procedimentoModal" tabindex="-1" aria-labelledby="procedimentoModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="procedimentoModalLabel">Detalhes do Registro</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                </div>
-                <div class="modal-body">
-                    <p><strong>Posto:</strong> <span id="modalPosto"></span></p>
-                    <p><strong>Data/Hora:</strong> <span id="modalDataHora"></span></p>
-                    <hr>
-                    <h6>Procedimento Completo:</h6>
-                    <div id="modalProcedimento" class="modal-procedimento-content">
-                        </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                </div>
-            </div>
+    <div id="procedimentoModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3>Procedimento Completo do Registro <span id="modalRegistroId"></span></h3>
+            <div id="modalProcedimentoTexto" class="modal-procedimento-content"></div>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <script>
-        $(document).ready(function() {
-            // Função para carregar os dados via AJAX
-            function carregarRegistros() {
-                const posto = $('#posto').val();
-                const data = $('#data').val();
-                const coleta = $('#coleta').val();
+        // Função para carregar e renderizar os dados
+        function carregarRegistros() {
+            const posto = $('#posto').val();
+            const data = $('#data').val();
+            const coleta = $('#coleta').val();
+            const $tbody = $('#tabelaRegistros tbody');
+            const $avisoVazio = $('#avisoVazio');
 
-                $.getJSON("{{ url_for('registros_json') }}", { posto: posto, data: data, coleta: coleta })
-                .done(function(registros) {
-                    const tbody = $('#tabelaRegistros tbody');
-                    tbody.empty();
-
-                    if (registros.length === 0) {
-                        tbody.append('<tr><td colspan="6">Nenhum registro encontrado.</td></tr>');
-                        return;
-                    }
-
-                    registros.forEach(function(r) {
-                        
-                        const row = `
-                            <tr data-registro-id="${r.id}" 
-                                data-posto="${r.posto}"
-                                data-data="${r.data}"
-                                data-hora-inicio="${r.hora_inicio}"
-                                data-procedimento-completo="${encodeURIComponent(r.procedimento_completo)}">
-                                <td>${r.posto}</td>
-                                <td class="coleta-negrito">${r.computador_coleta.toUpperCase()}</td>
-                                <td>${r.data}</td>
-                                <td>${r.hora_inicio}</td>
-                                <td>${r.hora_termino}</td>
-                                <td class="procedimento-resumo" title="${r.procedimento_completo}">${r.procedimento_resumo}</td>
-                            </tr>
-                        `;
-                        tbody.append(row);
-                    });
-                })
-                .fail(function(jqXHR, textStatus, errorThrown) {
-                    $('#tabelaRegistros tbody').empty().append(`<tr><td colspan="6">Erro ao carregar dados: ${textStatus}</td></tr>`);
-                });
-            }
+            $tbody.empty();
+            $avisoVazio.hide();
             
-            // --- Handler para Clique Duplo ---
-            $('#tabelaRegistros tbody').on('dblclick', 'tr', function() {
-                const posto = $(this).data('posto');
-                const data = $(this).data('data');
-                const horaInicio = $(this).data('hora-inicio');
-                // Decodifica o procedimento completo
-                const procedimentoCompleto = decodeURIComponent($(this).data('procedimento-completo'));
+            // Reconstroi o URL de exportação com os filtros atuais
+            const exportUrl = "{{ url_for('exportar_registros') }}";
+            $('#btnExportar').attr('href', `${exportUrl}?posto=${posto}&data=${data}&coleta=${coleta}`);
 
-                // 1. Preenche o Modal
-                $('#modalPosto').text(posto);
-                $('#modalDataHora').text(`${data} às ${horaInicio}`);
-                $('#modalProcedimento').text(procedimentoCompleto);
+            $.getJSON("{{ url_for('registros_json') }}", { posto: posto, data: data, coleta: coleta }, function(registros) {
+                if (registros.length === 0) {
+                    $avisoVazio.show();
+                    return;
+                }
 
-                // 2. Abre o Modal (usando a API do Bootstrap 5)
-                const modal = new bootstrap.Modal(document.getElementById('procedimentoModal'));
-                modal.show();
+                $.each(registros, function(i, registro) {
+                    const coletaClass = registro.computador_coleta === 'SIM' ? 'coleta-negrito' : '';
+                    
+                    // Monta o formulário de exclusão individual
+                    const deleteForm = `
+                        <form method="POST" action="{{ url_for('apagar_registro', id=99999) }}".replace('99999', registro.id)} onsubmit="return confirm('Tem certeza que deseja apagar o Registro ${registro.id}?');" style="display:inline;">
+                            <button type="submit" class="btn-acao btn-danger-individual" title="Apagar Registro Individual">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </form>
+                    `;
+                    
+                    const row = $(`
+                        <tr data-procedimento="${registro.procedimento_completo.replace(/"/g, '&quot;')}" data-registro-id="${registro.id}">
+                            <td>${registro.id}</td>
+                            <td>${registro.posto}</td>
+                            <td class="${coletaClass}">${registro.computador_coleta}</td>
+                            <td>${registro.data}</td>
+                            <td>${registro.hora_inicio}</td>
+                            <td>${registro.hora_termino}</td>
+                            <td class="procedimento-resumo">${registro.procedimento_resumo}</td>
+                            <td>${deleteForm}</td>
+                        </tr>
+                    `);
+                    $tbody.append(row);
+                });
+            }).fail(function() {
+                alert("Erro ao carregar os dados.");
             });
+        }
 
-            // Ativa o botão de Exportar
-            $('#btnExportar').click(function(e) {
-                e.preventDefault();
-                const posto = $('#posto').val();
-                const data = $('#data').val();
-                const coleta = $('#coleta').val(); 
-                let url = "{{ url_for('exportar_registros') }}";
-                
-                const params = new URLSearchParams();
-                if (posto && posto !== 'Todos') {
-                    params.append('posto', posto);
-                }
-                if (data) {
-                    params.append('data', data);
-                }
-                if (coleta && coleta !== 'Todos') { 
-                    params.append('coleta', coleta);
-                }
-                
-                if (params.toString()) {
-                    url += '?' + params.toString();
-                }
-                
-                window.location.href = url;
-            });
-
-            // Carrega os registros na inicialização da página
+        $(document).ready(function() {
+            // Carrega os registros ao abrir a página
             carregarRegistros();
+            
+            // Oculta a tabela se estiver vazia (para evitar mostrar a tabela vazia + aviso)
+            if ($('#tabelaRegistros tbody tr').length === 0) {
+                 $('#tabelaRegistros').hide();
+            }
+
+            // ===============================================
+            // Lógica do MODAL para visualização do procedimento
+            // ===============================================
+            const modal = $('#procedimentoModal');
+            const closeBtn = $('.close-button');
+            const modalTexto = $('#modalProcedimentoTexto');
+            const modalId = $('#modalRegistroId');
+
+            // 1. Abre o modal ao clicar em qualquer linha da tabela
+            $(document).on('click', '#tabelaRegistros tbody tr', function(e) {
+                // Previne abrir modal se o clique foi no botão de ação/exclusão
+                if ($(e.target).closest('form, button').length) {
+                    return; 
+                }
+                
+                // Pega os dados armazenados na linha (data-procedimento)
+                const procedimentoCompleto = $(this).data('procedimento');
+                const registroId = $(this).find('td:first').text(); 
+                
+                modalTexto.text(procedimentoCompleto);
+                modalId.text(registroId);
+                modal.css('display', 'block');
+            });
+
+            // 2. Fecha o modal
+            closeBtn.on('click', function() {
+                modal.css('display', 'none');
+            });
+            $(window).on('click', function(event) {
+                if ($(event.target).is(modal)) {
+                    modal.css('display', 'none');
+                }
+            });
+
+            // ===============================================
+            // Lógica para APAGAR TODOS os Registros (CRÍTICO)
+            // ===============================================
+            $('#formApagarTudo').submit(function(e) {
+                e.preventDefault(); // Impede o envio imediato
+                
+                const confirmacao = confirm(
+                    "🚨 ATENÇÃO: Você tem certeza que deseja APAGAR TODOS os registros do banco de dados?\n\n" +
+                    "ESTA AÇÃO É IRREVERSÍVEL! TODOS OS DADOS SERÃO PERDIDOS."
+                );
+
+                if (confirmacao) {
+                    // Se o usuário confirmar, permite o envio do formulário
+                    this.submit();
+                }
+            });
+
         });
     </script>
 </body>
