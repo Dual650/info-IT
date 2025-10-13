@@ -1,298 +1,143 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta de Registros Técnicos</title>
+    <title>Consultar Registros Técnicos</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
-        .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h1, h2 { color: #333; text-align: center; }
-        
-        .filter-form { display: flex; gap: 20px; align-items: flex-end; justify-content: center; margin-bottom: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 4px; background-color: #f9f9f9; }
-        .form-group { display: flex; flex-direction: column; }
-        label { margin-bottom: 5px; font-weight: bold; color: #555; }
-        input[type="date"], select { padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        #btn-buscar { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        #btn-buscar:hover { background-color: #1e7e34; }
-
-        /* Ajuste de margem para aproximar da área de ações */
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin-top: 5px; /* Valor ajustado */
-            font-size: 0.9em; 
-        }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
-        th { background-color: #f2f2f2; color: #333; }
-        .procedimento-col { max-width: 300px; }
-        .nav-link { display: block; text-align: center; margin-bottom: 20px; }
-        
-        /* Contêiner para os ícones - Margem ajustada */
-        .table-actions {
+        /* Adiciona a centralização para o conteúdo do formulário de filtro */
+        .filtro-container {
             display: flex;
-            justify-content: flex-end; 
-            align-items: center;
+            gap: 15px;
+            align-items: flex-end;
+            margin-bottom: 20px;
+        }
+        .icones-consulta {
+            /* Alinha os ícones à direita para ficarem mais próximos da tabela */
+            display: flex;
             gap: 10px;
-            margin-bottom: 5px; /* Valor ajustado */
+            float: right;
+            margin-bottom: 15px; /* Espaço entre os ícones e a tabela */
         }
-
-        /* Estilo para os ÍCONES */
-        .action-icon {
-            cursor: pointer;
-            padding: 8px 10px;
-            border-radius: 4px;
-            font-size: 1.2em; 
-            color: white;
-            transition: background-color 0.2s;
-            line-height: 1; 
-            border: none;
-            width: 38px; 
-            height: 38px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .action-icon:hover {
-            opacity: 0.8;
-        }
-
-        .export-excel {
-            background-color: #17a2b8;
-        }
-
-        .print-table {
-            background-color: #007bff;
-        }
-
-        .status-message { 
-            text-align: center; 
-            color: #6c757d; 
-            margin-top: 20px; 
-            font-style: italic;
-            min-height: 20px; /* Mantém o espaço reservado */
-        }
-
-        /* Regras de impressão */
+        /* Estilos de impressão */
         @media print {
-            .container { box-shadow: none; }
-            .nav-link, .filter-form, .table-actions, .export-button-container {
-                display: none;
+            .filtro-container, .navbar, .icones-consulta {
+                display: none; /* Esconde filtros e botões na impressão */
             }
-            body { background-color: white; margin: 0; }
-            h1 { display: block; text-align: center; margin-bottom: 20px; }
-            table { margin-top: 0; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Consulta de Registros Técnicos</h1>
-
-        <div class="nav-link">
-            <a href="{{ url_for('formulario_registro') }}" style="color: #007bff; text-decoration: none; font-weight: bold;">
-                &laquo; Voltar para o Formulário de Registro
-            </a>
-        </div>
-
-        <div class="filter-form">
-            <div class="form-group">
-                <label for="posto">Posto de Trabalho:</label>
-                <select id="posto" name="posto">
-                    <option value="Todos">Todos os Postos</option>
+        <h1>Consulta de Registros</h1>
+        
+        <form method="GET" action="{{ url_for('consultar_registro') }}" class="filtro-container">
+            <div>
+                <label for="posto">Posto:</label>
+                <select name="posto" id="posto" class="form-control">
+                    <option value="Todos">Todos</option>
                     {% for posto in postos %}
-                    <option value="{{ posto }}">{{ posto }}</option>
+                        <option value="{{ posto }}" {% if filtro_posto == posto %}selected{% endif %}>{{ posto }}</option>
                     {% endfor %}
                 </select>
             </div>
-
-            <div class="form-group">
-                <label for="data">Data do Procedimento:</label>
-                <input type="date" id="data" name="data" value="{{ filtro_data or '' }}">
+            <div>
+                <label for="data">Data:</label>
+                <input type="date" name="data" id="data" class="form-control" value="{{ filtro_data or '' }}">
             </div>
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{{ url_for('consultar_registro') }}" class="btn btn-secondary">Limpar Filtros</a>
+        </form>
 
-            <button id="btn-buscar" type="button" onclick="fetchRegistros()">Buscar Registros</button>
+        <div class="icones-consulta">
+            <a href="#" onclick="window.print()" title="Imprimir Consulta" class="btn btn-sm btn-light">
+                <i class="fas fa-print"></i> Imprimir
+            </a>
+            <a id="btnExportar" href="#" title="Exportar para Excel" class="btn btn-sm btn-success">
+                <i class="fas fa-file-excel"></i> Exportar
+            </a>
         </div>
-
-        <div class="table-actions">
-            <span style="font-size: 0.9em; color: #666;">Registros: <span id="registro-count">0</span></span>
-            
-            <button class="action-icon print-table" onclick="imprimirTabela()" title="Imprimir Tabela">
-                <i class="fas fa-print"></i>
-            </button>
-            
-            <button class="action-icon export-excel" onclick="exportarExcel()" title="Exportar para Excel (XLSX)">
-                <i class="fas fa-file-excel"></i>
-            </button>
-        </div>
-        
-        <p class="status-message" id="status-message">Carregando dados...</p>
-        
-        <table>
+        <div style="clear: both;"></div> <table id="tabelaRegistros">
             <thead>
                 <tr>
                     <th>Posto</th>
-                    <th>Computador da coleta?</th>
+                    <th>Coleta de imagem?</th>
                     <th>Data</th>
                     <th>Início</th>
                     <th>Término</th>
-                    <th>Procedimento (Resumo)</th>
+                    <th>Procedimento Realizado</th>
                 </tr>
             </thead>
-            <tbody id="tabela-corpo">
+            <tbody>
                 </tbody>
         </table>
 
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        const POSTO_SELECT = document.getElementById('posto');
-        const DATA_INPUT = document.getElementById('data');
-        const TABELA_CORPO = document.getElementById('tabela-corpo');
-        const REGISTRO_COUNT = document.getElementById('registro-count');
-        const STATUS_MESSAGE = document.getElementById('status-message'); 
-
-        let intervalId = null;
-
-        /**
-         * Constrói a URL de consulta com base nos filtros atuais.
-         */
-        function buildQueryUrl() {
-            let url = '{{ url_for("registros_json") }}';
-            let params = [];
-
-            if (POSTO_SELECT.value !== 'Todos') {
-                params.push(`posto=${encodeURIComponent(POSTO_SELECT.value)}`);
-            }
-            if (DATA_INPUT.value) {
-                params.push(`data=${encodeURIComponent(DATA_INPUT.value)}`);
-            }
-
-            if (params.length > 0) {
-                url += '?' + params.join('&');
-            }
-            return url;
-        }
-
-        /**
-         * Busca os registros na API e atualiza a tabela.
-         */
-        async function fetchRegistros(isInitialLoad = false) {
-            
-            if (isInitialLoad) {
-                STATUS_MESSAGE.textContent = 'Carregando dados...';
-            } else {
-                STATUS_MESSAGE.textContent = ''; 
-            }
-
-            const url = buildQueryUrl();
-            
-            try {
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const registros = await response.json();
-                renderTable(registros);
-            } catch (error) {
-                console.error("Erro ao buscar registros:", error);
-                STATUS_MESSAGE.textContent = 'Erro ao carregar dados.';
-            } 
-        }
-
-        /**
-         * Renderiza as linhas da tabela com base nos dados JSON.
-         */
-        function renderTable(registros) {
-            TABELA_CORPO.innerHTML = '';
-            REGISTRO_COUNT.textContent = registros.length;
-
-            if (registros.length === 0) {
-                STATUS_MESSAGE.textContent = 'Nenhum registro encontrado com os filtros selecionados.';
-                return;
-            }
-            
-            STATUS_MESSAGE.textContent = '';
-
-            registros.forEach(registro => {
-                const row = TABELA_CORPO.insertRow();
+        $(document).ready(function() {
+            // Função para carregar os dados via AJAX
+            function carregarRegistros() {
+                const posto = $('#posto').val();
+                const data = $('#data').val();
                 
-                // Formatação condicional de cor
-                let coletaStyle = '';
-                if (registro.computador_coleta === 'Sim') {
-                    coletaStyle = 'style="background-color: #C6EFCE;"'; 
-                } else if (registro.computador_coleta === 'Não') {
-                    coletaStyle = 'style="background-color: #FFC7CE;"'; 
+                $.getJSON("{{ url_for('registros_json') }}", { posto: posto, data: data })
+                .done(function(registros) {
+                    const tbody = $('#tabelaRegistros tbody');
+                    tbody.empty(); // Limpa registros existentes
+
+                    if (registros.length === 0) {
+                        tbody.append('<tr><td colspan="6">Nenhum registro encontrado.</td></tr>');
+                        return;
+                    }
+
+                    registros.forEach(function(r) {
+                        const row = `
+                            <tr>
+                                <td>${r.posto}</td>
+                                <td>${r.computador_coleta.toUpperCase()}</td>
+                                <td>${r.data}</td>
+                                <td>${r.hora_inicio}</td>
+                                <td>${r.hora_termino}</td>
+                                <td class="procedimento-resumo" title="${r.procedimento_completo}">${r.procedimento_resumo}</td>
+                            </tr>
+                        `;
+                        tbody.append(row);
+                    });
+                })
+                .fail(function(jqXHR, textStatus, errorThrown) {
+                    $('#tabelaRegistros tbody').empty().append(`<tr><td colspan="6">Erro ao carregar dados: ${textStatus}</td></tr>`);
+                });
+            }
+
+            // Ativa o botão de Exportar
+            $('#btnExportar').click(function(e) {
+                e.preventDefault();
+                const posto = $('#posto').val();
+                const data = $('#data').val();
+                let url = "{{ url_for('exportar_registros') }}";
+                
+                // Anexa os filtros atuais à URL de exportação
+                const params = new URLSearchParams();
+                if (posto && posto !== 'Todos') {
+                    params.append('posto', posto);
+                }
+                if (data) {
+                    params.append('data', data);
                 }
                 
-                row.innerHTML = `
-                    <td>${registro.posto}</td>
-                    <td ${coletaStyle}>${registro.computador_coleta}</td>
-                    <td>${registro.data}</td>
-                    <td>${registro.hora_inicio}</td>
-                    <td>${registro.hora_termino}</td>
-                    <td class="procedimento-col">${registro.procedimento_resumo}</td>
-                `;
+                if (params.toString()) {
+                    url += '?' + params.toString();
+                }
+                
+                window.location.href = url;
             });
-        }
 
-        /**
-         * Função para exportar para Excel.
-         */
-        function exportarExcel() {
-            let exportUrl = '{{ url_for("exportar_registros") }}';
-            
-            const posto = POSTO_SELECT.value;
-            const data = DATA_INPUT.value;
-            
-            let params = [];
-
-            if (posto && posto !== 'Todos') {
-                params.push(`posto=${encodeURIComponent(posto)}`);
-            }
-            if (data) {
-                params.push(`data=${encodeURIComponent(data)}`);
-            }
-
-            if (params.length > 0) {
-                exportUrl += '?' + params.join('&');
-            }
-
-            window.location.href = exportUrl;
-        }
-
-        /**
-         * Função para imprimir a tabela.
-         */
-        function imprimirTabela() {
-            window.print();
-        }
-
-
-        /**
-         * Inicializa a busca de dados e o polling.
-         */
-        function initPolling() {
-            fetchRegistros(true); 
-            
-            if (intervalId) {
-                clearInterval(intervalId);
-            }
-            // 60000 milissegundos = 1 minuto
-            intervalId = setInterval(fetchRegistros, 60000); 
-
-            POSTO_SELECT.addEventListener('change', fetchRegistros);
-            DATA_INPUT.addEventListener('change', fetchRegistros);
-        }
-
-        document.addEventListener('DOMContentLoaded', initPolling);
-        
-        window.fetchRegistros = fetchRegistros;
-        window.exportarExcel = exportarExcel;
-        window.imprimirTabela = imprimirTabela;
-        
+            // Carrega os registros na inicialização da página
+            carregarRegistros();
+        });
     </script>
 </body>
 </html>
