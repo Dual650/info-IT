@@ -4,7 +4,6 @@ from flask_sqlalchemy import SQLAlchemy
 import os
 import io
 import pandas as pd
-# Importa o módulo para manipulação de estilos do openpyxl
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Font, Alignment, PatternFill
 from openpyxl import Workbook
@@ -29,6 +28,9 @@ db = SQLAlchemy(app)
 class Registro(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     posto = db.Column(db.String(50), nullable=False)
+    # NOVO CAMPO
+    computador_coleta = db.Column(db.String(3), nullable=False) 
+    # Fim NOVO CAMPO
     data = db.Column(db.String(10), nullable=False) 
     hora_inicio = db.Column(db.String(5), nullable=False)
     hora_termino = db.Column(db.String(5), nullable=False)
@@ -38,11 +40,13 @@ class Registro(db.Model):
     def __repr__(self):
         return f"Registro('{self.posto}', '{self.data}', '{self.hora_inicio}')"
 
-# Cria as tabelas do banco de dados (crucial para o primeiro deploy)
+# Cria as tabelas do banco de dados (AVISO: Pode ser necessário recriar as tabelas no Render, 
+# se o banco já existir, para que a coluna 'computador_coleta' seja adicionada. 
+# Se o banco for novo, db.create_all() funciona.)
 with app.app_context():
     db.create_all()
 
-# Função auxiliar para aplicar filtros (usada na consulta e exportação)
+# Função auxiliar para aplicar filtros (sem alterações)
 def aplicar_filtros(query, filtro_posto, filtro_data_html):
     if filtro_posto and filtro_posto != 'Todos':
         query = query.filter(Registro.posto == filtro_posto)
@@ -57,7 +61,7 @@ def aplicar_filtros(query, filtro_posto, filtro_data_html):
             
     return query.order_by(Registro.timestamp_registro.desc())
 
-# --- Rota 1: Registro de Novo Procedimento (Sem Alterações) ---
+# --- Rota 1: Registro de Novo Procedimento (COM NOVO CAMPO) ---
 @app.route('/', methods=['GET', 'POST'])
 def formulario_registro():
     """
@@ -67,12 +71,14 @@ def formulario_registro():
     
     if request.method == 'POST':
         posto = request.form.get('posto')
+        computador_coleta = request.form.get('computador_coleta') # NOVO
         hora_inicio = request.form.get('hora_inicio')
         hora_termino = request.form.get('hora_termino')
         procedimento = request.form.get('procedimento')
         
         novo_registro = Registro(
             posto=posto,
+            computador_coleta=computador_coleta, # NOVO
             data=data_de_hoje,
             hora_inicio=hora_inicio,
             hora_termino=hora_termino,
@@ -111,12 +117,9 @@ def consultar_registro():
         filtro_data=filtro_data_html
     )
     
-# --- Rota 3: Exportar para XLSX (COMPLETAMENTE ATUALIZADA) ---
+# --- Rota 3: Exportar para XLSX (ATUALIZADA COM FORMATO CONDICIONAL) ---
 @app.route('/exportar', methods=['GET'])
 def exportar_registros():
-    """
-    Exporta os registros filtrados para um arquivo Excel (.xlsx) com formatação customizada.
-    """
     filtro_posto = request.args.get('posto')
     filtro_data_html = request.args.get('data')
 
@@ -128,17 +131,16 @@ def exportar_registros():
         return redirect(url_for('consultar_registro'))
 
     # 1. Preparar os dados para o DataFrame
-    # Converter 'Data' e 'Hora' para objetos datetime para formatação correta no Excel
     dados = []
     for r in registros:
         try:
-            # Converte a string DD/MM/AAAA para um objeto datetime.date
             data_obj = datetime.strptime(r.data, '%d/%m/%Y').date()
         except ValueError:
-            data_obj = r.data # Mantém como string se falhar a conversão
+            data_obj = r.data
             
         dados.append({
             'Posto': r.posto,
+            'Computador da coleta?': r.computador_coleta, # NOVO CAMPO
             'Data': data_obj,
             'Início': r.hora_inicio,
             'Término': r.hora_termino,
@@ -147,10 +149,8 @@ def exportar_registros():
 
     df = pd.DataFrame(dados)
 
-    # 2. Configurar o Writer e o Workbook (o arquivo Excel)
+    # 2. Configurar o Writer e o Workbook
     output = io.BytesIO()
-    
-    # Usaremos o openpyxl diretamente para ter controle total sobre o estilo
     writer = pd.ExcelWriter(output, engine='openpyxl')
     df.to_excel(writer, index=False, sheet_name='Registros Técnicos')
     workbook = writer.book
@@ -158,66 +158,75 @@ def exportar_registros():
 
     # --- 3. Definir Estilos ---
     
-    # Estilo do Cabeçalho
-    header_font = Font(size=16, bold=True, color="000000") # Preto padrão
-    header_fill = PatternFill(start_color="D3D3D3", end_color="D3D3D3", fill_type="solid") # Cinza claro
+    # Cores
+    FILL_GRAY = PatternFill(start_color="D3D3D3", end_color="D3D3D3", fill_type="solid")
+    FILL_GREEN = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid") # Verde claro
+    FILL_RED = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")   # Vermelho claro
+
+    # Fontes e Alinhamento
+    header_font = Font(size=16, bold=True, color="000000")
     header_alignment = Alignment(horizontal='center', vertical='center', wrapText=True)
-
-    # Estilo dos Dados (Corpo)
-    data_font = Font(size=12, color="000000") # Preto padrão
+    
+    data_font = Font(size=12, color="000000") 
+    data_font_bold = Font(size=12, bold=True, color="000000") # Negrito para a nova coluna
     data_alignment = Alignment(horizontal='center', vertical='top')
-    # Estilo específico para a coluna "Procedimento Realizado"
     procedimento_alignment = Alignment(horizontal='left', vertical='top', wrapText=True)
-
 
     # --- 4. Aplicar Estilos de Cabeçalho e Largura de Coluna ---
     
-    # Mapeamento para configurar larguras e formatos
     col_config = {
         'Posto': 15,
+        'Computador da coleta?': 18, # Largura ajustada para o novo título
         'Data': 15,
         'Início': 12,
         'Término': 12,
-        'Procedimento Realizado': 60 # Coluna mais larga para o texto
+        'Procedimento Realizado': 60
     }
     
-    # Itera sobre as colunas da planilha
+    # Itera sobre as colunas da planilha e aplica Largura e Estilo de Cabeçalho
     for i, col_name in enumerate(df.columns):
         col_letter = sheet.cell(row=1, column=i+1).column_letter
         
-        # A. Aplicar Largura da Coluna
         sheet.column_dimensions[col_letter].width = col_config.get(col_name, 15)
         
-        # B. Aplicar Estilo de Cabeçalho
         header_cell = sheet.cell(row=1, column=i+1)
         header_cell.font = header_font
-        header_cell.fill = header_fill
+        header_cell.fill = FILL_GRAY
         header_cell.alignment = header_alignment
 
 
-    # --- 5. Aplicar Estilos e Formatos ao Corpo da Planilha ---
+    # --- 5. Aplicar Estilos e Formatos ao Corpo da Planilha (Dados) ---
     
     # Itera sobre todas as células de dados (começa na linha 2)
     for row_idx, row in enumerate(sheet.iter_rows(min_row=2, max_col=len(df.columns))):
+        
+        # Obter o valor da coluna 'Computador da coleta?' desta linha
+        # A nova coluna está no índice 1 (coluna B)
+        valor_coleta = row[1].value 
+
         for col_idx, cell in enumerate(row):
             col_name = df.columns[col_idx]
             
             # A. Formatação base (Tamanho 12 e Centralizado)
-            cell.font = data_font
             cell.alignment = data_alignment
+            cell.font = data_font # Padrão (será sobrescrito na coluna 'coleta')
             
-            # B. Formatos Específicos
-            if col_name == 'Data':
-                # Formato de data brasileiro
+            # B. Formatação Condicional e Estilo da Coluna 'Computador da coleta?'
+            if col_name == 'Computador da coleta?':
+                cell.font = data_font_bold # Negrito
+                if valor_coleta == 'Sim':
+                    cell.fill = FILL_GREEN
+                elif valor_coleta == 'Não':
+                    cell.fill = FILL_RED
+            
+            # C. Formatos Específicos (Manter formatação de data/hora)
+            elif col_name == 'Data':
                 cell.number_format = 'DD/MM/YYYY' 
             elif col_name in ['Início', 'Término']:
-                # Formato de hora (o valor no DB já está como HH:MM)
                 cell.number_format = 'HH:MM'
             elif col_name == 'Procedimento Realizado':
-                # Aplica quebra de linha e alinhamento à esquerda/topo
                 cell.alignment = procedimento_alignment 
-                # Ajusta a altura da linha para acomodar o texto
-                sheet.row_dimensions[row_idx + 2].height = 40 # Altura maior para a linha (em pontos)
+                sheet.row_dimensions[row_idx + 2].height = 40
 
 
     # 6. Salvar e Retornar
@@ -227,7 +236,6 @@ def exportar_registros():
     data_exportacao = datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = f"registros_tecnicos_{data_exportacao}.xlsx"
 
-    # Retorna o arquivo para download
     return send_file(
         output,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
