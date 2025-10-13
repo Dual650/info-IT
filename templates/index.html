@@ -55,11 +55,23 @@
                     {% endfor %}
                 </select>
             </div>
-
+            
+            <div class="form-group">
+                <label for="computador_coleta">Computador da coleta?:</label>
+                <select id="computador_coleta" name="computador_coleta" required>
+                    <option value="">Selecione...</option>
+                    <option value="Sim">Sim</option>
+                    <option value="Não">Não</option>
+                </select>
+            </div>
+            
             <div class="form-group">
                 <label for="data_atual">Data Atual:</label>
                 <input type="text" id="data_atual" value="{{ data_de_hoje }}" disabled style="background-color: #eee;">
             </div>
+            
+            <div class="form-group">
+                </div>
             
             <div class="form-group">
                 <label for="hora_inicio">Horário de Início (HH:MM):</label>
@@ -83,11 +95,11 @@
     <script>
         document.getElementById('hora_inicio').addEventListener('click', function(e) {
             e.preventDefault(); 
-            this.focus(); // Força o foco, o que geralmente abre o seletor
+            this.focus(); 
         });
         document.getElementById('hora_termino').addEventListener('click', function(e) {
             e.preventDefault();
-            this.focus(); // Força o foco, o que geralmente abre o seletor
+            this.focus();
         });
     </script>
 </body>
