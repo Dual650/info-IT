@@ -42,7 +42,7 @@ with app.app_context():
     db.create_all()
 
 # --- CONSTANTE para Resumo ---
-RESUMO_MAX_CARACTERES = 70 # Define o limite de caracteres para o resumo na tela
+RESUMO_MAX_CARACTERES = 70 # Limite de caracteres para o resumo na tela
 
 # Função auxiliar para aplicar filtros
 def aplicar_filtros(query, filtro_posto, filtro_data_html):
@@ -59,7 +59,7 @@ def aplicar_filtros(query, filtro_posto, filtro_data_html):
             
     return query.order_by(Registro.timestamp_registro.desc())
 
-# --- Rota 1: Registro de Novo Procedimento (Sem Alterações) ---
+# --- Rota 1: Registro de Novo Procedimento ---
 @app.route('/', methods=['GET', 'POST'])
 def formulario_registro():
     data_de_hoje = datetime.now().strftime('%d/%m/%Y')
@@ -93,20 +93,17 @@ def formulario_registro():
 # --- Rota 2: Consulta de Registros Antigos (Apenas exibe a página HTML) ---
 @app.route('/consultar', methods=['GET'])
 def consultar_registro():
-    """
-    Simplesmente renderiza a página de consulta. O JS fará a primeira busca.
-    """
     filtro_posto = request.args.get('posto')
     filtro_data_html = request.args.get('data')
 
     return render_template(
         'consultar.html', 
         postos=POSTOS, 
-        filtro_posto=filtro_posto or 'Todos', # Garante que o dropdown inicie com o valor correto
+        filtro_posto=filtro_posto or 'Todos', 
         filtro_data=filtro_data_html
     )
 
-# --- NOVA ROTA: Retorna os dados em JSON para o JavaScript ---
+# --- ROTA JSON: Retorna os dados para o JavaScript (Com Resumo) ---
 @app.route('/registros_json', methods=['GET'])
 def registros_json():
     """
@@ -119,7 +116,6 @@ def registros_json():
     query = aplicar_filtros(query, filtro_posto, filtro_data_html)
     registros = query.all()
 
-    # Formata os dados para JSON, aplicando o resumo
     registros_formatados = []
     for r in registros:
         
@@ -135,17 +131,14 @@ def registros_json():
             'data': r.data,
             'hora_inicio': r.hora_inicio,
             'hora_termino': r.hora_termino,
-            # Campo que será exibido na tela
             'procedimento_resumo': procedimento_resumo, 
-            # Campo que será usado para exportação (não usado no front-end, mas importante saber que existe)
-            'procedimento_completo': procedimento_completo,
             'id': r.id
         })
 
     return jsonify(registros_formatados)
 
 
-# --- Rota 3: Exportar para XLSX (Mantém o texto COMPLETO) ---
+# --- Rota 3: Exportar para XLSX (Usa texto COMPLETO e lógica de Formatação) ---
 @app.route('/exportar', methods=['GET'])
 def exportar_registros():
     filtro_posto = request.args.get('posto')
@@ -158,26 +151,27 @@ def exportar_registros():
     if not registros:
         return redirect(url_for('consultar_registro'))
 
-    # 1. Preparar os dados para o DataFrame (USA PROCEDIMENTO COMPLETO)
+    # 1. Preparar os dados para o DataFrame
     dados = []
     for r in registros:
+        data_obj = r.data
         try:
+            # Tenta converter a string DD/MM/AAAA para um objeto datetime.date para o Excel
             data_obj = datetime.strptime(r.data, '%d/%m/%Y').date()
         except ValueError:
-            data_obj = r.data
+            pass # Mantém a string se a conversão falhar (Dados inconsistentes no DB)
             
         dados.append({
             'Posto': r.posto,
             'Computador da coleta?': r.computador_coleta, 
-            'Data': data_obj,
-            'Início': r.hora_inicio,
-            'Término': r.hora_termino,
-            'Procedimento Realizado': r.procedimento # <--- TEXTO ORIGINAL AQUI
+            'Data': data_obj, 
+            'Início': r.hora_inicio, 
+            'Término': r.hora_termino, 
+            'Procedimento Realizado': r.procedimento # <--- TEXTO ORIGINAL COMPLETO AQUI
         })
 
     df = pd.DataFrame(dados)
 
-    # ... (Restante da lógica de formatação do Excel permanece o mesmo) ...
     # 2. Configurar o Writer e o Workbook
     output = io.BytesIO()
     writer = pd.ExcelWriter(output, engine='openpyxl')
@@ -244,8 +238,10 @@ def exportar_registros():
                     cell.fill = FILL_RED
             
             elif col_name == 'Data':
+                # Aplica o formato DD/MM/YYYY
                 cell.number_format = 'DD/MM/YYYY' 
             elif col_name in ['Início', 'Término']:
+                # Aplica o formato de Hora
                 cell.number_format = 'HH:MM'
             
             elif col_name == 'Procedimento Realizado':
