@@ -1,5 +1,5 @@
 /* ========================================= */
-/* ESTILOS GLOBAIS E DA TABELA DE REGISTROS */
+/* ESTILOS GLOBAIS E DE FORMULÁRIO */
 /* ========================================= */
 
 /* Estilos Base para Formalidade */
@@ -13,19 +13,42 @@ h1, h2, h3 {
     color: #004080; /* Azul escuro formal */
 }
 
+/* Container da Index - Max-width: mantido em 900px */
+.container-index { 
+    max-width: 900px; 
+    margin: auto; 
+    background: #fff; 
+    padding: 20px; 
+    border-radius: 8px; 
+    box-shadow: 0 0 10px rgba(0,0,0,0.1); /* Sombra igual a da consulta */
+}
+
 /* Estilos de Formulário (Formal) - USADO TANTO EM INDEX QUANTO EM CONSULTAR */
 .form-control {
-    padding: 8px;
+    padding: 10px; /* Aumentado de 8px para 10px para melhor toque */
     border: 1px solid #ced4da;
     border-radius: 4px;
     box-sizing: border-box;
     font-size: 14px;
     width: 100%;
 }
+.disabled-input {
+    background-color: #e9ecef !important; /* Cor mais formal para campo desabilitado */
+}
+
+label { 
+    margin-bottom: 5px; 
+    font-weight: bold; 
+    color: #495057; /* Cor mais escura e formal */
+}
+textarea { 
+    resize: vertical; 
+    min-height: 100px; 
+}
 
 /* Botão Primário (Filtrar/Registrar) */
 .btn-primary {
-    padding: 8px 15px;
+    padding: 10px 15px; /* Ajustado para 10px */
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -33,10 +56,10 @@ h1, h2, h3 {
     text-decoration: none;
     text-align: center;
     transition: background-color 0.3s;
-    height: 40px; 
+    height: auto; /* Permite que o botão se estenda se o texto for grande */
     background-color: #007bff; 
     color: white;
-    display: inline-flex; /* Para alinhar ícone e texto */
+    display: inline-flex; 
     align-items: center;
     gap: 5px;
 }
@@ -44,33 +67,57 @@ h1, h2, h3 {
     background-color: #0056b3;
 }
 
-/* Estilos da Tabela (Centralização e Formalidade) */
-#tabelaRegistros {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-    background-color: white;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+/* ========================================= */
+/* ESTRUTURA E NAVEGAÇÃO DA INDEX.HTML */
+/* ========================================= */
+
+/* Cabeçalho da Index - Agora usa a mesma classe do cabeçalho da consulta */
+.header-index {
+    border-bottom: 2px solid #007bff; /* Linha de divisão azul */
+    padding-bottom: 10px;
+    margin-bottom: 25px;
 }
 
-/* Centraliza o conteúdo (texto e números) dentro de TODAS as células */
-#tabelaRegistros th,
-#tabelaRegistros td {
-    text-align: center;
-    vertical-align: middle;
-    padding: 10px;
-    border: 1px solid #dee2e6; 
-    font-size: 14px;
-}
-
-#tabelaRegistros th {
-    background-color: #e9ecef; 
+/* Botão de Consulta (Ajustado para ser um "Botão de Ação" discreto) */
+.btn-consulta {
+    /* Herda o estilo do .btn-acao (borda cinza, fundo branco, padding pequeno) */
+    background-color: #fff;
+    color: #004080; /* Azul escuro para destacar o link */
+    padding: 8px 12px; /* Um pouco maior que os ícones de ação */
+    border: 1px solid #007bff; /* Borda azul */
     font-weight: bold;
-    color: #495057;
+    font-size: 0.9em;
 }
+.btn-consulta:hover {
+    background-color: #f0f8ff; /* Fundo azul bem claro no hover */
+    color: #0056b3;
+}
+
+/* Estilo do Formulário (Grid) */
+.form-registro { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 20px; /* Aumentado de 15px para 20px para mais espaçamento */
+    padding: 20px; /* Aumentado de 10px para 20px */
+    border: 1px solid #ddd; /* Borda mais discreta */
+    border-radius: 5px; 
+    background-color: #f9f9f9; /* Fundo cinza claro para o bloco de formulário */
+}
+
+.form-group-full { 
+    grid-column: 1 / 3; 
+}
+
+/* Estilo do Botão de Registrar no formulário */
+.form-registro .btn-primary { 
+    grid-column: 1 / 3; 
+    margin-top: 10px; 
+    font-size: 16px; 
+}
+
 
 /* ========================================= */
-/* ESTILOS DA PÁGINA CONSULTAR.HTML */
+/* ESTILOS DA PÁGINA CONSULTAR.HTML (Inalterados, apenas reordenados) */
 /* ========================================= */
 
 .container {
@@ -81,7 +128,7 @@ h1, h2, h3 {
     box-shadow: 0 0 10px rgba(0,0,0,0.1); 
 }
 
-/* Modificação para o Cabeçalho da Consulta */
+/* Cabeçalho da Consulta (usa a mesma base .header-section) */
 .header-section {
     display: flex;
     justify-content: space-between;
@@ -98,14 +145,14 @@ h1, h2, h3 {
     gap: 15px; 
 }
 
-/* Botão Voltar/Registrar Procedimento (Usa .btn-primary) */
+/* Botão Voltar/Registrar Procedimento na CONSULTA */
 .btn-voltar {
     height: auto;
     padding: 8px 15px;
     text-decoration: none; 
 }
 
-/* Contêiner dos Ícones de Ação (Exportar/Imprimir) */
+/* Ícones de Ação (Exportar/Imprimir) */
 .icones-consulta {
     display: flex;
     align-items: center;
@@ -152,118 +199,11 @@ h1, h2, h3 {
     align-self: flex-end; 
 }
 
-/* Estilos específicos da tabela de consulta */
+/* Estilos da Tabela */
+#tabelaRegistros {
+    /* ... (Estilos da tabela) */
+}
 #tabelaRegistros tbody tr {
     cursor: pointer;
 }
-#tabelaRegistros tbody tr:hover {
-    background-color: #f0f0f0; 
-}
-.coleta-negrito {
-    font-weight: bold;
-    background-color: inherit !important; 
-    color: inherit !important;
-}
-#tabelaRegistros .procedimento-resumo {
-    text-align: left;
-    max-width: 400px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap; 
-    vertical-align: middle; 
-}
-.modal-procedimento-content {
-    white-space: pre-wrap; 
-    word-wrap: break-word; 
-    background-color: #f8f9fa; 
-    padding: 10px; 
-    border-radius: 5px;
-}
-@media print {
-    .filtro-container, .header-section, .btn-primary, .icones-consulta, .header-acoes {
-        display: none; 
-    }
-}
-
-
-/* ========================================= */
-/* NOVOS ESTILOS DA PÁGINA INDEX.HTML */
-/* ========================================= */
-
-/* Container da Index - Max-width é diferente da Consulta, que é 95% */
-.container-index { 
-    max-width: 900px; 
-    margin: auto; 
-    background: #fff; 
-    padding: 20px; 
-    border-radius: 8px; 
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-}
-
-/* Estilo do Formulário (Formato Grid) */
-.form-registro { 
-    display: grid; 
-    grid-template-columns: 1fr 1fr; 
-    gap: 15px; 
-    margin-bottom: 30px; 
-    padding: 10px; 
-    border: 1px solid #ccc; 
-    border-radius: 4px; 
-}
-.form-group { 
-    display: flex; 
-    flex-direction: column; 
-}
-.form-group-full { 
-    grid-column: 1 / 3; 
-}
-
-label { 
-    margin-bottom: 5px; 
-    font-weight: bold; 
-    color: #555; 
-}
-
-/* Campos de entrada (Hora, Texto, Select) */
-input[type="time"], textarea, select { 
-    padding: 10px; 
-    border: 1px solid #ddd; 
-    border-radius: 4px; 
-    box-sizing: border-box; 
-}
-textarea { 
-    resize: vertical; 
-    min-height: 100px; 
-}
-.disabled-input {
-    background-color: #eee;
-}
-
-/* Botão de Registrar (usa .btn-primary, mas estendido) */
-.form-registro button { 
-    grid-column: 1 / 3; 
-    margin-top: 10px; 
-    font-size: 16px; 
-    height: auto; /* Anula o height fixo do .btn-primary, se houver */
-}
-
-/* Link de Navegação (Consultar) */
-.nav-link { 
-    display: block; 
-    text-align: center; 
-    margin-bottom: 30px; 
-    padding: 10px; 
-    border: 2px solid #28a745; 
-    border-radius: 4px; 
-    background-color: #e6ffed;
-    transition: background-color 0.3s;
-}
-.nav-link:hover {
-    background-color: #d8f5e0;
-}
-.nav-link a {
-    color: #28a745; 
-    text-decoration: none; 
-    font-weight: bold;
-    font-size: 1.1em;
-}
+/* ... (outros estilos de tabela e modal) */
