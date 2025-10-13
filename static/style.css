@@ -16,7 +16,7 @@ h1, h2, h3 {
     border-radius: 4px;
     box-sizing: border-box;
     font-size: 14px;
-    width: 100%; /* Ocupa a largura total do filtro-item */
+    width: 100%;
 }
 
 /* Botão Primário (Filtrar) */
@@ -29,8 +29,8 @@ h1, h2, h3 {
     text-decoration: none;
     text-align: center;
     transition: background-color 0.3s;
-    height: 40px; /* Alinha com os inputs */
-    background-color: #007bff; /* Azul primário */
+    height: 40px; 
+    background-color: #007bff; 
     color: white;
 }
 .btn-primary:hover {
@@ -52,33 +52,36 @@ h1, h2, h3 {
     text-align: center;
     vertical-align: middle;
     padding: 10px;
-    border: 1px solid #dee2e6; /* Linhas cinzas claras */
+    border: 1px solid #dee2e6; 
     font-size: 14px;
 }
 
 #tabelaRegistros th {
-    background-color: #e9ecef; /* Cabeçalho levemente cinza */
+    background-color: #e9ecef; 
     font-weight: bold;
     color: #495057;
 }
 
-/* Cores Condicionais (SIM/NÃO) na Tabela HTML */
-.coleta-sim {
-    background-color: #C6EFCE; 
-    color: #006100;
+/* NOVO: Estilo para a coluna Coleta de Imagem (Apenas Negrito, Sem Cor) */
+.coleta-negrito {
     font-weight: bold;
-}
-.coleta-nao {
-    background-color: #FFC7CE; 
-    color: #9C0006;
-    font-weight: bold;
+    /* Garante que não haja cor de fundo ou texto condicional */
+    background-color: inherit !important; 
+    color: inherit !important;
 }
 
-/* Estilo para a coluna de procedimento (alinhamento esquerdo para o texto) */
+/* Estilo para a coluna de procedimento */
 #tabelaRegistros .procedimento-resumo {
+    /* MANTÉM O TEXTO ALINHADO À ESQUERDA, mas a célula (TD) ainda está centralizada verticalmente */
     text-align: left;
     max-width: 400px;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap; /* Impede quebra de linha no resumo */
+    white-space: nowrap; 
+}
+
+/* REFORÇO: Assegura que o texto da coluna Procedimento, mesmo sendo left-aligned,
+   use a centralização vertical do TD, garantindo alinhamento ao meio. */
+#tabelaRegistros td.procedimento-resumo {
+    vertical-align: middle;
 }
