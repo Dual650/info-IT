@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consulta de Registros Técnicos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
         .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
@@ -16,32 +17,69 @@
         #btn-buscar { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
         #btn-buscar:hover { background-color: #1e7e34; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 5px; /* Reduz a margem para aproximar dos ícones */ font-size: 0.9em; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
         th { background-color: #f2f2f2; color: #333; }
         .procedimento-col { max-width: 300px; }
         .nav-link { display: block; text-align: center; margin-bottom: 20px; }
         
-        .export-button-container { text-align: right; margin-top: 15px; }
-        .export-button {
-            background-color: #17a2b8;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
+        /* NOVO ESTILO: Contêiner para os ícones */
+        .table-actions {
+            display: flex;
+            justify-content: flex-end; /* Alinha os botões à direita */
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* ESTILO UNIFICADO para os ÍCONES */
+        .action-icon {
             cursor: pointer;
-            font-size: 14px;
+            padding: 8px 10px;
+            border-radius: 4px;
+            font-size: 1.2em; /* Tamanho do ícone */
+            color: white;
+            transition: background-color 0.2s;
+            line-height: 1; /* Centraliza verticalmente o ícone */
+            border: none;
+            width: 38px; /* Largura e altura fixas */
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .export-button:hover {
-            background-color: #138496;
+
+        .action-icon:hover {
+            opacity: 0.8;
         }
-        /* A mensagem de carregamento e sem registros deve ocupar um espaço fixo para evitar reflow */
+
+        /* Estilo específico para Exportar (Excel) */
+        .export-excel {
+            background-color: #17a2b8; /* Cor original do botão Exportar */
+        }
+
+        /* Estilo específico para Imprimir */
+        .print-table {
+            background-color: #007bff; /* Azul padrão */
+        }
+
         .status-message { 
             text-align: center; 
             color: #6c757d; 
             margin-top: 20px; 
             font-style: italic;
-            min-height: 20px; /* Garante que o elemento tenha uma altura mínima mesmo quando vazio */
+            min-height: 20px;
+        }
+
+        /* Regras de impressão: Oculta elementos que não devem ser impressos */
+        @media print {
+            .container { box-shadow: none; }
+            .nav-link, .filter-form, .table-actions, .export-button-container {
+                display: none;
+            }
+            body { background-color: white; margin: 0; }
+            h1 { display: block; text-align: center; margin-bottom: 20px; }
+            table { margin-top: 0; }
         }
     </style>
 </head>
@@ -74,14 +112,18 @@
             <button id="btn-buscar" type="button" onclick="fetchRegistros()">Buscar Registros</button>
         </div>
 
-        <h2>Resultados da Busca</h2>
-        
-        <div class="export-button-container">
-            <button class="export-button" onclick="exportarExcel()">
-                Exportar <span id="registro-count">0</span> Registro(s) para XLSX
+        <div class="table-actions">
+            <span style="font-size: 0.9em; color: #666;">Registros: <span id="registro-count">0</span></span>
+            
+            <button class="action-icon print-table" onclick="imprimirTabela()" title="Imprimir Tabela">
+                <i class="fas fa-print"></i>
+            </button>
+            
+            <button class="action-icon export-excel" onclick="exportarExcel()" title="Exportar para Excel (XLSX)">
+                <i class="fas fa-file-excel"></i>
             </button>
         </div>
-
+        
         <p class="status-message" id="status-message">Carregando dados...</p>
         
         <table>
@@ -106,7 +148,7 @@
         const DATA_INPUT = document.getElementById('data');
         const TABELA_CORPO = document.getElementById('tabela-corpo');
         const REGISTRO_COUNT = document.getElementById('registro-count');
-        const STATUS_MESSAGE = document.getElementById('status-message'); // Elemento unificado
+        const STATUS_MESSAGE = document.getElementById('status-message'); 
 
         let intervalId = null;
 
@@ -135,11 +177,9 @@
          */
         async function fetchRegistros(isInitialLoad = false) {
             
-            // Exibir mensagem de carregamento apenas na carga inicial
             if (isInitialLoad) {
                 STATUS_MESSAGE.textContent = 'Carregando dados...';
             } else {
-                // Oculta a mensagem em carregamentos subsequentes para evitar o flicker
                 STATUS_MESSAGE.textContent = ''; 
             }
 
@@ -170,7 +210,6 @@
                 return;
             }
             
-            // Limpa a mensagem de status se houver dados
             STATUS_MESSAGE.textContent = '';
 
             registros.forEach(registro => {
@@ -221,29 +260,34 @@
         }
 
         /**
+         * Função para imprimir a tabela.
+         */
+        function imprimirTabela() {
+            window.print();
+        }
+
+
+        /**
          * Inicializa a busca de dados e o polling.
          */
         function initPolling() {
-            // 1. Busca inicial ao carregar a página
-            fetchRegistros(true); // Passa 'true' para mostrar a mensagem de carregamento
+            fetchRegistros(true); 
             
-            // 2. Inicia o polling (Atualização a cada 60 segundos = 1 minuto)
             if (intervalId) {
                 clearInterval(intervalId);
             }
             // 60000 milissegundos = 1 minuto
             intervalId = setInterval(fetchRegistros, 60000); 
 
-            // 3. Ao mudar o filtro, buscar imediatamente
             POSTO_SELECT.addEventListener('change', fetchRegistros);
             DATA_INPUT.addEventListener('change', fetchRegistros);
         }
 
-        // Inicia a aplicação na página de consulta
         document.addEventListener('DOMContentLoaded', initPolling);
         
         window.fetchRegistros = fetchRegistros;
         window.exportarExcel = exportarExcel;
+        window.imprimirTabela = imprimirTabela;
         
     </script>
 </body>
