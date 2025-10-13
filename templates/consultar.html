@@ -13,13 +13,14 @@
         .form-group { display: flex; flex-direction: column; }
         label { margin-bottom: 5px; font-weight: bold; color: #555; }
         input[type="date"], select { padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        button { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        button:hover { background-color: #1e7e34; }
+        /* Alterado para um botão normal para evitar submissão dupla */
+        #btn-buscar { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        #btn-buscar:hover { background-color: #1e7e34; }
 
         table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9em; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
         th { background-color: #f2f2f2; color: #333; }
-        .procedimento-col { max-width: 400px; overflow-wrap: break-word; }
+        .procedimento-col { max-width: 300px; /* Reduz a largura para caber o resumo */ }
         .nav-link { display: block; text-align: center; margin-bottom: 20px; }
         
         .export-button-container { text-align: right; margin-top: 15px; }
@@ -35,6 +36,12 @@
         .export-button:hover {
             background-color: #138496;
         }
+        .loading { 
+            text-align: center; 
+            color: #6c757d; 
+            margin-top: 20px; 
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -47,13 +54,13 @@
             </a>
         </div>
 
-        <form method="GET" class="filter-form" id="filter-form" action="{{ url_for('consultar_registro') }}">
+        <div class="filter-form">
             <div class="form-group">
                 <label for="posto">Posto de Trabalho:</label>
                 <select id="posto" name="posto">
                     <option value="Todos">Todos os Postos</option>
                     {% for posto in postos %}
-                    <option value="{{ posto }}" {% if filtro_posto == posto %}selected{% endif %}>{{ posto }}</option>
+                    <option value="{{ posto }}">{{ posto }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -63,56 +70,138 @@
                 <input type="date" id="data" name="data" value="{{ filtro_data or '' }}">
             </div>
 
-            <button type="submit">Buscar Registros</button>
-        </form>
+            <button id="btn-buscar" type="button" onclick="fetchRegistros()">Buscar Registros</button>
+        </div>
 
         <h2>Resultados da Busca</h2>
         
-        {% if registros %}
-            <div class="export-button-container">
-                <button class="export-button" onclick="exportarExcel()">
-                    Exportar {{ registros|length }} Registro(s) para XLSX
-                </button>
-            </div>
+        <div class="export-button-container">
+            <button class="export-button" onclick="exportarExcel()">
+                Exportar <span id="registro-count">0</span> Registro(s) para XLSX
+            </button>
+        </div>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>Posto</th>
-                        <th>Computador da coleta?</th>
-                        <th>Data</th>
-                        <th>Início</th>
-                        <th>Término</th>
-                        <th>Procedimento</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for registro in registros %}
-                    <tr>
-                        <td>{{ registro.posto }}</td>
-                        <td>{{ registro.computador_coleta }}</td>
-                        <td>{{ registro.data }}</td>
-                        <td>{{ registro.hora_inicio }}</td>
-                        <td>{{ registro.hora_termino }}</td>
-                        <td class="procedimento-col">{{ registro.procedimento }}</td>
-                    </tr>
-                    {% endfor %}
+        <p class="loading" id="loading-message">Carregando dados...</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Posto</th>
+                    <th>Computador da coleta?</th>
+                    <th>Data</th>
+                    <th>Início</th>
+                    <th>Término</th>
+                    <th>Procedimento (Resumo)</th>
+                </tr>
+            </thead>
+            <tbody id="tabela-corpo">
                 </tbody>
-            </table>
-        {% else %}
-            <p style="text-align: center;">Nenhum registro encontrado com os filtros selecionados. Preencha o formulário e clique em Buscar.</p>
-        {% endif %}
+        </table>
+
+        <p id="no-records-message" style="text-align: center; display: none;">Nenhum registro encontrado com os filtros selecionados.</p>
+        
     </div>
 
     <script>
-        function exportarExcel() {
-            const posto = document.getElementById('posto').value;
-            const data = document.getElementById('data').value;
+        const POSTO_SELECT = document.getElementById('posto');
+        const DATA_INPUT = document.getElementById('data');
+        const TABELA_CORPO = document.getElementById('tabela-corpo');
+        const REGISTRO_COUNT = document.getElementById('registro-count');
+        const LOADING_MESSAGE = document.getElementById('loading-message');
+        const NO_RECORDS_MESSAGE = document.getElementById('no-records-message');
 
-            let exportUrl = "{{ url_for('exportar_registros') }}";
+        let intervalId = null;
+
+        /**
+         * Constrói a URL de consulta com base nos filtros atuais.
+         */
+        function buildQueryUrl() {
+            let url = '{{ url_for("registros_json") }}';
             let params = [];
 
-            if (posto) {
+            if (POSTO_SELECT.value !== 'Todos') {
+                params.push(`posto=${encodeURIComponent(POSTO_SELECT.value)}`);
+            }
+            if (DATA_INPUT.value) {
+                params.push(`data=${encodeURIComponent(DATA_INPUT.value)}`);
+            }
+
+            if (params.length > 0) {
+                url += '?' + params.join('&');
+            }
+            return url;
+        }
+
+        /**
+         * Busca os registros na API e atualiza a tabela.
+         */
+        async function fetchRegistros() {
+            LOADING_MESSAGE.style.display = 'block';
+            NO_RECORDS_MESSAGE.style.display = 'none';
+
+            const url = buildQueryUrl();
+            
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const registros = await response.json();
+                renderTable(registros);
+            } catch (error) {
+                console.error("Erro ao buscar registros:", error);
+                // Opcional: mostrar uma mensagem de erro na tela
+            } finally {
+                LOADING_MESSAGE.style.display = 'none';
+            }
+        }
+
+        /**
+         * Renderiza as linhas da tabela com base nos dados JSON.
+         */
+        function renderTable(registros) {
+            TABELA_CORPO.innerHTML = '';
+            REGISTRO_COUNT.textContent = registros.length;
+
+            if (registros.length === 0) {
+                NO_RECORDS_MESSAGE.style.display = 'block';
+                return;
+            }
+
+            registros.forEach(registro => {
+                const row = TABELA_CORPO.insertRow();
+                
+                // Adiciona o estilo de cor de fundo condicional
+                let coletaStyle = '';
+                if (registro.computador_coleta === 'Sim') {
+                    coletaStyle = 'style="background-color: #C6EFCE;"'; // Verde claro
+                } else if (registro.computador_coleta === 'Não') {
+                    coletaStyle = 'style="background-color: #FFC7CE;"'; // Vermelho claro
+                }
+                
+                row.innerHTML = `
+                    <td>${registro.posto}</td>
+                    <td ${coletaStyle}>${registro.computador_coleta}</td>
+                    <td>${registro.data}</td>
+                    <td>${registro.hora_inicio}</td>
+                    <td>${registro.hora_termino}</td>
+                    <td class="procedimento-col">${registro.procedimento_resumo}</td>
+                `;
+            });
+        }
+
+        /**
+         * Função para exportar para Excel. Usa os mesmos filtros, mas chama a rota /exportar.
+         */
+        function exportarExcel() {
+            let exportUrl = '{{ url_for("exportar_registros") }}';
+            
+            const posto = POSTO_SELECT.value;
+            const data = DATA_INPUT.value;
+            
+            let params = [];
+
+            if (posto && posto !== 'Todos') {
                 params.push(`posto=${encodeURIComponent(posto)}`);
             }
             if (data) {
@@ -125,6 +214,32 @@
 
             window.location.href = exportUrl;
         }
+
+        /**
+         * Inicializa a busca de dados e o polling.
+         */
+        function initPolling() {
+            // 1. Busca inicial ao carregar a página
+            fetchRegistros();
+            
+            // 2. Inicia o polling (atualização a cada 5 segundos)
+            if (intervalId) {
+                clearInterval(intervalId); // Limpa qualquer polling anterior
+            }
+            intervalId = setInterval(fetchRegistros, 5000); // Atualiza a cada 5 segundos
+
+            // 3. Ao mudar o filtro, buscar imediatamente
+            POSTO_SELECT.addEventListener('change', fetchRegistros);
+            DATA_INPUT.addEventListener('change', fetchRegistros);
+        }
+
+        // Inicia a aplicação na página de consulta
+        document.addEventListener('DOMContentLoaded', initPolling);
+        
+        // Expor a função globalmente para o botão (melhor do que no HTML)
+        window.fetchRegistros = fetchRegistros;
+        window.exportarExcel = exportarExcel;
+        
     </script>
 </body>
 </html>
