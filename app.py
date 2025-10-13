@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify
+from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify, flash
 from datetime import datetime, time
 from flask_sqlalchemy import SQLAlchemy
 import os
@@ -15,7 +15,11 @@ POSTOS = [
 
 app = Flask(__name__)
 
+# --- Configuração de Segurança e Mensagens Flash ---
+app.config['SECRET_KEY'] = 'uma_chave_secreta_muito_forte_e_dificil' # Adicionado para usar 'flash'
+
 # --- Configuração do Banco de Dados (Pronto para Render/PostgreSQL) ---
+# Usando .replace para compatibilidade com SQLAlchemy 2.0 e URLs do Heroku/Render
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///site.db').replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -25,8 +29,8 @@ db = SQLAlchemy(app)
 class Registro(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     posto = db.Column(db.String(50), nullable=False)
-    computador_coleta = db.Column(db.String(3), nullable=False) 
-    data = db.Column(db.String(10), nullable=False) 
+    computador_coleta = db.Column(db.String(3), nullable=False) # 'SIM' ou 'NÃO'
+    data = db.Column(db.String(10), nullable=False) # 'DD/MM/YYYY'
     hora_inicio = db.Column(db.String(5), nullable=False)
     hora_termino = db.Column(db.String(5), nullable=False)
     procedimento = db.Column(db.Text, nullable=False)
@@ -42,7 +46,7 @@ with app.app_context():
 # --- CONSTANTE para Resumo ---
 RESUMO_MAX_CARACTERES = 70 
 
-# Função auxiliar para aplicar filtros (ATUALIZADA)
+# Função auxiliar para aplicar filtros
 def aplicar_filtros(query, filtro_posto, filtro_data_html, filtro_coleta):
     if filtro_posto and filtro_posto != 'Todos':
         query = query.filter(Registro.posto == filtro_posto)
@@ -57,65 +61,71 @@ def aplicar_filtros(query, filtro_posto, filtro_data_html, filtro_coleta):
 
     # Lógica do NOVO FILTRO (Coleta de Imagem)
     if filtro_coleta and filtro_coleta != 'Todos':
-        # Valor no DB é armazenado em caixa alta ("SIM" ou "NÃO")
         coleta_db_value = filtro_coleta.upper() 
         query = query.filter(Registro.computador_coleta == coleta_db_value)
             
     return query.order_by(Registro.timestamp_registro.desc())
 
-# --- Rota 1: Registro de Novo Procedimento (Inalterada) ---
+# --- Rota 1: Registro de Novo Procedimento (Index) ---
 @app.route('/', methods=['GET', 'POST'])
 def formulario_registro():
     data_de_hoje = datetime.now().strftime('%d/%m/%Y')
     
     if request.method == 'POST':
-        posto = request.form.get('posto')
-        computador_coleta = request.form.get('computador_coleta')
-        hora_inicio = request.form.get('hora_inicio')
-        hora_termino = request.form.get('hora_termino')
-        procedimento = request.form.get('procedimento')
-        
-        novo_registro = Registro(
-            posto=posto,
-            computador_coleta=computador_coleta,
-            data=data_de_hoje,
-            hora_inicio=hora_inicio,
-            hora_termino=hora_termino,
-            procedimento=procedimento
-        )
-        db.session.add(novo_registro)
-        db.session.commit()
+        try:
+            posto = request.form.get('posto')
+            computador_coleta = request.form.get('computador_coleta')
+            hora_inicio = request.form.get('hora_inicio')
+            hora_termino = request.form.get('hora_termino')
+            procedimento = request.form.get('procedimento')
+            
+            novo_registro = Registro(
+                posto=posto,
+                computador_coleta=computador_coleta,
+                data=data_de_hoje,
+                hora_inicio=hora_inicio,
+                hora_termino=hora_termino,
+                procedimento=procedimento
+            )
+            db.session.add(novo_registro)
+            db.session.commit()
+            
+            flash('Procedimento registrado com sucesso!', 'success')
+            return redirect(url_for('formulario_registro'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao registrar procedimento: {e}', 'danger')
+            return redirect(url_for('formulario_registro'))
 
-        return redirect(url_for('formulario_registro'))
-
-    # Esta rota espera o template 'index.html'
     return render_template(
         'index.html', 
         postos=POSTOS, 
         data_de_hoje=data_de_hoje
     )
 
-# --- Rota 2: Consulta de Registros Antigos (ATUALIZADA) ---
+# --- Rota 2: Consulta de Registros Antigos ---
 @app.route('/consultar', methods=['GET'])
 def consultar_registro():
+    # Os filtros são lidos aqui, mas o processamento dos dados é feito na rota JSON
     filtro_posto = request.args.get('posto')
     filtro_data_html = request.args.get('data')
-    filtro_coleta = request.args.get('coleta') # Novo filtro adicionado
+    filtro_coleta = request.args.get('coleta')
 
     return render_template(
         'consultar.html', 
         postos=POSTOS, 
         filtro_posto=filtro_posto or 'Todos', 
         filtro_data=filtro_data_html,
-        filtro_coleta=filtro_coleta or 'Todos' # Passa o novo filtro
+        filtro_coleta=filtro_coleta or 'Todos'
     )
 
-# --- Rota: Retorna os dados em JSON para o JavaScript (ATUALIZADA) ---
+# --- Rota: Retorna os dados em JSON para o JavaScript ---
 @app.route('/registros_json', methods=['GET'])
 def registros_json():
     filtro_posto = request.args.get('posto')
     filtro_data_html = request.args.get('data')
-    filtro_coleta = request.args.get('coleta') # Novo filtro
+    filtro_coleta = request.args.get('coleta')
 
     query = Registro.query
     query = aplicar_filtros(query, filtro_posto, filtro_data_html, filtro_coleta)
@@ -143,19 +153,56 @@ def registros_json():
     return jsonify(registros_formatados)
 
 
-# --- Rota 3: Exportar para XLSX (FINAL E ESTÁVEL) ---
+# ==========================================================
+# --- NOVAS ROTAS DE EXCLUSÃO (Individual e em Massa) ---
+# ==========================================================
+
+# --- Rota 3: Apagar um Registro Individual (POST) ---
+@app.route('/apagar/<int:id>', methods=['POST'])
+def apagar_registro(id):
+    registro_a_apagar = Registro.query.get_or_404(id)
+    try:
+        db.session.delete(registro_a_apagar)
+        db.session.commit()
+        flash(f'Registro ID {id} de {registro_a_apagar.posto} apagado com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao apagar registro {id}: {e}', 'danger')
+        
+    # Redireciona para a página de consulta após a exclusão
+    return redirect(url_for('consultar_registro'))
+
+
+# --- Rota 4: Apagar TODOS os Registros (CRÍTICO - POST) ---
+@app.route('/apagar_todos', methods=['POST'])
+def apagar_todos_registros():
+    try:
+        # Comando do SQLAlchemy para apagar todos os registros da tabela Registro
+        # Retorna o número de linhas deletadas
+        num_registros_apagados = db.session.query(Registro).delete()
+        db.session.commit()
+        
+        flash(f'SUCESSO: {num_registros_apagados} registros foram APAGADOS permanentemente!', 'warning')
+        return redirect(url_for('consultar_registro'))
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro CRÍTICO ao apagar todos os registros: {e}', 'danger')
+        return redirect(url_for('consultar_registro'))
+
+
+# --- Rota 5: Exportar para XLSX (FINAL E ESTÁVEL) ---
 @app.route('/exportar', methods=['GET'])
 def exportar_registros():
     filtro_posto = request.args.get('posto')
     filtro_data_html = request.args.get('data')
-    filtro_coleta = request.args.get('coleta') # Novo filtro
+    filtro_coleta = request.args.get('coleta')
 
     query = Registro.query
     query = aplicar_filtros(query, filtro_posto, filtro_data_html, filtro_coleta)
     registros = query.all()
 
     if not registros:
-        # Redireciona de volta para a consulta se não houver dados, para evitar erro 500
+        flash('Não há registros para exportar com os filtros selecionados.', 'danger')
         return redirect(url_for('consultar_registro'))
 
     # 1. Preparar os dados para o DataFrame (Conversão de tipos para Formatação Excel)
@@ -270,13 +317,15 @@ def exportar_registros():
                 sheet.write(row_xlsx, col_posto_idx, row_data['Posto'], default_data_format)
                 
                 for col_idx, col_name in enumerate(df.columns):
-                     if col_idx not in [col_data_idx, col_inicio_idx, col_termino_idx, col_coleta_idx, col_proc_idx, col_posto_idx]:
+                    # Garante que as colunas já formatadas não sejam sobrescritas
+                    if col_idx not in [col_data_idx, col_inicio_idx, col_termino_idx, col_coleta_idx, col_proc_idx, col_posto_idx]:
                         sheet.write(row_xlsx, col_idx, row_data[col_name], default_data_format)
 
 
     except Exception as e:
         print(f"Erro CRÍTICO na exportação: {e}")
-        return "Erro interno ao gerar o arquivo Excel.", 500
+        flash("Erro interno ao gerar o arquivo Excel. Verifique o log.", 'danger')
+        return redirect(url_for('consultar_registro'))
 
     # 3. Salvar e Retornar
     output.seek(0)
