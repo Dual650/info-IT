@@ -1,10 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify
-from datetime import datetime
+from datetime import datetime, time # Importa 'time' para conversão de hora
 from flask_sqlalchemy import SQLAlchemy
 import os
 import io
 import pandas as pd
-# As bibliotecas openpyxl e seus estilos não são mais necessárias nesta versão simplificada de exportação
+# Não é mais necessário importar componentes do openpyxl
 import io
 
 # --- Opções de Postos de Trabalho ---
@@ -17,7 +17,6 @@ POSTOS = [
 app = Flask(__name__)
 
 # --- Configuração do Banco de Dados (Pronto para Render/PostgreSQL) ---
-# A variável de ambiente DATABASE_URL deve estar configurada no Render
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///site.db').replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -42,7 +41,7 @@ with app.app_context():
     db.create_all()
 
 # --- CONSTANTE para Resumo ---
-RESUMO_MAX_CARACTERES = 70 # Define o limite de caracteres para o resumo na tela
+RESUMO_MAX_CARACTERES = 70 
 
 # Função auxiliar para aplicar filtros
 def aplicar_filtros(query, filtro_posto, filtro_data_html):
@@ -135,7 +134,7 @@ def registros_json():
     return jsonify(registros_formatados)
 
 
-# --- Rota 3: Exportar para XLSX (Versão MÍNIMA usando xlsxwriter) ---
+# --- Rota 3: Exportar para XLSX (COMPLETA COM FORMATAÇÃO xlsxwriter) ---
 @app.route('/exportar', methods=['GET'])
 def exportar_registros():
     filtro_posto = request.args.get('posto')
@@ -146,34 +145,174 @@ def exportar_registros():
     registros = query.all()
 
     if not registros:
-        return redirect(url_for('consultar_registro', erro='Nenhum registro encontrado para exportar.'))
+        return redirect(url_for('consultar_registro'))
 
-    # 1. Preparar os dados para o DataFrame (TUDO MANTIDO COMO STRING)
+    # 1. Preparar os dados para o DataFrame (Conversão de tipos para Formatação Excel)
     dados = []
     for r in registros:
+        data_obj = r.data
+        inicio_obj = r.hora_inicio
+        termino_obj = r.hora_termino
+        
+        # Converte Data (DD/MM/YYYY string para objeto date)
+        try:
+            data_obj = datetime.strptime(r.data, '%d/%m/%Y').date()
+        except ValueError:
+            pass
+            
+        # Converte Hora (HH:MM string para objeto time)
+        try:
+            inicio_obj = datetime.strptime(r.hora_inicio, '%H:%M').time()
+        except ValueError:
+            pass 
+            
+        try:
+            termino_obj = datetime.strptime(r.hora_termino, '%H:%M').time()
+        except ValueError:
+            pass 
+
         dados.append({
             'Posto': r.posto,
             'Computador da coleta?': r.computador_coleta,  
-            'Data': r.data, 
-            'Início': r.hora_inicio, 
-            'Término': r.hora_termino, 
-            'Procedimento Realizado': r.procedimento 
+            'Data': data_obj, # Objeto date
+            'Início': inicio_obj, # Objeto time
+            'Término': termino_obj, # Objeto time
+            'Procedimento Realizado': r.procedimento # Texto Completo
         })
 
     df = pd.DataFrame(dados)
 
-    # 2. Configurar o Writer e o Workbook (MÍNIMO)
+    # 2. Configurar o Writer e o Workbook
     output = io.BytesIO()
     
     try:
         # Usa o Pandas com o engine 'xlsxwriter'
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, index=False, sheet_name='Registros Técnicos')
+            workbook = writer.book
+            sheet = writer.sheets['Registros Técnicos']
             
+            # --- DEFINIÇÃO DOS FORMATOS (xlsxwriter) ---
+            
+            # 1. Formato de Cabeçalho (Tam 14, Negrito, Centralizado, Bordas, Cinza Claro)
+            header_format = workbook.add_format({
+                'bold': True,
+                'font_size': 14,
+                'align': 'center',
+                'valign': 'vcenter',
+                'border': 1,
+                'bg_color': '#D3D3D3' # Cor Cinza
+            })
+            
+            # 2. Formato de Dados Padrão (Tam 12, Centralizado, Bordas)
+            default_data_format = workbook.add_format({
+                'font_size': 12,
+                'align': 'center',
+                'valign': 'vcenter',
+                'border': 1
+            })
+            
+            # 3. Formato de Data (DD/MM/YYYY)
+            date_format = workbook.add_format({
+                'font_size': 12,
+                'align': 'center',
+                'valign': 'vcenter',
+                'border': 1,
+                'num_format': 'dd/mm/yyyy'
+            })
+            
+            # 4. Formato de Hora (HH:MM - 24h)
+            time_format = workbook.add_format({
+                'font_size': 12,
+                'align': 'center',
+                'valign': 'vcenter',
+                'border': 1,
+                'num_format': 'hh:mm'
+            })
+            
+            # 5. Formato "Sim" (Verde de Fundo)
+            sim_format = workbook.add_format({
+                'font_size': 12,
+                'align': 'center',
+                'valign': 'vcenter',
+                'border': 1,
+                'bg_color': '#C6EFCE' # Verde Claro (C6EFCE)
+            })
+            
+            # 6. Formato "Não" (Vermelho de Fundo)
+            nao_format = workbook.add_format({
+                'font_size': 12,
+                'align': 'center',
+                'valign': 'vcenter',
+                'border': 1,
+                'bg_color': '#FFC7CE' # Vermelho Claro (FFC7CE)
+            })
+
+            # 7. Formato Procedimento (Quebra de Linha, Alinhado à esquerda)
+            proc_format = workbook.add_format({
+                'font_size': 12,
+                'align': 'left',
+                'valign': 'top',
+                'border': 1,
+                'text_wrap': True 
+            })
+            
+            # --- APLICAÇÃO DOS FORMATOS ---
+            
+            # Define largura das colunas e aplica formatação de cabeçalho
+            col_widths = {
+                'Posto': 15,
+                'Computador da coleta?': 18, 
+                'Data': 15,
+                'Início': 12,
+                'Término': 12,
+                'Procedimento Realizado': 60
+            }
+            
+            for col_num, col_name in enumerate(df.columns):
+                width = col_widths.get(col_name, 15)
+                # Aplica o formato de cabeçalho na linha 0 (cabeçalho)
+                sheet.write(0, col_num, col_name, header_format)
+                # Define a largura das colunas
+                sheet.set_column(col_num, col_num, width) 
+
+            # Iterar sobre os dados (começando na linha 1) e aplicar formatação de linha
+            col_data_idx = df.columns.get_loc('Data')
+            col_inicio_idx = df.columns.get_loc('Início')
+            col_termino_idx = df.columns.get_loc('Término')
+            col_coleta_idx = df.columns.get_loc('Computador da coleta?')
+            col_proc_idx = df.columns.get_loc('Procedimento Realizado')
+            col_posto_idx = df.columns.get_loc('Posto')
+            
+            for row_num, row_data in df.iterrows():
+                row_xlsx = row_num + 1 # Linha real no Excel (após o cabeçalho)
+                
+                # 1. Aplicação dos formatos de Data e Hora
+                sheet.write(row_xlsx, col_data_idx, row_data['Data'], date_format)
+                sheet.write(row_xlsx, col_inicio_idx, row_data['Início'], time_format)
+                sheet.write(row_xlsx, col_termino_idx, row_data['Término'], time_format)
+                
+                # 2. Aplicação do formato Condicional (Computador da coleta?)
+                coleta_value = row_data['Computador da coleta?']
+                coleta_format = sim_format if coleta_value == 'Sim' else nao_format
+                sheet.write(row_xlsx, col_coleta_idx, coleta_value, coleta_format)
+                
+                # 3. Aplicação do formato Procedimento (Quebra de Linha)
+                sheet.write(row_xlsx, col_proc_idx, row_data['Procedimento Realizado'], proc_format)
+                sheet.set_row(row_xlsx, 60) # Aumenta a altura da linha para acomodar a quebra de texto
+                
+                # 4. Aplicação do formato padrão para o Posto
+                sheet.write(row_xlsx, col_posto_idx, row_data['Posto'], default_data_format)
+                # Garantir que as outras colunas não formatadas sejam escritas com o formato padrão
+                
+                # Preenche células vazias com formato padrão (opcional, mas seguro)
+                for col_idx, col_name in enumerate(df.columns):
+                     if col_idx not in [col_data_idx, col_inicio_idx, col_termino_idx, col_coleta_idx, col_proc_idx, col_posto_idx]:
+                        sheet.write(row_xlsx, col_idx, row_data[col_name], default_data_format)
+
     except Exception as e:
-        # Em caso de erro, captura e registra a mensagem
         print(f"Erro CRÍTICO na exportação: {e}")
-        return "Erro interno ao gerar o arquivo Excel. Verifique os logs do servidor.", 500
+        return "Erro interno ao gerar o arquivo Excel.", 500
 
     # 3. Salvar e Retornar
     output.seek(0)
