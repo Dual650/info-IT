@@ -82,7 +82,6 @@ $(document).ready(function() {
 
     // ===============================================
     // Lógica do MODAL para visualização do procedimento
-    // (Esta lógica é a mesma que você já tinha)
     // ===============================================
     const modal = $('#procedimentoModal');
     const closeBtn = $('.close-button');
@@ -114,21 +113,38 @@ $(document).ready(function() {
     });
 
     // ===============================================
-    // Lógica para APAGAR TODOS os Registros (CRÍTICO)
-    // (Esta lógica é a mesma que você já tinha)
+    // Lógica para APAGAR TODOS os Registros (COM SENHA)
     // ===============================================
     $('#formApagarTudo').submit(function(e) {
         e.preventDefault(); // Impede o envio imediato
         
+        // 1. Confirmação inicial
         const confirmacao = confirm(
-            "🚨 ATENÇÃO: Você tem certeza que deseja APAGAR TODOS os registros do banco de dados?\n\n" +
-            "ESTA AÇÃO É IRREVERSÍVEL! TODOS OS DADOS SERÃO PERDIDOS."
+            "🚨 ATENÇÃO: Você está prestes a apagar TODOS os dados permanentemente.\n\n" +
+            "Clique em OK para continuar e digitar a senha."
         );
 
-        if (confirmacao) {
-            // Se o usuário confirmar, permite o envio do formulário
-            this.submit();
+        if (!confirmacao) {
+            return; // Sai se a primeira confirmação for cancelada
         }
+
+        // 2. Solicita a Senha
+        const senha = prompt("CONFIRMAÇÃO FINAL: Digite a senha mestra para APAGAR TODOS os registros:");
+
+        if (senha === null || senha === "") {
+            alert("Operação cancelada. Nenhuma senha foi fornecida.");
+            return;
+        }
+
+        // 3. Insere a senha no campo oculto e envia o formulário
+        $('#senhaConfirmacao').val(senha);
+
+        // Atualiza os campos de filtro ocultos antes de enviar
+        $('#postoFiltroHidden').val($('#posto').val());
+        $('#dataFiltroHidden').val($('#data').val());
+        $('#coletaFiltroHidden').val($('#coleta').val());
+
+        this.submit();
     });
 
 });
