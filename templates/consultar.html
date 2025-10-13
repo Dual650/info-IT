@@ -7,6 +7,8 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <script src="{{ url_for('static', filename='consultar.js') }}"></script>
 </head>
 <body>
     <div class="container">
@@ -114,7 +116,7 @@
     </div>
 
     <script>
-        // Função para carregar e renderizar os dados
+        // Função que precisa do acesso ao Jinja/url_for para gerar URLs
         function carregarRegistros() {
             const posto = $('#posto').val();
             const data = $('#data').val();
@@ -124,6 +126,7 @@
 
             $tbody.empty();
             $avisoVazio.hide();
+            $('#tabelaRegistros').show();
             
             // Reconstroi o URL de exportação com os filtros atuais
             const exportUrl = "{{ url_for('exportar_registros') }}";
@@ -132,15 +135,19 @@
             $.getJSON("{{ url_for('registros_json') }}", { posto: posto, data: data, coleta: coleta }, function(registros) {
                 if (registros.length === 0) {
                     $avisoVazio.show();
+                    $('#tabelaRegistros').hide();
                     return;
                 }
 
                 $.each(registros, function(i, registro) {
                     const coletaClass = registro.computador_coleta === 'SIM' ? 'coleta-negrito' : '';
                     
+                    // Cria o URL de exclusão individual usando Flask/Jinja
+                    const deleteUrl = "{{ url_for('apagar_registro', id=0) }}".replace('0', registro.id);
+                    
                     // Monta o formulário de exclusão individual
                     const deleteForm = `
-                        <form method="POST" action="{{ url_for('apagar_registro', id=99999) }}".replace('99999', registro.id)} onsubmit="return confirm('Tem certeza que deseja apagar o Registro ${registro.id}?');" style="display:inline;">
+                        <form method="POST" action="${deleteUrl}" onsubmit="return confirm('Tem certeza que deseja apagar o Registro ${registro.id}?');" style="display:inline;">
                             <button type="submit" class="btn-acao btn-danger-individual" title="Apagar Registro Individual">
                                 <i class="fas fa-times"></i>
                             </button>
@@ -166,66 +173,9 @@
             });
         }
 
+        // Chamada da função de carregamento ao carregar a página
         $(document).ready(function() {
-            // Carrega os registros ao abrir a página
             carregarRegistros();
-            
-            // Oculta a tabela se estiver vazia (para evitar mostrar a tabela vazia + aviso)
-            if ($('#tabelaRegistros tbody tr').length === 0) {
-                 $('#tabelaRegistros').hide();
-            }
-
-            // ===============================================
-            // Lógica do MODAL para visualização do procedimento
-            // ===============================================
-            const modal = $('#procedimentoModal');
-            const closeBtn = $('.close-button');
-            const modalTexto = $('#modalProcedimentoTexto');
-            const modalId = $('#modalRegistroId');
-
-            // 1. Abre o modal ao clicar em qualquer linha da tabela
-            $(document).on('click', '#tabelaRegistros tbody tr', function(e) {
-                // Previne abrir modal se o clique foi no botão de ação/exclusão
-                if ($(e.target).closest('form, button').length) {
-                    return; 
-                }
-                
-                // Pega os dados armazenados na linha (data-procedimento)
-                const procedimentoCompleto = $(this).data('procedimento');
-                const registroId = $(this).find('td:first').text(); 
-                
-                modalTexto.text(procedimentoCompleto);
-                modalId.text(registroId);
-                modal.css('display', 'block');
-            });
-
-            // 2. Fecha o modal
-            closeBtn.on('click', function() {
-                modal.css('display', 'none');
-            });
-            $(window).on('click', function(event) {
-                if ($(event.target).is(modal)) {
-                    modal.css('display', 'none');
-                }
-            });
-
-            // ===============================================
-            // Lógica para APAGAR TODOS os Registros (CRÍTICO)
-            // ===============================================
-            $('#formApagarTudo').submit(function(e) {
-                e.preventDefault(); // Impede o envio imediato
-                
-                const confirmacao = confirm(
-                    "🚨 ATENÇÃO: Você tem certeza que deseja APAGAR TODOS os registros do banco de dados?\n\n" +
-                    "ESTA AÇÃO É IRREVERSÍVEL! TODOS OS DADOS SERÃO PERDIDOS."
-                );
-
-                if (confirmacao) {
-                    // Se o usuário confirmar, permite o envio do formulário
-                    this.submit();
-                }
-            });
-
         });
     </script>
 </body>
