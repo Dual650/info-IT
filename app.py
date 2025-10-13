@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file
+from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 import os
@@ -27,7 +27,7 @@ db = SQLAlchemy(app)
 class Registro(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     posto = db.Column(db.String(50), nullable=False)
-    computador_coleta = db.Column(db.String(3), nullable=False) # NOVO CAMPO
+    computador_coleta = db.Column(db.String(3), nullable=False) 
     data = db.Column(db.String(10), nullable=False) 
     hora_inicio = db.Column(db.String(5), nullable=False)
     hora_termino = db.Column(db.String(5), nullable=False)
@@ -37,11 +37,14 @@ class Registro(db.Model):
     def __repr__(self):
         return f"Registro('{self.posto}', '{self.data}', '{self.hora_inicio}')"
 
-# Cria as tabelas do banco de dados (crucial para o primeiro deploy em um DB vazio)
+# Cria as tabelas do banco de dados
 with app.app_context():
     db.create_all()
 
-# Função auxiliar para aplicar filtros (usada na consulta e exportação)
+# --- CONSTANTE para Resumo ---
+RESUMO_MAX_CARACTERES = 70 # Define o limite de caracteres para o resumo na tela
+
+# Função auxiliar para aplicar filtros
 def aplicar_filtros(query, filtro_posto, filtro_data_html):
     if filtro_posto and filtro_posto != 'Todos':
         query = query.filter(Registro.posto == filtro_posto)
@@ -56,12 +59,9 @@ def aplicar_filtros(query, filtro_posto, filtro_data_html):
             
     return query.order_by(Registro.timestamp_registro.desc())
 
-# --- Rota 1: Registro de Novo Procedimento ---
+# --- Rota 1: Registro de Novo Procedimento (Sem Alterações) ---
 @app.route('/', methods=['GET', 'POST'])
 def formulario_registro():
-    """
-    Exibe o formulário de registro e salva novos dados.
-    """
     data_de_hoje = datetime.now().strftime('%d/%m/%Y')
     
     if request.method == 'POST':
@@ -90,29 +90,62 @@ def formulario_registro():
         data_de_hoje=data_de_hoje
     )
 
-# --- Rota 2: Consulta de Registros Antigos ---
+# --- Rota 2: Consulta de Registros Antigos (Apenas exibe a página HTML) ---
 @app.route('/consultar', methods=['GET'])
 def consultar_registro():
     """
-    Busca registros no banco de dados com base nos filtros (Posto e Data).
+    Simplesmente renderiza a página de consulta. O JS fará a primeira busca.
+    """
+    filtro_posto = request.args.get('posto')
+    filtro_data_html = request.args.get('data')
+
+    return render_template(
+        'consultar.html', 
+        postos=POSTOS, 
+        filtro_posto=filtro_posto or 'Todos', # Garante que o dropdown inicie com o valor correto
+        filtro_data=filtro_data_html
+    )
+
+# --- NOVA ROTA: Retorna os dados em JSON para o JavaScript ---
+@app.route('/registros_json', methods=['GET'])
+def registros_json():
+    """
+    Retorna os registros filtrados em formato JSON, com o procedimento resumido.
     """
     filtro_posto = request.args.get('posto')
     filtro_data_html = request.args.get('data')
     
     query = Registro.query
     query = aplicar_filtros(query, filtro_posto, filtro_data_html)
-        
     registros = query.all()
 
-    return render_template(
-        'consultar.html', 
-        postos=POSTOS, 
-        registros=registros,
-        filtro_posto=filtro_posto,
-        filtro_data=filtro_data_html
-    )
-    
-# --- Rota 3: Exportar para XLSX com Formatação Customizada ---
+    # Formata os dados para JSON, aplicando o resumo
+    registros_formatados = []
+    for r in registros:
+        
+        # Lógica de Resumo do Procedimento
+        procedimento_completo = r.procedimento
+        procedimento_resumo = procedimento_completo
+        if len(procedimento_completo) > RESUMO_MAX_CARACTERES:
+            procedimento_resumo = procedimento_completo[:RESUMO_MAX_CARACTERES] + '...'
+            
+        registros_formatados.append({
+            'posto': r.posto,
+            'computador_coleta': r.computador_coleta,
+            'data': r.data,
+            'hora_inicio': r.hora_inicio,
+            'hora_termino': r.hora_termino,
+            # Campo que será exibido na tela
+            'procedimento_resumo': procedimento_resumo, 
+            # Campo que será usado para exportação (não usado no front-end, mas importante saber que existe)
+            'procedimento_completo': procedimento_completo,
+            'id': r.id
+        })
+
+    return jsonify(registros_formatados)
+
+
+# --- Rota 3: Exportar para XLSX (Mantém o texto COMPLETO) ---
 @app.route('/exportar', methods=['GET'])
 def exportar_registros():
     filtro_posto = request.args.get('posto')
@@ -125,7 +158,7 @@ def exportar_registros():
     if not registros:
         return redirect(url_for('consultar_registro'))
 
-    # 1. Preparar os dados para o DataFrame
+    # 1. Preparar os dados para o DataFrame (USA PROCEDIMENTO COMPLETO)
     dados = []
     for r in registros:
         try:
@@ -139,11 +172,12 @@ def exportar_registros():
             'Data': data_obj,
             'Início': r.hora_inicio,
             'Término': r.hora_termino,
-            'Procedimento Realizado': r.procedimento
+            'Procedimento Realizado': r.procedimento # <--- TEXTO ORIGINAL AQUI
         })
 
     df = pd.DataFrame(dados)
 
+    # ... (Restante da lógica de formatação do Excel permanece o mesmo) ...
     # 2. Configurar o Writer e o Workbook
     output = io.BytesIO()
     writer = pd.ExcelWriter(output, engine='openpyxl')
@@ -152,20 +186,17 @@ def exportar_registros():
     sheet = writer.sheets['Registros Técnicos']
 
     # --- 3. Definir Estilos ---
-    
-    # Cores
     FILL_GRAY = PatternFill(start_color="D3D3D3", end_color="D3D3D3", fill_type="solid")
-    FILL_GREEN = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid") # Verde claro
-    FILL_RED = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")   # Vermelho claro
+    FILL_GREEN = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
+    FILL_RED = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
 
-    # Fontes e Alinhamento
     header_font = Font(size=16, bold=True, color="000000")
     header_alignment = Alignment(horizontal='center', vertical='center') 
     
     data_font = Font(size=12, color="000000") 
-    data_font_bold = Font(size=12, bold=True, color="000000") # Negrito para a nova coluna
+    data_font_bold = Font(size=12, bold=True, color="000000")
     data_alignment = Alignment(horizontal='center', vertical='top')
-    procedimento_alignment = Alignment(horizontal='left', vertical='top', wrapText=True) # Quebra de linha aqui
+    procedimento_alignment = Alignment(horizontal='left', vertical='top', wrapText=True)
 
     # --- 4. Aplicar Estilos de Cabeçalho e Largura de Coluna ---
     
@@ -181,10 +212,8 @@ def exportar_registros():
     for i, col_name in enumerate(df.columns):
         col_letter = sheet.cell(row=1, column=i+1).column_letter
         
-        # A. Largura
         sheet.column_dimensions[col_letter].width = col_config.get(col_name, 15)
         
-        # B. Estilo de Cabeçalho
         header_cell = sheet.cell(row=1, column=i+1)
         header_cell.font = header_font
         header_cell.fill = FILL_GRAY
@@ -197,36 +226,31 @@ def exportar_registros():
 
     for row_idx, row in enumerate(sheet.iter_rows(min_row=2, max_col=len(df.columns))):
         
-        valor_coleta = row[1].value # Coluna 'Computador da coleta?'
+        valor_coleta = row[1].value 
         
-        # Define a altura da linha para o padrão (será sobrescrita se necessário)
         sheet.row_dimensions[row_idx + 2].height = DEFAULT_ROW_HEIGHT 
 
         for col_idx, cell in enumerate(row):
             col_name = df.columns[col_idx]
             
-            # A. Formatação base (Tamanho 12 e Centralizado)
             cell.alignment = data_alignment 
             cell.font = data_font 
             
-            # B. Formatação Condicional e Estilo da Coluna 'Computador da coleta?'
             if col_name == 'Computador da coleta?':
-                cell.font = data_font_bold # Negrito
+                cell.font = data_font_bold
                 if valor_coleta == 'Sim':
                     cell.fill = FILL_GREEN
                 elif valor_coleta == 'Não':
                     cell.fill = FILL_RED
             
-            # C. Formatos Específicos (Data e Hora)
             elif col_name == 'Data':
                 cell.number_format = 'DD/MM/YYYY' 
             elif col_name in ['Início', 'Término']:
                 cell.number_format = 'HH:MM'
             
-            # D. ESTILO ESPECÍFICO PARA PROCEDIMENTO REALIZADO
             elif col_name == 'Procedimento Realizado':
-                cell.alignment = procedimento_alignment # Aplica wrapText=True
-                sheet.row_dimensions[row_idx + 2].height = 40 # Aumenta a altura
+                cell.alignment = procedimento_alignment 
+                sheet.row_dimensions[row_idx + 2].height = 40 
 
 
     # 6. Salvar e Retornar
