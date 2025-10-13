@@ -17,32 +17,38 @@
         #btn-buscar { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
         #btn-buscar:hover { background-color: #1e7e34; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 5px; /* Reduz a margem para aproximar dos ícones */ font-size: 0.9em; }
+        /* Ajuste de margem para aproximar da área de ações */
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 5px; /* Valor ajustado */
+            font-size: 0.9em; 
+        }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
         th { background-color: #f2f2f2; color: #333; }
         .procedimento-col { max-width: 300px; }
         .nav-link { display: block; text-align: center; margin-bottom: 20px; }
         
-        /* NOVO ESTILO: Contêiner para os ícones */
+        /* Contêiner para os ícones - Margem ajustada */
         .table-actions {
             display: flex;
-            justify-content: flex-end; /* Alinha os botões à direita */
+            justify-content: flex-end; 
             align-items: center;
             gap: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 5px; /* Valor ajustado */
         }
 
-        /* ESTILO UNIFICADO para os ÍCONES */
+        /* Estilo para os ÍCONES */
         .action-icon {
             cursor: pointer;
             padding: 8px 10px;
             border-radius: 4px;
-            font-size: 1.2em; /* Tamanho do ícone */
+            font-size: 1.2em; 
             color: white;
             transition: background-color 0.2s;
-            line-height: 1; /* Centraliza verticalmente o ícone */
+            line-height: 1; 
             border: none;
-            width: 38px; /* Largura e altura fixas */
+            width: 38px; 
             height: 38px;
             display: flex;
             align-items: center;
@@ -53,14 +59,12 @@
             opacity: 0.8;
         }
 
-        /* Estilo específico para Exportar (Excel) */
         .export-excel {
-            background-color: #17a2b8; /* Cor original do botão Exportar */
+            background-color: #17a2b8;
         }
 
-        /* Estilo específico para Imprimir */
         .print-table {
-            background-color: #007bff; /* Azul padrão */
+            background-color: #007bff;
         }
 
         .status-message { 
@@ -68,10 +72,10 @@
             color: #6c757d; 
             margin-top: 20px; 
             font-style: italic;
-            min-height: 20px;
+            min-height: 20px; /* Mantém o espaço reservado */
         }
 
-        /* Regras de impressão: Oculta elementos que não devem ser impressos */
+        /* Regras de impressão */
         @media print {
             .container { box-shadow: none; }
             .nav-link, .filter-form, .table-actions, .export-button-container {
