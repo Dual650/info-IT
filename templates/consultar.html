@@ -5,69 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consulta de Registros Técnicos</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        /* Estilos específicos desta página para o layout */
-        .container {
-            max-width: 95%;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #fff;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .header-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center; /* ALINHA ITENS AO CENTRO VERTICALMENTE */
-            margin-bottom: 20px;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-        }
-        .filtro-container {
-            display: flex;
-            flex-wrap: wrap; 
-            gap: 15px;
-            align-items: flex-end;
-            margin-bottom: 20px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-        }
-        .filtro-item {
-            display: flex;
-            flex-direction: column;
-        }
-        .btn-acao {
-            background: none;
-            border: 1px solid #ccc;
-            padding: 5px 8px; 
-            cursor: pointer;
-            border-radius: 4px;
-            transition: background-color 0.3s;
-            color: #333;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            /* REMOVIDO height: 35px; - O alinhamento será feito pelo align-items do header-section */
-        }
-        .btn-acao:hover {
-            background-color: #e9e9e9;
-        }
-        /* Ajuste do tamanho dos ícones */
-        .btn-acao i {
-            font-size: 1.0em; 
-        }
-        /* Estilos de impressão */
-        @media print {
-            .filtro-container, .header-section, .btn-primary, .icones-consulta {
-                display: none; 
-            }
-        }
-    </style>
-</head>
+    </head>
 <body>
     <div class="container">
         
@@ -109,7 +50,7 @@
                 <input type="date" name="data" id="data" class="form-control" value="{{ filtro_data or '' }}">
             </div>
             
-            <div class="filtro-item" style="flex-direction: row; gap: 10px;">
+            <div class="filtro-item botoes-filtro">
                 <button type="submit" class="btn-primary">Filtrar</button>
             </div>
         </form>
@@ -133,6 +74,29 @@
 
     </div>
 
+    <div class="modal fade" id="procedimentoModal" tabindex="-1" aria-labelledby="procedimentoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="procedimentoModalLabel">Detalhes do Registro</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Posto:</strong> <span id="modalPosto"></span></p>
+                    <p><strong>Data/Hora:</strong> <span id="modalDataHora"></span></p>
+                    <hr>
+                    <h6>Procedimento Completo:</h6>
+                    <div id="modalProcedimento" class="modal-procedimento-content">
+                        </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
         $(document).ready(function() {
             // Função para carregar os dados via AJAX
@@ -152,13 +116,15 @@
                     }
 
                     registros.forEach(function(r) {
-                        // Aplica a classe de negrito na coluna Coleta de Imagem
-                        const coleta_class = 'coleta-negrito'; 
                         
                         const row = `
-                            <tr>
+                            <tr data-registro-id="${r.id}" 
+                                data-posto="${r.posto}"
+                                data-data="${r.data}"
+                                data-hora-inicio="${r.hora_inicio}"
+                                data-procedimento-completo="${encodeURIComponent(r.procedimento_completo)}">
                                 <td>${r.posto}</td>
-                                <td class="${coleta_class}">${r.computador_coleta.toUpperCase()}</td>
+                                <td class="coleta-negrito">${r.computador_coleta.toUpperCase()}</td>
                                 <td>${r.data}</td>
                                 <td>${r.hora_inicio}</td>
                                 <td>${r.hora_termino}</td>
@@ -172,6 +138,24 @@
                     $('#tabelaRegistros tbody').empty().append(`<tr><td colspan="6">Erro ao carregar dados: ${textStatus}</td></tr>`);
                 });
             }
+            
+            // --- Handler para Clique Duplo ---
+            $('#tabelaRegistros tbody').on('dblclick', 'tr', function() {
+                const posto = $(this).data('posto');
+                const data = $(this).data('data');
+                const horaInicio = $(this).data('hora-inicio');
+                // Decodifica o procedimento completo
+                const procedimentoCompleto = decodeURIComponent($(this).data('procedimento-completo'));
+
+                // 1. Preenche o Modal
+                $('#modalPosto').text(posto);
+                $('#modalDataHora').text(`${data} às ${horaInicio}`);
+                $('#modalProcedimento').text(procedimentoCompleto);
+
+                // 2. Abre o Modal (usando a API do Bootstrap 5)
+                const modal = new bootstrap.Modal(document.getElementById('procedimentoModal'));
+                modal.show();
+            });
 
             // Ativa o botão de Exportar
             $('#btnExportar').click(function(e) {
