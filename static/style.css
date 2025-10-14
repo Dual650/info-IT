@@ -336,3 +336,68 @@ textarea {
     font-size: 1.0em;
     line-height: 1.4;
 }
+
+/* ========================================= */
+/* ESTILOS DE IMPRESSÃO (MEDIA QUERY) */
+/* ========================================= */
+@media print {
+    /* 1. Ocultar elementos desnecessários na impressão */
+    body > *:not(.container) {
+        display: none !important; /* Esconde tudo fora do container principal */
+    }
+
+    .container {
+        width: 100%; /* Ocupa toda a largura da página impressa */
+        margin: 0;
+        padding: 0;
+        box-shadow: none; /* Remove a sombra do container */
+    }
+    
+    /* Ocultar elementos de navegação e controle */
+    .header-acoes, /* Botão de voltar, Exportar, Apagar Tudo, Imprimir */
+    .flashes,      /* Mensagens de erro/sucesso */
+    .filtro-container, /* O formulário de filtro */
+    #avisoVazio,   /* Aviso de tabela vazia */
+    .modal,        /* Oculta o modal, caso esteja aberto */
+    #tabelaRegistros td:last-child, /* Oculta a coluna de Ações (Excluir Individual) */
+    #tabelaRegistros th:last-child {
+        display: none !important;
+    }
+
+    /* 2. Mostrar apenas a tabela e o título */
+    .header-section {
+        border-bottom: 1px solid #333; /* Adiciona uma linha visível sob o título */
+        display: block; /* Garante que o título do documento seja visível */
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .header-titulo {
+        text-align: center;
+    }
+
+    /* 3. Estilos da Tabela para Impressão */
+    #tabelaRegistros {
+        box-shadow: none;
+        font-size: 10pt;
+        min-width: unset; 
+    }
+    #tabelaRegistros td,
+    #tabelaRegistros th {
+        border: 1px solid #666; /* Torna as bordas mais escuras */
+        padding: 5px;
+    }
+    
+    /* Faz o procedimento completo caber na impressão, desativando o 'white-space: nowrap;'*/
+    #tabelaRegistros .procedimento-resumo {
+        white-space: normal;
+        overflow: visible;
+        max-width: none;
+        text-align: left;
+    }
+    
+    /* Faz a tabela caber sem a coluna de ações */
+    .procedimento-header {
+        width: 45%; 
+    }
+}
