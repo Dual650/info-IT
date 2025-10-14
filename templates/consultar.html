@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consulta de Registros</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -23,70 +22,54 @@
 
         <div class="header-section">
             <div class="header-titulo">
-                <h2>Consulta de Registros Técnicos</h2>
+                <h2>Consulta e Exportação de Registros</h2>
             </div>
             <div class="header-acoes">
-                <a href="{{ url_for('formulario_registro') }}" class="btn-primary btn-voltar" title="Ir para a página de registro">
-                    <i class="fas fa-arrow-left"></i> Registrar Procedimento
+                <a href="{{ url_for('formulario_registro') }}" class="btn-primary btn-consulta" title="Voltar para a página de registro">
+                    <i class="fas fa-arrow-left"></i> Novo Registro
                 </a>
-                
-                <div class="icones-consulta">
-                    
-                    <a id="btnExportar" href="#" title="Exportar para Excel" class="btn-acao">
-                        <i class="fas fa-file-excel" style="color: green;"></i>
-                    </a>
-                    
-                    <a href="#" onclick="window.print()" title="Imprimir Consulta" class="btn-acao">
-                        <i class="fas fa-print"></i>
-                    </a>
-                    
-                    <form id="formApagarTudo" method="POST" action="{{ url_for('apagar_todos_registros') }}" style="display: inline-block;">
-                        <input type="hidden" name="senha_confirmacao" id="senhaConfirmacao" value="">
-                        <input type="hidden" name="posto_filtro_hidden" id="postoFiltroHidden" value="{{ filtro_posto }}">
-                        <input type="hidden" name="data_filtro_hidden" id="dataFiltroHidden" value="{{ filtro_data }}">
-                        <input type="hidden" name="coleta_filtro_hidden" id="coletaFiltroHidden" value="{{ filtro_coleta }}">
-
-                        <button type="submit" id="btnApagarTudo" title="Apagar TODOS os Registros (Requer Senha)" class="btn-acao btn-danger">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </form>
-                    
-                </div>
+                <button class="btn-acao" onclick="window.print()" title="Imprimir a tabela">
+                    <i class="fas fa-print"></i> Imprimir
+                </button>
+                <a id="btnExportar" href="#" class="btn-acao" title="Exportar dados filtrados para Excel">
+                    <i class="fas fa-file-excel"></i> Exportar (.xlsx)
+                </a>
+                <button type="button" class="btn-acao btn-danger" onclick="document.getElementById('modalApagarTudo').style.display='block'" title="Apagar TODOS os registros (Atenção!)">
+                    <i class="fas fa-trash-alt"></i> Apagar Tudo
+                </button>
             </div>
         </div>
 
-        <form id="filtroForm" method="GET" class="filtro-container">
-            <div class="filtro-item">
-                <label for="posto">Filtrar por Posto:</label>
-                <select id="posto" name="posto" class="form-control">
-                    <option value="Todos">Todos os Postos</option>
-                    {% for posto in postos %}
-                    <option value="{{ posto }}" {% if posto == filtro_posto %}selected{% endif %}>{{ posto }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <div class="filtro-item">
-                <label for="coleta">Computador Coleta?:</label>
-                <select id="coleta" name="coleta" class="form-control">
-                    <option value="Todos">Todos</option>
-                    <option value="Sim" {% if filtro_coleta.lower() == 'sim' %}selected{% endif %}>Sim</option>
-                    <option value="Não" {% if filtro_coleta.lower() == 'não' %}selected{% endif %}>Não</option>
-                </select>
-            </div>
-            
-            <div class="filtro-item">
-                <label for="data">Filtrar por Data:</label>
-                <input type="date" id="data" name="data" value="{{ filtro_data }}" class="form-control">
-            </div>
+        <form id="formFiltro" method="GET" action="{{ url_for('consultar_registro') }}">
+            <div class="filtro-container">
+                <div class="filtro-item">
+                    <label for="posto">Posto de Trabalho:</label>
+                    <select id="posto" name="posto" class="form-control">
+                        <option value="Todos" {% if filtro_posto == 'Todos' %}selected{% endif %}>Todos os Postos</option>
+                        {% for posto in postos %}
+                        <option value="{{ posto }}" {% if filtro_posto == posto %}selected{% endif %}>{{ posto }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filtro-item">
+                    <label for="data">Data Específica:</label>
+                    <input type="date" id="data" name="data" class="form-control" value="{{ filtro_data }}">
+                </div>
 
-            <div class="botoes-filtro">
-                <button type="button" id="btnFiltrar" class="btn-primary">
-                    <i class="fas fa-filter"></i> Filtrar
-                </button>
-                <a href="{{ url_for('consultar_registro') }}" class="btn-primary" style="background-color: #6c757d;">
-                    <i class="fas fa-redo"></i> Limpar Filtros
-                </a>
+                <div class="filtro-item">
+                    <label for="coleta">Computador de Coleta?</label>
+                    <select id="coleta" name="coleta" class="form-control">
+                        <option value="Todos" {% if filtro_coleta == 'Todos' %}selected{% endif %}>Todos</option>
+                        <option value="SIM" {% if filtro_coleta == 'SIM' %}selected{% endif %}>SIM</option>
+                        <option value="NÃO" {% if filtro_coleta == 'NÃO' %}selected{% endif %}>NÃO</option>
+                    </select>
+                </div>
+
+                <div class="botoes-filtro">
+                    <button type="submit" class="btn-primary"><i class="fas fa-filter"></i> Aplicar Filtros</button>
+                    <button type="button" class="btn-acao" onclick="window.location.href='{{ url_for('consultar_registro') }}'"><i class="fas fa-sync"></i> Limpar Filtros</button>
+                </div>
             </div>
         </form>
 
@@ -96,7 +79,8 @@
                     <tr>
                         <th>ID</th>
                         <th>Posto</th>
-                        <th>Nº Mesa</th> <th>Retaguarda</th> <th>Coleta?</th>
+                        <th>Mesa</th>
+                        <th>Retaguarda</th> <th>Coleta?</th>
                         <th>Data</th>
                         <th>Início</th>
                         <th>Término</th>
@@ -104,30 +88,55 @@
                         <th>Ações</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="corpoTabela">
                     </tbody>
             </table>
+            
+            <div id="avisoVazio" class="aviso-vazio" style="display: none;">
+                Não há registros encontrados para os filtros aplicados.
+            </div>
         </div>
-        <p id="avisoVazio" class="aviso-vazio" style="display:none;">Nenhum registro encontrado para os filtros selecionados.</p>
-        
+
     </div>
 
-    <div id="procedimentoModal" class="modal">
+    <div id="modalProcedimento" class="modal">
         <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h3>Procedimento Completo do Registro <span id="modalRegistroId"></span></h3>
-            <div id="modalProcedimentoTexto" class="modal-procedimento-content"></div>
+            <span class="close-button" onclick="document.getElementById('modalProcedimento').style.display='none'">&times;</span>
+            <h3>Procedimento Completo (ID: <span id="modalId"></span>)</h3>
+            <p>Posto: <strong id="modalPosto"></strong></p>
+            <div id="modalProcedimentoContent" class="modal-procedimento-content"></div>
+            
+            <form id="formApagarIndividual" method="POST" action="">
+                <input type="hidden" name="_method" value="DELETE">
+                <button type="submit" class="btn-primary btn-danger-individual" style="margin-top: 15px;">
+                    <i class="fas fa-trash"></i> Apagar Este Registro
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="modalApagarTudo" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="document.getElementById('modalApagarTudo').style.display='none'">&times;</span>
+            <h3>Atenção: Exclusão Permanente!</h3>
+            <p>Tem certeza que deseja apagar **TODOS** os registros do banco de dados?</p>
+            <p style="color: red; font-weight: bold;">Essa ação é IRREVERSÍVEL.</p>
+
+            <form method="POST" action="{{ url_for('apagar_todos_registros') }}" style="margin-top: 20px;">
+                <label for="senha_confirmacao">Para confirmar, digite a senha mestra:</label>
+                <input type="password" id="senha_confirmacao" name="senha_confirmacao" class="form-control" required style="margin-bottom: 10px;">
+                
+                <input type="hidden" name="posto_filtro_hidden" value="{{ filtro_posto }}">
+                <input type="hidden" name="data_filtro_hidden" value="{{ filtro_data }}">
+                <input type="hidden" name="coleta_filtro_hidden" value="{{ filtro_coleta }}">
+
+                <button type="submit" class="btn-primary btn-danger">
+                    <i class="fas fa-exclamation-triangle"></i> Sim, Apagar TUDO Agora
+                </button>
+            </form>
         </div>
     </div>
 
-    <script>
-        // VARS GLOBAIS: Passando URLs do Flask para o JavaScript externo
-        const URLS = {
-            registrosJson: "{{ url_for('registros_json') }}",
-            apagarRegistro: "{{ url_for('apagar_registro', id=0) }}".replace('0', ''), 
-            exportarRegistros: "{{ url_for('exportar_registros') }}"
-        };
-    </script>
     <script src="{{ url_for('static', filename='consultar.js') }}"></script>
 </body>
 </html>
