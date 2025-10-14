@@ -1,10 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify, flash
-from datetime import datetime, time
+from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 import os
 import io
 import pandas as pd
-import io
 
 # --- Opções de Postos de Trabalho ---
 POSTOS = [
@@ -259,9 +258,6 @@ def exportar_registros():
         else:
             retaguarda_export = "NÃO"
         
-        # O campo 'Retaguarda?' agora será a informação formatada
-        # O campo 'Destino Retaguarda' será removido, pois a informação estará na coluna 'Retaguarda?'
-
         data_obj = r.data
         inicio_obj = r.hora_inicio
         termino_obj = r.hora_termino
@@ -297,13 +293,12 @@ def exportar_registros():
     output = io.BytesIO()
     
     try:
-        # A lógica de formatação do Excel precisará ser revisada para incluir as 3 novas colunas
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, index=False, sheet_name='Registros Técnicos')
             workbook = writer.book
             sheet = writer.sheets['Registros Técnicos']
             
-            # Formatos (simplificado aqui, mas manteria os originais)
+            # Formatos 
             header_format = workbook.add_format({'bold': True, 'font_size': 14, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'bg_color': '#D3D3D3'})
             default_data_format = workbook.add_format({'font_size': 12, 'align': 'center', 'valign': 'vcenter', 'border': 1})
             date_format = workbook.add_format({'font_size': 12, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'num_format': 'dd/mm/yyyy'})
@@ -312,9 +307,9 @@ def exportar_registros():
             nao_format = workbook.add_format({'font_size': 12, 'bold': True, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'bg_color': '#FFC7CE'})
             proc_format = workbook.add_format({'font_size': 12, 'align': 'left', 'valign': 'top', 'border': 1, 'text_wrap': True, 'num_format': '@'})
 
-            # --- APLICAÇÃO DOS FORMATOS (Atualizado para 2 NOVAS COLUNAS + 1 COMBINADA) ---
+            # --- APLICAÇÃO DOS FORMATOS ---
             col_widths = {
-                'Posto': 15, 'Nº da Mesa': 10, 'Retaguarda': 25, # Aumenta a largura da nova coluna
+                'Posto': 15, 'Nº da Mesa': 10, 'Retaguarda': 25, 
                 'Coleta de imagem?': 18, 'Data': 15,
                 'Horário de Início': 15, 'Horário de Término': 15, 'Procedimento Realizado': 60
             }
@@ -343,7 +338,6 @@ def exportar_registros():
                 
                 # Formato para Retaguarda
                 retaguarda_value = row_data['Retaguarda']
-                # Se contém "Retaguarda", é SIM (verde), senão é NÃO (vermelho)
                 retaguarda_format = sim_format if 'Retaguarda' in retaguarda_value else nao_format
                 sheet.write(row_xlsx, cols_to_format['Retaguarda'], retaguarda_value, retaguarda_format)
 
