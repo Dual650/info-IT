@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const registroId = editIdHidden.value;
         const novoProcedimento = editProcedimento.value;
         
-        // ATENÇÃO: A URL DEVE SER IMPLEMENTADA NO FLASK
+        // Envia o POST para a rota do Flask
         fetch(`/editar_procedimento/${registroId}`, {
             method: 'POST', 
             headers: {
