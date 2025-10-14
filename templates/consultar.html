@@ -41,9 +41,7 @@
                     </a>
                     
                     <form id="formApagarTudo" method="POST" action="{{ url_for('apagar_todos_registros') }}" style="display: inline-block;">
-                        
                         <input type="hidden" name="senha_confirmacao" id="senhaConfirmacao" value="">
-                        
                         <input type="hidden" name="posto_filtro_hidden" id="postoFiltroHidden" value="{{ filtro_posto }}">
                         <input type="hidden" name="data_filtro_hidden" id="dataFiltroHidden" value="{{ filtro_data }}">
                         <input type="hidden" name="coleta_filtro_hidden" id="coletaFiltroHidden" value="{{ filtro_coleta }}">
@@ -98,7 +96,7 @@
                     <tr>
                         <th>ID</th>
                         <th>Posto</th>
-                        <th>Coleta?</th>
+                        <th>Nº Mesa</th> <th>Retaguarda</th> <th>Coleta?</th>
                         <th>Data</th>
                         <th>Início</th>
                         <th>Término</th>
