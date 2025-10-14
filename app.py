@@ -169,16 +169,17 @@ def registros_json():
         if len(procedimento_completo) > RESUMO_MAX_CARACTERES:
             procedimento_resumo = procedimento_completo[:RESUMO_MAX_CARACTERES] + '...'
             
-        # Adiciona os novos campos para o JSON
-        retaguarda_display = f"{r.retaguarda_sim_nao}"
-        if r.retaguarda_destino:
-            retaguarda_display += f" ({r.retaguarda_destino})"
+        # FORMATO DE EXIBIÇÃO PARA CONSULTA: "Retaguarda Poupatempo" ou "NÃO"
+        if r.retaguarda_sim_nao == 'SIM' and r.retaguarda_destino:
+            retaguarda_display = f"Retaguarda {r.retaguarda_destino}"
+        else:
+            retaguarda_display = "NÃO" # Se não é SIM, exibe NÃO
             
         registros_formatados.append({
             'posto': r.posto,
             'computador_coleta': r.computador_coleta,
-            'numero_mesa': r.numero_mesa, # NOVO
-            'retaguarda_display': retaguarda_display, # NOVO COMBINADO
+            'numero_mesa': r.numero_mesa,
+            'retaguarda_display': retaguarda_display, # AGORA COM O NOVO FORMATO
             'data': r.data,
             'hora_inicio': r.hora_inicio,
             'hora_termino': r.hora_termino,
@@ -252,9 +253,15 @@ def exportar_registros():
     dados = []
     for r in registros:
         
-        # Define o destino da retaguarda, se houver
-        destino = r.retaguarda_destino if r.retaguarda_destino else 'N/A'
+        # Lógica de formatação para a exportação (Novo requisito)
+        if r.retaguarda_sim_nao == 'SIM' and r.retaguarda_destino:
+            retaguarda_export = f"Retaguarda {r.retaguarda_destino}"
+        else:
+            retaguarda_export = "NÃO"
         
+        # O campo 'Retaguarda?' agora será a informação formatada
+        # O campo 'Destino Retaguarda' será removido, pois a informação estará na coluna 'Retaguarda?'
+
         data_obj = r.data
         inicio_obj = r.hora_inicio
         termino_obj = r.hora_termino
@@ -276,9 +283,8 @@ def exportar_registros():
 
         dados.append({
             'Posto': r.posto,
-            'Nº da Mesa': r.numero_mesa, # NOVO CAMPO
-            'Retaguarda?': r.retaguarda_sim_nao, # NOVO CAMPO
-            'Destino Retaguarda': destino, # NOVO CAMPO
+            'Nº da Mesa': r.numero_mesa,
+            'Retaguarda': retaguarda_export, # Coluna única e formatada
             'Coleta de imagem?': r.computador_coleta.upper(),  
             'Data': data_obj,
             'Horário de Início': inicio_obj, 
@@ -306,9 +312,9 @@ def exportar_registros():
             nao_format = workbook.add_format({'font_size': 12, 'bold': True, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'bg_color': '#FFC7CE'})
             proc_format = workbook.add_format({'font_size': 12, 'align': 'left', 'valign': 'top', 'border': 1, 'text_wrap': True, 'num_format': '@'})
 
-            # --- APLICAÇÃO DOS FORMATOS (Atualizado para 3 NOVAS COLUNAS) ---
+            # --- APLICAÇÃO DOS FORMATOS (Atualizado para 2 NOVAS COLUNAS + 1 COMBINADA) ---
             col_widths = {
-                'Posto': 15, 'Nº da Mesa': 10, 'Retaguarda?': 12, 'Destino Retaguarda': 18, 
+                'Posto': 15, 'Nº da Mesa': 10, 'Retaguarda': 25, # Aumenta a largura da nova coluna
                 'Coleta de imagem?': 18, 'Data': 15,
                 'Horário de Início': 15, 'Horário de Término': 15, 'Procedimento Realizado': 60
             }
@@ -330,18 +336,20 @@ def exportar_registros():
                 sheet.write(row_xlsx, cols_to_format['Horário de Término'], row_data['Horário de Término'], time_format)
                 sheet.write(row_xlsx, cols_to_format['Procedimento Realizado'], row_data['Procedimento Realizado'], proc_format)
                 
+                # Formato para Coleta?
                 coleta_value = row_data['Coleta de imagem?']
                 coleta_format = sim_format if coleta_value == 'SIM' else nao_format
                 sheet.write(row_xlsx, cols_to_format['Coleta de imagem?'], coleta_value, coleta_format)
                 
-                # Formato para Retaguarda?
-                retaguarda_value = row_data['Retaguarda?']
-                retaguarda_format = sim_format if retaguarda_value == 'SIM' else nao_format
-                sheet.write(row_xlsx, cols_to_format['Retaguarda?'], retaguarda_value, retaguarda_format)
+                # Formato para Retaguarda
+                retaguarda_value = row_data['Retaguarda']
+                # Se contém "Retaguarda", é SIM (verde), senão é NÃO (vermelho)
+                retaguarda_format = sim_format if 'Retaguarda' in retaguarda_value else nao_format
+                sheet.write(row_xlsx, cols_to_format['Retaguarda'], retaguarda_value, retaguarda_format)
 
                 # Formato padrão para as demais colunas
                 for col_idx, col_name in enumerate(df.columns):
-                    if col_name not in ['Data', 'Horário de Início', 'Horário de Término', 'Procedimento Realizado', 'Coleta de imagem?', 'Retaguarda?']:
+                    if col_name not in ['Data', 'Horário de Início', 'Horário de Término', 'Procedimento Realizado', 'Coleta de imagem?', 'Retaguarda']:
                         sheet.write(row_xlsx, col_idx, row_data[col_name], default_data_format)
 
 
