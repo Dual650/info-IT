@@ -42,11 +42,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 registros.forEach(registro => {
                     const row = corpoTabela.insertRow();
                     
-                    // Coluna 'Coleta?' com destaque
-                    const coletaCellClass = registro.computador_coleta === 'SIM' ? 'coleta-negrito' : '';
+                    // LÓGICA DE CORREÇÃO: Aplicar classes de fundo
                     
-                    // Coluna 'Retaguarda' com o formato customizado
-                    const retaguardaCellClass = registro.retaguarda_display !== 'NÃO' ? 'coleta-negrito' : '';
+                    // Coluna 'Coleta?'
+                    const coletaSimNao = registro.computador_coleta === 'SIM';
+                    const coletaCellClass = coletaSimNao ? 'fundo-sim' : 'fundo-nao';
+                    
+                    // Coluna 'Retaguarda'
+                    // A coluna Retaguarda é "SIM" se o display for diferente de "NÃO" (Ex: Retaguarda Poupatempo)
+                    const retaguardaSimNao = registro.retaguarda_display !== 'NÃO';
+                    const retaguardaCellClass = retaguardaSimNao ? 'fundo-sim' : 'fundo-nao';
                     
                     row.innerHTML = `
                         <td>${registro.id}</td>
@@ -88,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function abrirModal(registro) {
         modalId.textContent = registro.id;
         modalPosto.textContent = registro.posto;
-        modalContent.textContent = registro.procedimento_completo; // .textContent para inserir como texto simples
+        modalContent.textContent = registro.procedimento_completo;
         
         // Atualiza a URL do formulário de exclusão individual
         formApagarIndividual.action = `/apagar/${registro.id}`;
