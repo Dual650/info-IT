@@ -113,7 +113,8 @@
             const selectDestino = document.getElementById('retaguarda_destino');
 
             if (selectRetaguarda.value === 'SIM') {
-                // Ao mostrar, forçamos o display como block/flex para respeitar o CSS
+                // Usamos 'flex' aqui para garantir que ele apareça, e confiamos no CSS
+                // para definir a direção como coluna.
                 grupoDestino.style.display = 'flex'; 
                 selectDestino.setAttribute('required', 'required'); 
             } else {
