@@ -26,8 +26,46 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 3. Atualizar link de exportação com os filtros atuais
     btnExportar.href = `/exportar?${queryString}`;
+    
+    // 4. Função para editar o procedimento (NOVA FUNÇÃO)
+    window.editarProcedimento = function(registroId, procedimentoAtual) {
+        const novoProcedimento = prompt("Edite a 'Ação realizada' para o registro ID " + registroId + ":", procedimentoAtual);
 
-    // 4. Função para carregar e renderizar os dados
+        if (novoProcedimento !== null && novoProcedimento !== procedimentoAtual) {
+            // Se o usuário digitou um novo valor e não cancelou
+            
+            // ATENÇÃO: Você deve implementar esta rota no seu backend Flask
+            fetch(`/editar_procedimento/${registroId}`, {
+                method: 'POST', // Usamos POST para simular um formulário ou PATCH para uma API RESTful
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    'procedimento_completo': novoProcedimento 
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Procedimento atualizado com sucesso!');
+                    // Recarrega os registros para mostrar a alteração
+                    carregarRegistros();
+                } else {
+                    alert('Erro ao atualizar o procedimento. Verifique o servidor.');
+                }
+            })
+            .catch(error => {
+                console.error('Erro de rede:', error);
+                alert('Erro de conexão ao tentar atualizar o registro.');
+            });
+
+        } else if (novoProcedimento === null) {
+             // Usuário cancelou
+             return;
+        }
+    }
+
+
+    // 5. Função para carregar e renderizar os dados
     function carregarRegistros() {
         fetch(apiUrl)
             .then(response => {
@@ -53,13 +91,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     const row = corpoTabela.insertRow();
                     
                     // LÓGICA DE APLICAÇÃO DE CLASSES
-                    
-                    // Coluna 'Coleta?'
                     const coletaSimNao = registro.computador_coleta === 'SIM';
                     const coletaCellClass = coletaSimNao ? 'fundo-sim' : 'fundo-nao';
-                    
-                    // Coluna 'Retaguarda': NÃO recebe classe de fundo.
                     const retaguardaCellClass = ''; 
+                    
+                    // Escapar as aspas simples e duplas do procedimento para usar no parâmetro da função JS
+                    const procedimentoEscapado = registro.procedimento_completo
+                        .replace(/'/g, "\\'")
+                        .replace(/"/g, '\\"');
                     
                     row.innerHTML = `
                         <td>${registro.posto}</td>
@@ -70,9 +109,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td>${registro.hora_inicio}</td>
                         <td>${registro.hora_termino}</td>
                         <td class="procedimento-resumo" title="${registro.procedimento_completo}">${registro.procedimento_resumo}</td>
-                        <td>
+                        <td class="acoes-cell">
+                            <button type="button" class="btn-acao btn-edit" title="Editar Ação Realizada" onclick="event.stopPropagation(); editarProcedimento(${registro.id}, '${procedimentoEscapado}');">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            
                             <form method="POST" action="/apagar/${registro.id}" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja apagar o registro ID ${registro.id}?');">
-                                <button type="submit" class="btn-acao btn-danger-individual" title="Apagar registro individual">
+                                <button type="submit" class="btn-acao btn-danger-individual" title="Apagar registro individual" onclick="event.stopPropagation();">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </form>
@@ -81,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Adicionar evento de clique na linha para abrir o modal, excluindo a célula de Ações
                     row.addEventListener('click', function(event) {
-                        // Verifica se o clique não foi no botão de apagar
+                        // Verifica se o clique não foi em um botão de ação
                         if (!event.target.closest('.btn-acao')) {
                             abrirModal(registro);
                         }
@@ -96,11 +139,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // 5. Função para abrir o Modal (CORRIGIDA)
+    // 6. Função para abrir o Modal
     function abrirModal(registro) {
-        // Preenche todos os campos do modal
         modalId.textContent = registro.id; 
-        // CORREÇÃO: Remove o ID da exibição no título.
         modalTitulo.textContent = `Detalhes do Registro`; 
         modalPosto.textContent = registro.posto;
         modalMesa.textContent = registro.numero_mesa;
@@ -111,13 +152,13 @@ document.addEventListener('DOMContentLoaded', function() {
         modalHoraTermino.textContent = registro.hora_termino;
         modalContent.textContent = registro.procedimento_completo;
         
-        // Atualiza a URL do formulário de exclusão individual (ainda precisa do ID internamente)
+        // Atualiza a URL do formulário de exclusão individual
         formApagarIndividual.action = `/apagar/${registro.id}`;
         
         modal.style.display = 'block';
     }
 
-    // 6. Fechar modal ao clicar fora dele
+    // 7. Fechar modal ao clicar fora dele
     window.onclick = function(event) {
         if (event.target == modal) {
             modal.style.display = "none";
