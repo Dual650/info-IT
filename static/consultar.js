@@ -42,16 +42,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 registros.forEach(registro => {
                     const row = corpoTabela.insertRow();
                     
-                    // LÓGICA DE CORREÇÃO: Aplicar classes de fundo
+                    // LÓGICA DE CORREÇÃO: Aplicar classes de fundo APENAS na coluna Coleta
                     
                     // Coluna 'Coleta?'
                     const coletaSimNao = registro.computador_coleta === 'SIM';
                     const coletaCellClass = coletaSimNao ? 'fundo-sim' : 'fundo-nao';
                     
-                    // Coluna 'Retaguarda'
-                    // A coluna Retaguarda é "SIM" se o display for diferente de "NÃO" (Ex: Retaguarda Poupatempo)
-                    const retaguardaSimNao = registro.retaguarda_display !== 'NÃO';
-                    const retaguardaCellClass = retaguardaSimNao ? 'fundo-sim' : 'fundo-nao';
+                    // Coluna 'Retaguarda': NÃO recebe classe de fundo.
+                    // A coluna Retaguarda precisa apenas saber se é SIM/NÃO para talvez
+                    // aplicarmos um estilo de texto (que não foi pedido, mas vou deixar
+                    // apenas a classe vazia aqui, caso precise no futuro).
+                    const retaguardaCellClass = ''; 
                     
                     row.innerHTML = `
                         <td>${registro.id}</td>
