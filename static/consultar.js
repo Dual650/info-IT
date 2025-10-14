@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
         editIdHidden.value = registroId;
         editProcedimento.value = procedimentoAtual;
         
-        // Define a URL de ação do formulário (Você deve implementar esta rota no Flask)
+        // Define a URL de ação do formulário 
         formEditarProcedimento.action = `/editar_procedimento/${registroId}`;
         
         // Exibe o modal
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const registroId = editIdHidden.value;
         const novoProcedimento = editProcedimento.value;
         
-        // ATENÇÃO: A URL deve corresponder à rota que você implementará no Flask
+        // ATENÇÃO: A URL DEVE SER IMPLEMENTADA NO FLASK
         fetch(`/editar_procedimento/${registroId}`, {
             method: 'POST', 
             headers: {
