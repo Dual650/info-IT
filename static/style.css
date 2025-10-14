@@ -353,14 +353,17 @@ textarea {
 
 .modal-content {
     background-color: #fff;
-    margin: 10% auto;
+    /* Ajuste para aumentar o tamanho e centralizar melhor */
+    margin: 5% auto; /* Margem reduzida para dar mais espaço vertical */
     padding: 20px;
     border: 1px solid #888;
-    width: 80%;
-    max-width: 600px;
+    width: 90%; /* Aumenta a largura base */
+    max-width: 800px; /* Aumenta o limite máximo de largura */
+    /* Fim do Ajuste */
     border-radius: 8px;
     position: relative;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    /* Altura será automática (auto) para se ajustar ao conteúdo */
 }
 
 .close-button {
@@ -376,7 +379,7 @@ textarea {
     cursor: pointer;
 }
 
-/* NOVO: Estilos de Organização para os Detalhes no Modal */
+/* Estilos de Organização para os Detalhes no Modal */
 .modal-info-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr); /* 3 colunas de informações */
