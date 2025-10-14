@@ -11,9 +11,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalEdicao = document.getElementById('modalEdicao'); 
 
     // Referências do Modal de Edição
-    // const editIdDisplay = document.getElementById('editIdDisplay'); // REMOVIDO DO HTML
     const editIdHidden = document.getElementById('editIdHidden');
-    const editProcedimento = document.getElementById('editProcedimento');
+    const editProcedimento = document.getElementById('editProcedimento'); 
     const formEditarProcedimento = document.getElementById('formEditarProcedimento');
     
     // Referências do Modal de Visualização
@@ -29,31 +28,59 @@ document.addEventListener('DOMContentLoaded', function() {
     const formApagarIndividual = document.getElementById('formApagarIndividual');
     const btnExportar = document.getElementById('btnExportar');
 
-    // 3. Atualizar link de exportação com os filtros atuais
+    // 3. Variável de estado para verificar se houve alteração
+    let textoFoiAlterado = false;
+    
+    // 4. Atualizar link de exportação com os filtros atuais
     btnExportar.href = `/exportar?${queryString}`;
     
-    // 4. Função para abrir o Modal de Edição
+    // 5. Função para abrir o Modal de Edição (Inicializa o rastreamento)
     window.editarProcedimento = function(registroId, procedimentoAtual) {
-        // Preenche os campos do modal de edição
-        // editIdDisplay.textContent = registroId; // Linha removida
+        // 5a. Preenche e rastreia o valor original
         editIdHidden.value = registroId;
         editProcedimento.value = procedimentoAtual;
+        editProcedimento.setAttribute('data-original-value', procedimentoAtual); // Salva o valor original
+        textoFoiAlterado = false; // Reseta o estado
         
-        // Define a URL de ação do formulário 
+        // 5b. Define a URL de ação do formulário 
         formEditarProcedimento.action = `/editar_procedimento/${registroId}`;
         
-        // Exibe o modal
+        // 5c. Exibe o modal
         modalEdicao.style.display = 'block';
     }
 
-    // 5. Adicionar listener para submissão do formulário de edição (AJAX)
+    // 6. Listener para rastrear alterações no campo de texto
+    editProcedimento.addEventListener('input', function() {
+        const originalValue = editProcedimento.getAttribute('data-original-value');
+        // Define textoFoiAlterado como true se o valor atual for diferente do original
+        textoFoiAlterado = this.value !== originalValue;
+    });
+
+    // 7. NOVA FUNÇÃO para tentar fechar o modal de edição (chamada pelo 'X' e pelo clique fora)
+    window.tentarFecharEdicao = function() {
+        if (textoFoiAlterado) {
+            // Se o texto foi alterado, solicita confirmação
+            const fechar = confirm("Você tem alterações não salvas. Deseja realmente fechar a janela e descartar as modificações?");
+            if (fechar) {
+                // Se confirmado, fecha e reseta o estado
+                modalEdicao.style.display = 'none';
+                textoFoiAlterado = false; 
+            }
+            // Se não confirmado, o modal permanece aberto
+        } else {
+            // Se nada foi alterado, fecha o modal sem aviso
+            modalEdicao.style.display = 'none';
+        }
+    }
+
+
+    // 8. Adicionar listener para submissão do formulário de edição (AJAX)
     formEditarProcedimento.addEventListener('submit', function(e) {
-        e.preventDefault(); // Impede o envio tradicional do formulário
+        e.preventDefault(); 
         
         const registroId = editIdHidden.value;
         const novoProcedimento = editProcedimento.value;
         
-        // Envia o POST para a rota do Flask
         fetch(`/editar_procedimento/${registroId}`, {
             method: 'POST', 
             headers: {
@@ -65,10 +92,11 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             if (response.ok) {
-                // Se a atualização for bem-sucedida
-                document.getElementById('modalEdicao').style.display = 'none'; // Fecha o modal
+                // Atualização bem-sucedida: fecha, avisa, reseta estado
+                document.getElementById('modalEdicao').style.display = 'none';
                 alert('Ação realizada atualizada com sucesso!');
-                carregarRegistros(); // Recarrega a tabela para mostrar a alteração
+                textoFoiAlterado = false; // Reseta o estado após salvar
+                carregarRegistros(); 
             } else {
                 alert('Erro ao atualizar. Verifique a conexão e o servidor.');
             }
@@ -80,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 
-    // 6. Função para carregar e renderizar os dados
+    // 9. Função para carregar e renderizar os dados (Inalterada)
     function carregarRegistros() {
         fetch(apiUrl)
             .then(response => {
@@ -108,7 +136,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     const coletaCellClass = coletaSimNao ? 'fundo-sim' : 'fundo-nao';
                     const retaguardaCellClass = ''; 
                     
-                    // Escapar as aspas simples e duplas do procedimento para usar no parâmetro da função JS
                     const procedimentoEscapado = registro.procedimento_completo
                         .replace(/'/g, "\\'")
                         .replace(/"/g, '\\"');
@@ -135,9 +162,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </td>
                     `;
                     
-                    // Adicionar evento de clique na linha para abrir o modal de VISUALIZAÇÃO
                     row.addEventListener('click', function(event) {
-                        // Verifica se o clique não foi em um botão de ação
                         if (!event.target.closest('.btn-acao')) {
                             abrirModalVisualizacao(registro);
                         }
@@ -152,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // 7. Função para abrir o Modal de Visualização
+    // 10. Função para abrir o Modal de Visualização (Inalterada)
     function abrirModalVisualizacao(registro) {
         modalTitulo.textContent = `Detalhes do Registro`; 
         modalPosto.textContent = registro.posto;
@@ -169,13 +194,14 @@ document.addEventListener('DOMContentLoaded', function() {
         modalVisualizacao.style.display = 'block';
     }
 
-    // 8. Fechar modal ao clicar fora dele
+    // 11. Fechar modal ao clicar fora dele (AGORA CHAMA A FUNÇÃO DE CONFIRMAÇÃO)
     window.onclick = function(event) {
         if (event.target == modalVisualizacao) {
             modalVisualizacao.style.display = "none";
         }
         if (event.target == modalEdicao) { 
-            modalEdicao.style.display = "none";
+            // Se o clique for no fundo do modal de edição, chama a função de confirmação
+            tentarFecharEdicao();
         }
         if (event.target == document.getElementById('modalApagarTudo')) {
             document.getElementById('modalApagarTudo').style.display = "none";
