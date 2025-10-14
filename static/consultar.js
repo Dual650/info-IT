@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalEdicao = document.getElementById('modalEdicao'); 
 
     // Referências do Modal de Edição
-    const editIdDisplay = document.getElementById('editIdDisplay');
+    // const editIdDisplay = document.getElementById('editIdDisplay'); // REMOVIDO DO HTML
     const editIdHidden = document.getElementById('editIdHidden');
     const editProcedimento = document.getElementById('editProcedimento');
     const formEditarProcedimento = document.getElementById('formEditarProcedimento');
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 4. Função para abrir o Modal de Edição
     window.editarProcedimento = function(registroId, procedimentoAtual) {
         // Preenche os campos do modal de edição
-        editIdDisplay.textContent = registroId;
+        // editIdDisplay.textContent = registroId; // Linha removida
         editIdHidden.value = registroId;
         editProcedimento.value = procedimentoAtual;
         
