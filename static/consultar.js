@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 
-    // 9. Função para carregar e renderizar os dados (Inalterada)
+    // 9. Função para carregar e renderizar os dados
     function carregarRegistros() {
         fetch(apiUrl)
             .then(response => {
@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // 10. Função para abrir o Modal de Visualização (Inalterada)
+    // 10. Função para abrir o Modal de Visualização
     function abrirModalVisualizacao(registro) {
         modalTitulo.textContent = `Detalhes do Registro`; 
         modalPosto.textContent = registro.posto;
@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
         modalVisualizacao.style.display = 'block';
     }
 
-    // 11. Fechar modal ao clicar fora dele (AGORA CHAMA A FUNÇÃO DE CONFIRMAÇÃO)
+    // 11. Fechar modal ao clicar fora dele 
     window.onclick = function(event) {
         if (event.target == modalVisualizacao) {
             modalVisualizacao.style.display = "none";
