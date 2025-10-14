@@ -189,6 +189,18 @@ textarea {
     border-color: #bd2130 !important;
 }
 
+/* Estilo para o botão de Edição (NOVO) */
+.btn-edit {
+    border-color: #ffc107; /* Amarelo/Atenção */
+    color: #ffc107;
+    margin-right: 5px; /* Adiciona um pequeno espaço entre os botões de ação */
+}
+
+.btn-edit:hover {
+    background-color: #ffc107;
+    color: white;
+}
+
 /* Botão de Exclusão Individual (mais discreto) */
 .btn-danger-individual {
     background-color: #fff;
@@ -382,7 +394,8 @@ textarea {
 /* Estilos de Organização para os Detalhes no Modal */
 .modal-info-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 colunas de informações */
+    /* Ajusta a largura da coluna para telas pequenas */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
     gap: 10px;
     margin-bottom: 20px;
     padding: 10px;
