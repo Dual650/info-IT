@@ -116,8 +116,7 @@
                 <span id="modalId" style="display: none;"></span> 
             </div>
 
-            <h4>Ação Realizada (Completa)</h4>
-            <div id="modalProcedimentoContent" class="modal-procedimento-content"></div>
+            <h4>Ação realizada</h4> <div id="modalProcedimentoContent" class="modal-procedimento-content"></div>
             
             <form id="formApagarIndividual" method="POST" action="">
                 <input type="hidden" name="_method" value="DELETE">
@@ -131,11 +130,14 @@
     <div id="modalEdicao" class="modal">
         <div class="modal-content">
             <span class="close-button" onclick="document.getElementById('modalEdicao').style.display='none'">&times;</span>
-            <h3>Edição da Ação Realizada</h3> <form id="formEditarProcedimento" method="POST" action="">
+            <h3>Edição da Ação Realizada</h3>
+
+            <form id="formEditarProcedimento" method="POST" action="">
                 <input type="hidden" id="editIdHidden" name="id_registro">
                 
                 <div class="form-group form-group-full" style="margin-top: 20px;">
-                    <label for="editProcedimento">Ação realizada</label> <textarea id="editProcedimento" name="procedimento_completo" class="form-control" rows="8" required></textarea>
+                    <label for="editProcedimento">Ação realizada</label>
+                    <textarea id="editProcedimento" name="procedimento_completo" class="form-control" rows="8" required></textarea>
                 </div>
                 
                 <button type="submit" class="btn-primary" style="margin-top: 20px;">
