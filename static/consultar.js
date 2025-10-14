@@ -7,10 +7,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // 2. Elementos DOM
     const corpoTabela = document.getElementById('corpoTabela');
     const avisoVazio = document.getElementById('avisoVazio');
-    const modal = document.getElementById('modalProcedimento');
+    const modalVisualizacao = document.getElementById('modalProcedimento');
+    const modalEdicao = document.getElementById('modalEdicao'); 
+
+    // Referências do Modal de Edição
+    const editIdDisplay = document.getElementById('editIdDisplay');
+    const editIdHidden = document.getElementById('editIdHidden');
+    const editProcedimento = document.getElementById('editProcedimento');
+    const formEditarProcedimento = document.getElementById('formEditarProcedimento');
     
-    // Novas referências do Modal
-    const modalId = document.getElementById('modalId');
+    // Referências do Modal de Visualização
     const modalTitulo = document.getElementById('modalTitulo');
     const modalPosto = document.getElementById('modalPosto');
     const modalMesa = document.getElementById('modalMesa');
@@ -20,52 +26,61 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalHoraInicio = document.getElementById('modalHoraInicio');
     const modalHoraTermino = document.getElementById('modalHoraTermino');
     const modalContent = document.getElementById('modalProcedimentoContent');
-    
     const formApagarIndividual = document.getElementById('formApagarIndividual');
     const btnExportar = document.getElementById('btnExportar');
 
     // 3. Atualizar link de exportação com os filtros atuais
     btnExportar.href = `/exportar?${queryString}`;
     
-    // 4. Função para editar o procedimento (NOVA FUNÇÃO)
+    // 4. Função para abrir o Modal de Edição
     window.editarProcedimento = function(registroId, procedimentoAtual) {
-        const novoProcedimento = prompt("Edite a 'Ação realizada' para o registro ID " + registroId + ":", procedimentoAtual);
-
-        if (novoProcedimento !== null && novoProcedimento !== procedimentoAtual) {
-            // Se o usuário digitou um novo valor e não cancelou
-            
-            // ATENÇÃO: Você deve implementar esta rota no seu backend Flask
-            fetch(`/editar_procedimento/${registroId}`, {
-                method: 'POST', // Usamos POST para simular um formulário ou PATCH para uma API RESTful
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    'procedimento_completo': novoProcedimento 
-                })
-            })
-            .then(response => {
-                if (response.ok) {
-                    alert('Procedimento atualizado com sucesso!');
-                    // Recarrega os registros para mostrar a alteração
-                    carregarRegistros();
-                } else {
-                    alert('Erro ao atualizar o procedimento. Verifique o servidor.');
-                }
-            })
-            .catch(error => {
-                console.error('Erro de rede:', error);
-                alert('Erro de conexão ao tentar atualizar o registro.');
-            });
-
-        } else if (novoProcedimento === null) {
-             // Usuário cancelou
-             return;
-        }
+        // Preenche os campos do modal de edição
+        editIdDisplay.textContent = registroId;
+        editIdHidden.value = registroId;
+        editProcedimento.value = procedimentoAtual;
+        
+        // Define a URL de ação do formulário (Você deve implementar esta rota no Flask)
+        formEditarProcedimento.action = `/editar_procedimento/${registroId}`;
+        
+        // Exibe o modal
+        modalEdicao.style.display = 'block';
     }
 
+    // 5. Adicionar listener para submissão do formulário de edição (AJAX)
+    formEditarProcedimento.addEventListener('submit', function(e) {
+        e.preventDefault(); // Impede o envio tradicional do formulário
+        
+        const registroId = editIdHidden.value;
+        const novoProcedimento = editProcedimento.value;
+        
+        // ATENÇÃO: A URL deve corresponder à rota que você implementará no Flask
+        fetch(`/editar_procedimento/${registroId}`, {
+            method: 'POST', 
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                'procedimento_completo': novoProcedimento 
+            })
+        })
+        .then(response => {
+            if (response.ok) {
+                // Se a atualização for bem-sucedida
+                document.getElementById('modalEdicao').style.display = 'none'; // Fecha o modal
+                alert('Ação realizada atualizada com sucesso!');
+                carregarRegistros(); // Recarrega a tabela para mostrar a alteração
+            } else {
+                alert('Erro ao atualizar. Verifique a conexão e o servidor.');
+            }
+        })
+        .catch(error => {
+            console.error('Erro de rede:', error);
+            alert('Erro de conexão ao tentar atualizar o registro.');
+        });
+    });
 
-    // 5. Função para carregar e renderizar os dados
+
+    // 6. Função para carregar e renderizar os dados
     function carregarRegistros() {
         fetch(apiUrl)
             .then(response => {
@@ -75,7 +90,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(registros => {
-                // Limpa o corpo da tabela antes de adicionar novos dados
                 corpoTabela.innerHTML = ''; 
 
                 if (registros.length === 0) {
@@ -90,7 +104,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 registros.forEach(registro => {
                     const row = corpoTabela.insertRow();
                     
-                    // LÓGICA DE APLICAÇÃO DE CLASSES
                     const coletaSimNao = registro.computador_coleta === 'SIM';
                     const coletaCellClass = coletaSimNao ? 'fundo-sim' : 'fundo-nao';
                     const retaguardaCellClass = ''; 
@@ -122,11 +135,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         </td>
                     `;
                     
-                    // Adicionar evento de clique na linha para abrir o modal, excluindo a célula de Ações
+                    // Adicionar evento de clique na linha para abrir o modal de VISUALIZAÇÃO
                     row.addEventListener('click', function(event) {
                         // Verifica se o clique não foi em um botão de ação
                         if (!event.target.closest('.btn-acao')) {
-                            abrirModal(registro);
+                            abrirModalVisualizacao(registro);
                         }
                     });
                 });
@@ -139,9 +152,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // 6. Função para abrir o Modal
-    function abrirModal(registro) {
-        modalId.textContent = registro.id; 
+    // 7. Função para abrir o Modal de Visualização
+    function abrirModalVisualizacao(registro) {
         modalTitulo.textContent = `Detalhes do Registro`; 
         modalPosto.textContent = registro.posto;
         modalMesa.textContent = registro.numero_mesa;
@@ -152,16 +164,18 @@ document.addEventListener('DOMContentLoaded', function() {
         modalHoraTermino.textContent = registro.hora_termino;
         modalContent.textContent = registro.procedimento_completo;
         
-        // Atualiza a URL do formulário de exclusão individual
         formApagarIndividual.action = `/apagar/${registro.id}`;
         
-        modal.style.display = 'block';
+        modalVisualizacao.style.display = 'block';
     }
 
-    // 7. Fechar modal ao clicar fora dele
+    // 8. Fechar modal ao clicar fora dele
     window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = "none";
+        if (event.target == modalVisualizacao) {
+            modalVisualizacao.style.display = "none";
+        }
+        if (event.target == modalEdicao) { 
+            modalEdicao.style.display = "none";
         }
         if (event.target == document.getElementById('modalApagarTudo')) {
             document.getElementById('modalApagarTudo').style.display = "none";
