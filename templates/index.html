@@ -35,7 +35,7 @@
             
             <div class="form-group">
                 <label for="posto">Posto de Trabalho:</label>
-                <select id="posto" name="posto" class="form-control" required>
+                <select id="posto" name="posto" class="form-control" required **size="5"**>
                     <option value="" disabled selected>Selecione o Posto</option>
                     {% for posto in postos %}
                     <option value="{{ posto }}">{{ posto }}</option>
@@ -50,7 +50,7 @@
             
             <div class="form-group">
                 <label for="numero_mesa">Nº da Mesa:</label>
-                <select id="numero_mesa" name="numero_mesa" class="form-control" required>
+                <select id="numero_mesa" name="numero_mesa" class="form-control" required **size="5"**>
                     <option value="" disabled selected>Selecione o Local</option>
                     {% for mesa in opcoes_mesa %}
                     <option value="{{ mesa }}">{{ mesa }}</option>
@@ -76,7 +76,7 @@
 
             <div class="form-group form-group-compacto" id="grupo_retaguarda_destino" style="display: none;">
                 <label for="retaguarda_destino">Qual?</label>
-                <select id="retaguarda_destino" name="retaguarda_destino" class="form-control">
+                <select id="retaguarda_destino" name="retaguarda_destino" class="form-control" **size="5"**>
                     <option value="" disabled selected>Selecione o Destino</option>
                     {% for destino in opcoes_retaguarda %}
                     <option value="{{ destino }}">{{ destino }}</option>
