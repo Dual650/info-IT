@@ -198,14 +198,14 @@ textarea {
 }
 
 /* NOVO ESTILO: Para o campo "Qual?" ficar mais compacto e alinhado */
+/* O objetivo é que ele herde a disposição vertical (label em cima) de .form-group */
 .form-group-compacto {
-    /* Reduz a margem inferior padrão se necessário, ou apenas garante que o flexbox
-       não crie espaçamentos indesejados se a div acima for 'SIM' */
-    align-self: flex-end; /* Garante que ele se alinhe ao fundo dos campos ao lado */
+    /* Esta classe agora serve apenas como marcador, o layout é controlado por .form-group */
 }
+
 /* Altera o estilo do label no grid para forçar o campo para cima, se necessário */
 .form-registro .form-group-compacto label {
-    margin-top: 5px; /* Ajusta a margem superior do rótulo, se houver um abaixo */
+    margin-top: 5px; 
 }
 
 
