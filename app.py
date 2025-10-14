@@ -13,12 +13,17 @@ POSTOS = [
     "Ourinhos", "Penápolis", "Presidente Prudente", "Tatuí", "Tupã"
 ]
 
+# --- NOVAS OPÇÕES DE CAMPOS ---
+OPCOES_MESA = [str(i) for i in range(1, 41)] + ["Sala médica", "Exame teórico", "COREN", "Fazenda", "SERT", "Sabesp", "Recepção/Triagem", "Despachante"]
+OPCOES_RETAGUARDA_DESTINO = ["COREN", "Poupatempo", "Fazenda", "Sabesp"]
+
+
 app = Flask(__name__)
 
 # --- Configuração de Segurança e Mensagens Flash ---
-app.config['SECRET_KEY'] = 'uma_chave_secreta_muito_forte_e_dificil' # Adicionado para usar 'flash'
+app.config['SECRET_KEY'] = 'uma_chave_secreta_muito_forte_e_dificil' 
 
-# --- Configuração do Banco de Dados (Pronto para Render/PostgreSQL) ---
+# --- Configuração do Banco de Dados ---
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///site.db').replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -29,6 +34,12 @@ class Registro(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     posto = db.Column(db.String(50), nullable=False)
     computador_coleta = db.Column(db.String(3), nullable=False) # 'SIM' ou 'NÃO'
+    
+    # NOVOS CAMPOS ADICIONADOS
+    numero_mesa = db.Column(db.String(50), nullable=False) # Ex: 1 a 40, Sala médica, COREN, etc.
+    retaguarda_sim_nao = db.Column(db.String(4), nullable=False) # 'SIM' ou 'NÃO'
+    retaguarda_destino = db.Column(db.String(50), nullable=True) # Destino (apenas se SIM)
+    
     data = db.Column(db.String(10), nullable=False) # 'DD/MM/YYYY'
     hora_inicio = db.Column(db.String(5), nullable=False)
     hora_termino = db.Column(db.String(5), nullable=False)
@@ -38,8 +49,11 @@ class Registro(db.Model):
     def __repr__(self):
         return f"Registro('{self.posto}', '{self.data}', '{self.hora_inicio}')"
 
-# Cria as tabelas do banco de dados
+# Cria as tabelas do banco de dados (Será necessário DELETAR o arquivo 'site.db' local para recriar as tabelas com as novas colunas, se estiver usando SQLite)
 with app.app_context():
+    # ATENÇÃO: Se estiver usando SQLite localmente (site.db), você precisará deletar o arquivo
+    # site.db para que esta linha crie as novas colunas.
+    # Em produção, use migrações (Alembic/Flask-Migrate).
     db.create_all()
 
 # --- CONSTANTE para Resumo ---
@@ -47,6 +61,7 @@ RESUMO_MAX_CARACTERES = 70
 
 # Função auxiliar para aplicar filtros
 def aplicar_filtros(query, filtro_posto, filtro_data_html, filtro_coleta):
+    # A função original não precisa de filtro de mesa ou retaguarda por enquanto
     if filtro_posto and filtro_posto != 'Todos':
         query = query.filter(Registro.posto == filtro_posto)
             
@@ -58,7 +73,6 @@ def aplicar_filtros(query, filtro_posto, filtro_data_html, filtro_coleta):
         except ValueError:
             pass
 
-    # Lógica do NOVO FILTRO (Coleta de Imagem)
     if filtro_coleta and filtro_coleta != 'Todos':
         coleta_db_value = filtro_coleta.upper() 
         query = query.filter(Registro.computador_coleta == coleta_db_value)
@@ -74,6 +88,19 @@ def formulario_registro():
         try:
             posto = request.form.get('posto')
             computador_coleta = request.form.get('computador_coleta')
+            
+            # NOVOS CAMPOS NO POST
+            numero_mesa = request.form.get('numero_mesa')
+            retaguarda_sim_nao = request.form.get('retaguarda_sim_nao')
+            
+            # O campo retaguarda_destino só é obrigatório se for 'SIM'
+            retaguarda_destino = request.form.get('retaguarda_destino')
+            if retaguarda_sim_nao == 'NÃO':
+                retaguarda_destino = None # Armazena como NULL/None se a opção for NÃO
+            elif retaguarda_sim_nao == 'SIM' and not retaguarda_destino:
+                flash('ERRO: Se "Retaguarda?" for SIM, o Destino é obrigatório.', 'danger')
+                return redirect(url_for('formulario_registro'))
+
             hora_inicio = request.form.get('hora_inicio')
             hora_termino = request.form.get('hora_termino')
             procedimento = request.form.get('procedimento')
@@ -81,6 +108,9 @@ def formulario_registro():
             novo_registro = Registro(
                 posto=posto,
                 computador_coleta=computador_coleta,
+                numero_mesa=numero_mesa,
+                retaguarda_sim_nao=retaguarda_sim_nao,
+                retaguarda_destino=retaguarda_destino,
                 data=data_de_hoje,
                 hora_inicio=hora_inicio,
                 hora_termino=hora_termino,
@@ -100,7 +130,9 @@ def formulario_registro():
     return render_template(
         'index.html', 
         postos=POSTOS, 
-        data_de_hoje=data_de_hoje
+        data_de_hoje=data_de_hoje,
+        opcoes_mesa=OPCOES_MESA, # Passa as opções para o template
+        opcoes_retaguarda=OPCOES_RETAGUARDA_DESTINO
     )
 
 # --- Rota 2: Consulta de Registros Antigos ---
@@ -137,9 +169,16 @@ def registros_json():
         if len(procedimento_completo) > RESUMO_MAX_CARACTERES:
             procedimento_resumo = procedimento_completo[:RESUMO_MAX_CARACTERES] + '...'
             
+        # Adiciona os novos campos para o JSON
+        retaguarda_display = f"{r.retaguarda_sim_nao}"
+        if r.retaguarda_destino:
+            retaguarda_display += f" ({r.retaguarda_destino})"
+            
         registros_formatados.append({
             'posto': r.posto,
             'computador_coleta': r.computador_coleta,
+            'numero_mesa': r.numero_mesa, # NOVO
+            'retaguarda_display': retaguarda_display, # NOVO COMBINADO
             'data': r.data,
             'hora_inicio': r.hora_inicio,
             'hora_termino': r.hora_termino,
@@ -163,21 +202,18 @@ def apagar_registro(id):
         db.session.rollback()
         flash(f'Erro ao apagar registro {id}: {e}', 'danger')
         
-    # Redireciona para a página de consulta após a exclusão
     return redirect(url_for('consultar_registro'))
 
 
 # --- Rota: Apagar TODOS os Registros (CRÍTICO - POST com Senha) ---
 @app.route('/apagar_todos', methods=['POST'])
 def apagar_todos_registros():
-    # 1. Verifica a Senha
     senha_digitada = request.form.get('senha_confirmacao')
-    SENHA_MESTRA = "PPT.123" # Senha Mestra
+    SENHA_MESTRA = "PPT.123" 
 
     if senha_digitada != SENHA_MESTRA:
         flash('ERRO: Senha incorreta. A exclusão em massa foi cancelada.', 'danger')
         
-        # Tenta retornar para a consulta preservando os filtros
         filtro_posto = request.form.get('posto_filtro_hidden')
         filtro_data = request.form.get('data_filtro_hidden')
         filtro_coleta = request.form.get('coleta_filtro_hidden')
@@ -186,7 +222,6 @@ def apagar_todos_registros():
         return redirect(url_retorno)
 
 
-    # 2. Executa a Exclusão se a senha estiver correta
     try:
         num_registros_apagados = db.session.query(Registro).delete()
         db.session.commit()
@@ -199,7 +234,7 @@ def apagar_todos_registros():
         return redirect(url_for('consultar_registro'))
 
 
-# --- Rota: Exportar para XLSX (FINAL E ESTÁVEL) ---
+# --- Rota: Exportar para XLSX ---
 @app.route('/exportar', methods=['GET'])
 def exportar_registros():
     filtro_posto = request.args.get('posto')
@@ -214,9 +249,12 @@ def exportar_registros():
         flash('Não há registros para exportar com os filtros selecionados.', 'danger')
         return redirect(url_for('consultar_registro'))
 
-    # 1. Preparar os dados para o DataFrame (Conversão de tipos para Formatação Excel)
     dados = []
     for r in registros:
+        
+        # Define o destino da retaguarda, se houver
+        destino = r.retaguarda_destino if r.retaguarda_destino else 'N/A'
+        
         data_obj = r.data
         inicio_obj = r.hora_inicio
         termino_obj = r.hora_termino
@@ -236,11 +274,12 @@ def exportar_registros():
         except ValueError:
             pass 
 
-        coleta_status = r.computador_coleta.upper() 
-
         dados.append({
             'Posto': r.posto,
-            'Coleta de imagem?': coleta_status,  
+            'Nº da Mesa': r.numero_mesa, # NOVO CAMPO
+            'Retaguarda?': r.retaguarda_sim_nao, # NOVO CAMPO
+            'Destino Retaguarda': destino, # NOVO CAMPO
+            'Coleta de imagem?': r.computador_coleta.upper(),  
             'Data': data_obj,
             'Horário de Início': inicio_obj, 
             'Horário de Término': termino_obj,
@@ -249,52 +288,28 @@ def exportar_registros():
 
     df = pd.DataFrame(dados)
 
-    # 2. Configurar o Writer e o Workbook (xlsxwriter)
     output = io.BytesIO()
     
     try:
+        # A lógica de formatação do Excel precisará ser revisada para incluir as 3 novas colunas
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, index=False, sheet_name='Registros Técnicos')
             workbook = writer.book
             sheet = writer.sheets['Registros Técnicos']
             
-            # --- DEFINIÇÃO DOS FORMATOS (xlsxwriter) ---
-            
-            header_format = workbook.add_format({
-                'bold': True, 'font_size': 14, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'bg_color': '#D3D3D3'
-            })
-            
-            default_data_format = workbook.add_format({
-                'font_size': 12, 'align': 'center', 'valign': 'vcenter', 'border': 1
-            })
-            
-            date_format = workbook.add_format({
-                'font_size': 12, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'num_format': 'dd/mm/yyyy'
-            })
-            
-            time_format = workbook.add_format({
-                'font_size': 12, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'num_format': 'hh:mm'
-            })
+            # Formatos (simplificado aqui, mas manteria os originais)
+            header_format = workbook.add_format({'bold': True, 'font_size': 14, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'bg_color': '#D3D3D3'})
+            default_data_format = workbook.add_format({'font_size': 12, 'align': 'center', 'valign': 'vcenter', 'border': 1})
+            date_format = workbook.add_format({'font_size': 12, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'num_format': 'dd/mm/yyyy'})
+            time_format = workbook.add_format({'font_size': 12, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'num_format': 'hh:mm'})
+            sim_format = workbook.add_format({'font_size': 12, 'bold': True, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'bg_color': '#C6EFCE'})
+            nao_format = workbook.add_format({'font_size': 12, 'bold': True, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'bg_color': '#FFC7CE'})
+            proc_format = workbook.add_format({'font_size': 12, 'align': 'left', 'valign': 'top', 'border': 1, 'text_wrap': True, 'num_format': '@'})
 
-            # Formato SIM (Verde, Negrito)
-            sim_format = workbook.add_format({
-                'font_size': 12, 'bold': True, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'bg_color': '#C6EFCE'
-            })
-            
-            # Formato NÃO (Vermelho, Negrito)
-            nao_format = workbook.add_format({
-                'font_size': 12, 'bold': True, 'align': 'center', 'valign': 'vcenter', 'border': 1, 'bg_color': '#FFC7CE'
-            })
-
-            # Formato Procedimento (Texto Puro, Quebra de Linha, Esquerda)
-            proc_format = workbook.add_format({
-                'font_size': 12, 'align': 'left', 'valign': 'top', 'border': 1, 'text_wrap': True, 'num_format': '@'
-            })
-            
-            # --- APLICAÇÃO DOS FORMATOS ---
-            
+            # --- APLICAÇÃO DOS FORMATOS (Atualizado para 3 NOVAS COLUNAS) ---
             col_widths = {
-                'Posto': 15, 'Coleta de imagem?': 18, 'Data': 15,
+                'Posto': 15, 'Nº da Mesa': 10, 'Retaguarda?': 12, 'Destino Retaguarda': 18, 
+                'Coleta de imagem?': 18, 'Data': 15,
                 'Horário de Início': 15, 'Horário de Término': 15, 'Procedimento Realizado': 60
             }
             
@@ -303,31 +318,30 @@ def exportar_registros():
                 sheet.write(0, col_num, col_name, header_format)
                 sheet.set_column(col_num, col_num, width) 
                 
-            col_data_idx = df.columns.get_loc('Data')
-            col_inicio_idx = df.columns.get_loc('Horário de Início')
-            col_termino_idx = df.columns.get_loc('Horário de Término')
-            col_coleta_idx = df.columns.get_loc('Coleta de imagem?')
-            col_proc_idx = df.columns.get_loc('Procedimento Realizado')
-            col_posto_idx = df.columns.get_loc('Posto')
-            
+            # Mapeamento das colunas por nome (mais seguro)
+            cols_to_format = {name: df.columns.get_loc(name) for name in df.columns}
             
             for row_num, row_data in df.iterrows():
                 row_xlsx = row_num + 1 
                 
-                sheet.write(row_xlsx, col_data_idx, row_data['Data'], date_format)
-                sheet.write(row_xlsx, col_inicio_idx, row_data['Horário de Início'], time_format)
-                sheet.write(row_xlsx, col_termino_idx, row_data['Horário de Término'], time_format)
+                # Aplica formatos específicos
+                sheet.write(row_xlsx, cols_to_format['Data'], row_data['Data'], date_format)
+                sheet.write(row_xlsx, cols_to_format['Horário de Início'], row_data['Horário de Início'], time_format)
+                sheet.write(row_xlsx, cols_to_format['Horário de Término'], row_data['Horário de Término'], time_format)
+                sheet.write(row_xlsx, cols_to_format['Procedimento Realizado'], row_data['Procedimento Realizado'], proc_format)
                 
                 coleta_value = row_data['Coleta de imagem?']
                 coleta_format = sim_format if coleta_value == 'SIM' else nao_format
-                sheet.write(row_xlsx, col_coleta_idx, coleta_value, coleta_format)
+                sheet.write(row_xlsx, cols_to_format['Coleta de imagem?'], coleta_value, coleta_format)
                 
-                sheet.write(row_xlsx, col_proc_idx, row_data['Procedimento Realizado'], proc_format)
-                sheet.write(row_xlsx, col_posto_idx, row_data['Posto'], default_data_format)
-                
+                # Formato para Retaguarda?
+                retaguarda_value = row_data['Retaguarda?']
+                retaguarda_format = sim_format if retaguarda_value == 'SIM' else nao_format
+                sheet.write(row_xlsx, cols_to_format['Retaguarda?'], retaguarda_value, retaguarda_format)
+
+                # Formato padrão para as demais colunas
                 for col_idx, col_name in enumerate(df.columns):
-                    # Garante que as colunas já formatadas não sejam sobrescritas
-                    if col_idx not in [col_data_idx, col_inicio_idx, col_termino_idx, col_coleta_idx, col_proc_idx, col_posto_idx]:
+                    if col_name not in ['Data', 'Horário de Início', 'Horário de Término', 'Procedimento Realizado', 'Coleta de imagem?', 'Retaguarda?']:
                         sheet.write(row_xlsx, col_idx, row_data[col_name], default_data_format)
 
 
@@ -336,9 +350,7 @@ def exportar_registros():
         flash("Erro interno ao gerar o arquivo Excel. Verifique o log.", 'danger')
         return redirect(url_for('consultar_registro'))
 
-    # 3. Salvar e Retornar
     output.seek(0)
-
     data_exportacao = datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = f"registros_tecnicos_{data_exportacao}.xlsx"
 
