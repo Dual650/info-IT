@@ -139,17 +139,25 @@ textarea {
     background-color: #e9e9e9;
 }
 
-/* NOVO: Regra para colorir os ícones de Imprimir e Exportar */
-/* O seletor :not(.btn-danger) garante que o botão de Apagar Tudo não mude de cor */
-.btn-acao:not(.btn-danger) i {
-    color: #007bff; /* Cor azul primária para destaque */
+/* NOVO: Regras para colorir ícones de forma específica */
+
+/* 1. Ícone de Exportar (Excel) - Verde */
+.btn-acao .fa-file-excel {
+    color: #217346; /* Verde escuro do Excel */
     transition: color 0.3s;
 }
-
-.btn-acao:not(.btn-danger):hover i {
-    color: #0056b3; /* Cor mais escura no hover */
+.btn-acao:hover .fa-file-excel {
+    color: #1a5c38; /* Verde um pouco mais escuro no hover */
 }
 
+/* 2. Ícone de Imprimir - Preto/Cinza */
+.btn-acao .fa-print {
+    color: #495057; /* Cinza escuro */
+    transition: color 0.3s;
+}
+.btn-acao:hover .fa-print {
+    color: #343a40; /* Preto mais forte no hover */
+}
 
 /* Ocultar o texto do botão de exportar, imprimir e apagar no consultar.html */
 .header-acoes .btn-acao span {
@@ -173,7 +181,7 @@ textarea {
 /* Botão de Exclusão (Perigo) - EM MASSA (estilo compacto) */
 .btn-acao.btn-danger {
     background-color: #dc3545 !important; 
-    color: white !important;
+    color: white !important; /* Cor branca para o ÍCONE dentro de btn-danger */
     border-color: #dc3545 !important;
 }
 .btn-acao.btn-danger:hover {
