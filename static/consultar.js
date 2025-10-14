@@ -49,7 +49,7 @@ function carregarRegistros() {
                 <tr data-procedimento="${registro.procedimento_completo.replace(/"/g, '&quot;')}" data-registro-id="${registro.id}">
                     <td>${registro.id}</td>
                     <td>${registro.posto}</td>
-                    <td class="${coletaClass}">${registro.computador_coleta}</td>
+                    <td>${registro.numero_mesa}</td>             <td>${registro.retaguarda_display}</td>      <td class="${coletaClass}">${registro.computador_coleta}</td>
                     <td>${registro.data}</td>
                     <td>${registro.hora_inicio}</td>
                     <td>${registro.hora_termino}</td>
