@@ -1,150 +1,111 @@
-// Acessa as URLs globais definidas no consultar.html
-const JSON_URL = URLS.registrosJson;
-const DELETE_BASE_URL = URLS.apagarRegistro;
-const EXPORT_BASE_URL = URLS.exportarRegistros;
-
-/**
- * Carrega os registros via AJAX com base nos filtros e popula a tabela.
- */
-function carregarRegistros() {
-    const posto = $('#posto').val();
-    const data = $('#data').val();
-    const coleta = $('#coleta').val();
-    const $tbody = $('#tabelaRegistros tbody');
-    const $avisoVazio = $('#avisoVazio');
-
-    $tbody.empty();
-    $avisoVazio.hide();
-    $('#tabelaRegistros').show();
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. URL da API para buscar os dados (inclui os parâmetros de filtro da URL atual)
+    const urlParams = new URLSearchParams(window.location.search);
+    const queryString = urlParams.toString();
+    const apiUrl = `/registros_json?${queryString}`;
     
-    // Constrói os parâmetros da query para o JSON e Exportação
-    const queryParams = `posto=${posto}&data=${data}&coleta=${coleta}`;
-    
-    // Atualiza o link de exportação
-    $('#btnExportar').attr('href', `${EXPORT_BASE_URL}?${queryParams}`);
+    // 2. Elementos DOM
+    const corpoTabela = document.getElementById('corpoTabela');
+    const avisoVazio = document.getElementById('avisoVazio');
+    const modal = document.getElementById('modalProcedimento');
+    const modalId = document.getElementById('modalId');
+    const modalPosto = document.getElementById('modalPosto');
+    const modalContent = document.getElementById('modalProcedimentoContent');
+    const formApagarIndividual = document.getElementById('formApagarIndividual');
+    const btnExportar = document.getElementById('btnExportar');
 
-    $.getJSON(`${JSON_URL}?${queryParams}`, function(registros) {
-        if (registros.length === 0) {
-            $avisoVazio.show();
-            $('#tabelaRegistros').hide();
-            return;
+    // 3. Atualizar link de exportação com os filtros atuais
+    btnExportar.href = `/exportar?${queryString}`;
+
+    // 4. Função para carregar e renderizar os dados
+    function carregarRegistros() {
+        fetch(apiUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(registros => {
+                // Limpa o corpo da tabela antes de adicionar novos dados
+                corpoTabela.innerHTML = ''; 
+
+                if (registros.length === 0) {
+                    avisoVazio.style.display = 'block';
+                    document.getElementById('tabelaRegistros').style.display = 'none';
+                    return;
+                }
+
+                avisoVazio.style.display = 'none';
+                document.getElementById('tabelaRegistros').style.display = 'table';
+
+                registros.forEach(registro => {
+                    const row = corpoTabela.insertRow();
+                    
+                    // Coluna 'Coleta?' com destaque
+                    const coletaCellClass = registro.computador_coleta === 'SIM' ? 'coleta-negrito' : '';
+                    
+                    // Coluna 'Retaguarda' com o formato customizado
+                    const retaguardaCellClass = registro.retaguarda_display !== 'NÃO' ? 'coleta-negrito' : '';
+                    
+                    row.innerHTML = `
+                        <td>${registro.id}</td>
+                        <td>${registro.posto}</td>
+                        <td>${registro.numero_mesa}</td>
+                        <td class="${retaguardaCellClass}">${registro.retaguarda_display}</td>
+                        <td class="${coletaCellClass}">${registro.computador_coleta}</td>
+                        <td>${registro.data}</td>
+                        <td>${registro.hora_inicio}</td>
+                        <td>${registro.hora_termino}</td>
+                        <td class="procedimento-resumo" title="${registro.procedimento_completo}">${registro.procedimento_resumo}</td>
+                        <td>
+                            <form method="POST" action="/apagar/${registro.id}" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja apagar o registro ID ${registro.id}?');">
+                                <button type="submit" class="btn-acao btn-danger-individual" title="Apagar registro individual">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </td>
+                    `;
+                    
+                    // Adicionar evento de clique na linha para abrir o modal, excluindo a célula de Ações
+                    row.addEventListener('click', function(event) {
+                        // Verifica se o clique não foi no botão de apagar
+                        if (!event.target.closest('.btn-acao')) {
+                            abrirModal(registro);
+                        }
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Erro ao buscar registros:', error);
+                corpoTabela.innerHTML = `<tr><td colspan="10">Erro ao carregar dados. Tente recarregar a página.</td></tr>`;
+                avisoVazio.style.display = 'none';
+                document.getElementById('tabelaRegistros').style.display = 'table';
+            });
+    }
+
+    // 5. Função para abrir o Modal
+    function abrirModal(registro) {
+        modalId.textContent = registro.id;
+        modalPosto.textContent = registro.posto;
+        modalContent.textContent = registro.procedimento_completo; // .textContent para inserir como texto simples
+        
+        // Atualiza a URL do formulário de exclusão individual
+        formApagarIndividual.action = `/apagar/${registro.id}`;
+        
+        modal.style.display = 'block';
+    }
+
+    // 6. Fechar modal ao clicar fora dele
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
         }
+        if (event.target == document.getElementById('modalApagarTudo')) {
+            document.getElementById('modalApagarTudo').style.display = "none";
+        }
+    }
 
-        $.each(registros, function(i, registro) {
-            const coletaClass = registro.computador_coleta === 'SIM' ? 'coleta-negrito' : '';
-            
-            // Cria o URL de exclusão individual
-            const deleteUrl = DELETE_BASE_URL + registro.id;
-            
-            // Monta o formulário de exclusão individual
-            const deleteForm = `
-                <form method="POST" action="${deleteUrl}" onsubmit="return confirm('Tem certeza que deseja apagar o Registro ${registro.id}?');" style="display:inline;">
-                    <button type="submit" class="btn-acao btn-danger-individual" title="Apagar Registro Individual">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </form>
-            `;
-            
-            const row = $(`
-                <tr data-procedimento="${registro.procedimento_completo.replace(/"/g, '&quot;')}" data-registro-id="${registro.id}">
-                    <td>${registro.id}</td>
-                    <td>${registro.posto}</td>
-                    <td>${registro.numero_mesa}</td>             <td>${registro.retaguarda_display}</td>      <td class="${coletaClass}">${registro.computador_coleta}</td>
-                    <td>${registro.data}</td>
-                    <td>${registro.hora_inicio}</td>
-                    <td>${registro.hora_termino}</td>
-                    <td class="procedimento-resumo">${registro.procedimento_resumo}</td>
-                    <td>${deleteForm}</td>
-                </tr>
-            `);
-            $tbody.append(row);
-        });
-    }).fail(function() {
-        alert("Erro ao carregar os dados.");
-    });
-}
-
-
-$(document).ready(function() {
-    
-    // 1. Carrega os registros ao iniciar a página
+    // Inicia o carregamento dos registros
     carregarRegistros();
-    
-    // 2. Adiciona o evento de clique ao botão de filtro 
-    $('#btnFiltrar').on('click', function() {
-        // Redireciona para a rota /consultar com os parâmetros de filtro (recarga completa da página)
-        const posto = $('#posto').val();
-        const data = $('#data').val();
-        const coleta = $('#coleta').val();
-        window.location.href = `/consultar?posto=${posto}&data=${data}&coleta=${coleta}`;
-    });
-
-
-    // ===============================================
-    // Lógica do MODAL para visualização do procedimento
-    // ===============================================
-    const modal = $('#procedimentoModal');
-    const closeBtn = $('.close-button');
-    const modalTexto = $('#modalProcedimentoTexto');
-    const modalId = $('#modalRegistroId');
-
-    // Abre o modal ao clicar em qualquer linha da tabela (delegação de evento)
-    $(document).on('click', '#tabelaRegistros tbody tr', function(e) {
-        if ($(e.target).closest('form, button').length) {
-            return; 
-        }
-        
-        const procedimentoCompleto = $(this).data('procedimento');
-        const registroId = $(this).find('td:first').text(); 
-        
-        modalTexto.text(procedimentoCompleto);
-        modalId.text(registroId);
-        modal.css('display', 'block');
-    });
-
-    // Fecha o modal
-    closeBtn.on('click', function() {
-        modal.css('display', 'none');
-    });
-    $(window).on('click', function(event) {
-        if ($(event.target).is(modal)) {
-            modal.css('display', 'none');
-        }
-    });
-
-    // ===============================================
-    // Lógica para APAGAR TODOS os Registros (COM SENHA)
-    // ===============================================
-    $('#formApagarTudo').submit(function(e) {
-        e.preventDefault(); // Impede o envio imediato
-        
-        // 1. Confirmação inicial
-        const confirmacao = confirm(
-            "🚨 ATENÇÃO: Você está prestes a apagar TODOS os dados permanentemente.\n\n" +
-            "Clique em OK para continuar e digitar a senha."
-        );
-
-        if (!confirmacao) {
-            return; // Sai se a primeira confirmação for cancelada
-        }
-
-        // 2. Solicita a Senha
-        const senha = prompt("CONFIRMAÇÃO FINAL: Digite a senha mestra para APAGAR TODOS os registros:");
-
-        if (senha === null || senha === "") {
-            alert("Operação cancelada. Nenhuma senha foi fornecida.");
-            return;
-        }
-
-        // 3. Insere a senha no campo oculto e envia o formulário
-        $('#senhaConfirmacao').val(senha);
-
-        // Atualiza os campos de filtro ocultos antes de enviar
-        $('#postoFiltroHidden').val($('#posto').val());
-        $('#dataFiltroHidden').val($('#data').val());
-        $('#coletaFiltroHidden').val($('#coleta').val());
-
-        this.submit();
-    });
-
 });
