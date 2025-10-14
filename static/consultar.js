@@ -42,20 +42,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 registros.forEach(registro => {
                     const row = corpoTabela.insertRow();
                     
-                    // LÓGICA DE CORREÇÃO: Aplicar classes de fundo APENAS na coluna Coleta
+                    // LÓGICA DE APLICAÇÃO DE CLASSES
                     
                     // Coluna 'Coleta?'
                     const coletaSimNao = registro.computador_coleta === 'SIM';
                     const coletaCellClass = coletaSimNao ? 'fundo-sim' : 'fundo-nao';
                     
                     // Coluna 'Retaguarda': NÃO recebe classe de fundo.
-                    // A coluna Retaguarda precisa apenas saber se é SIM/NÃO para talvez
-                    // aplicarmos um estilo de texto (que não foi pedido, mas vou deixar
-                    // apenas a classe vazia aqui, caso precise no futuro).
                     const retaguardaCellClass = ''; 
                     
                     row.innerHTML = `
-                        <td>${registro.id}</td>
                         <td>${registro.posto}</td>
                         <td>${registro.numero_mesa}</td>
                         <td class="${retaguardaCellClass}">${registro.retaguarda_display}</td>
@@ -84,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Erro ao buscar registros:', error);
-                corpoTabela.innerHTML = `<tr><td colspan="10">Erro ao carregar dados. Tente recarregar a página.</td></tr>`;
+                corpoTabela.innerHTML = `<tr><td colspan="9">Erro ao carregar dados. Tente recarregar a página.</td></tr>`;
                 avisoVazio.style.display = 'none';
                 document.getElementById('tabelaRegistros').style.display = 'table';
             });
@@ -92,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 5. Função para abrir o Modal
     function abrirModal(registro) {
-        modalId.textContent = registro.id;
+        modalId.textContent = registro.id; // ID continua necessário para o modal e exclusão individual
         modalPosto.textContent = registro.posto;
         modalContent.textContent = registro.procedimento_completo;
         
