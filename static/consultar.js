@@ -8,9 +8,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const corpoTabela = document.getElementById('corpoTabela');
     const avisoVazio = document.getElementById('avisoVazio');
     const modal = document.getElementById('modalProcedimento');
+    
+    // Novas referências do Modal
     const modalId = document.getElementById('modalId');
+    const modalTitulo = document.getElementById('modalTitulo');
     const modalPosto = document.getElementById('modalPosto');
+    const modalMesa = document.getElementById('modalMesa');
+    const modalRetaguarda = document.getElementById('modalRetaguarda');
+    const modalColeta = document.getElementById('modalColeta');
+    const modalData = document.getElementById('modalData');
+    const modalHoraInicio = document.getElementById('modalHoraInicio');
+    const modalHoraTermino = document.getElementById('modalHoraTermino');
     const modalContent = document.getElementById('modalProcedimentoContent');
+    
     const formApagarIndividual = document.getElementById('formApagarIndividual');
     const btnExportar = document.getElementById('btnExportar');
 
@@ -86,10 +96,18 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // 5. Função para abrir o Modal
+    // 5. Função para abrir o Modal (ATUALIZADA)
     function abrirModal(registro) {
-        modalId.textContent = registro.id; // ID continua necessário para o modal e exclusão individual
+        // Preenche todos os campos do modal
+        modalId.textContent = registro.id; 
+        modalTitulo.textContent = `Detalhes do Registro (ID: ${registro.id})`; // Mantém o ID no título, mas não no corpo
         modalPosto.textContent = registro.posto;
+        modalMesa.textContent = registro.numero_mesa;
+        modalRetaguarda.textContent = registro.retaguarda_display;
+        modalColeta.textContent = registro.computador_coleta;
+        modalData.textContent = registro.data;
+        modalHoraInicio.textContent = registro.hora_inicio;
+        modalHoraTermino.textContent = registro.hora_termino;
         modalContent.textContent = registro.procedimento_completo;
         
         // Atualiza a URL do formulário de exclusão individual
