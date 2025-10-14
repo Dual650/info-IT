@@ -80,7 +80,8 @@
                     <tr>
                         <th>Posto</th>
                         <th>Mesa</th>
-                        <th>Retaguarda</th> <th>Coleta?</th>
+                        <th>Retaguarda</th>
+                        <th>Coleta?</th>
                         <th>Data</th>
                         <th>Início</th>
                         <th>Término</th>
@@ -102,8 +103,20 @@
     <div id="modalProcedimento" class="modal">
         <div class="modal-content">
             <span class="close-button" onclick="document.getElementById('modalProcedimento').style.display='none'">&times;</span>
-            <h3>Procedimento Completo (ID: <span id="modalId"></span>)</h3>
-            <p>Posto: <strong id="modalPosto"></strong></p>
+            <h3 id="modalTitulo">Detalhes do Registro</h3>
+            
+            <div class="modal-info-grid">
+                <p><strong>Posto:</strong> <span id="modalPosto"></span></p>
+                <p><strong>Mesa:</strong> <span id="modalMesa"></span></p>
+                <p><strong>Retaguarda:</strong> <span id="modalRetaguarda"></span></p>
+                <p><strong>Coleta de Imagem:</strong> <span id="modalColeta"></span></p>
+                <p><strong>Data:</strong> <span id="modalData"></span></p>
+                <p><strong>Início:</strong> <span id="modalHoraInicio"></span></p>
+                <p><strong>Término:</strong> <span id="modalHoraTermino"></span></p>
+                <span id="modalId" style="display: none;"></span> 
+            </div>
+
+            <h4>Procedimento Realizado</h4>
             <div id="modalProcedimentoContent" class="modal-procedimento-content"></div>
             
             <form id="formApagarIndividual" method="POST" action="">
