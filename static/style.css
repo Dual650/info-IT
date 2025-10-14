@@ -442,10 +442,10 @@ textarea {
     
     /* Ocultar elementos de navegação e controle */
     .header-acoes, 
-    .flashes,      
+    .flashes, 
     .filtro-container, 
-    #avisoVazio,   
-    .modal,        
+    #avisoVazio, 
+    .modal, 
     #tabelaRegistros td:last-child, 
     #tabelaRegistros th:last-child {
         display: none !important;
@@ -486,5 +486,125 @@ textarea {
     /* Faz a tabela caber sem a coluna de ações */
     .procedimento-header {
         width: 45%; 
+    }
+}
+
+/* ================================================= */
+/* NOVO: REGRAS DE RESPONSIVIDADE (Mobile) */
+/* ================================================= */
+
+/* 1. Otimização da Tabela para Mobile */
+
+/* Reduz o padding das células em telas menores para economizar espaço */
+#tabelaRegistros th,
+#tabelaRegistros td {
+    padding: 8px 6px; /* Ajustado de 10px para 8px 6px */
+    font-size: 0.8em; /* Fonte um pouco menor para caber mais conteúdo */
+    /* Mantém o white-space: nowrap para a tabela ser rolável horizontalmente */
+}
+
+/* Otimiza a coluna de Procedimento para telas pequenas, permitindo que ela quebre */
+#tabelaRegistros td.procedimento-resumo {
+    white-space: normal; /* Permite que o texto do resumo quebre a linha */
+    max-width: 150px; /* Define uma largura máxima para não monopolizar a tela */
+}
+
+
+/* 2. Correção da Coluna "Ações" (Ações Cell) em Mobile */
+
+/* Usa Flexbox para controlar o espaçamento e alinhamento dos botões na coluna */
+.acoes-cell {
+    display: flex;
+    gap: 5px; /* Espaço de 5px entre os botões */
+    justify-content: center;
+    align-items: center;
+    padding: 8px 4px !important; /* Padding ajustado para a célula de botões */
+    min-width: 75px; /* Garante que a célula tenha espaço mínimo */
+}
+
+/* Estiliza os botões de ação dentro da célula */
+.acoes-cell .btn-acao {
+    flex-shrink: 0; /* Impede que os botões diminuam de tamanho */
+    width: 30px; /* Largura fixa para o botão (ícone) */
+    height: 30px; /* Altura fixa para o botão (ícone) */
+    padding: 0; /* Remove padding interno, pois o tamanho já está fixo */
+    line-height: 30px; /* Centraliza o ícone verticalmente */
+    font-size: 1em;
+    margin: 0; /* Remove margens extras */
+}
+
+/* Garante que o formulário de exclusão individual não atrapalhe o Flexbox */
+.acoes-cell form {
+    display: flex;
+    margin: 0;
+}
+
+
+/* 3. Media Query para Telas de Celular (Ajustes de Layout e Ocultação de Colunas) */
+
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+
+    /* Ajusta a exibição do cabeçalho */
+    .header-section {
+        flex-direction: column; /* Coloca o título e as ações em colunas */
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .header-acoes {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap; /* Permite que os botões de ação quebrem a linha */
+        gap: 8px;
+        justify-content: space-between;
+    }
+
+    /* Força os botões de ação a serem um pouco maiores para facilitar o toque */
+    .header-acoes .btn-acao,
+    .header-acoes .btn-primary {
+        flex-grow: 1; /* Faz com que os botões cresçam e ocupem a largura disponível */
+        font-size: 0.9em;
+        padding: 8px 10px;
+    }
+
+    /* Filtros: Garante que os filtros fiquem em colunas (um por linha) */
+    .filtro-container {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .filtro-item {
+        width: 100%;
+    }
+
+    .botoes-filtro {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+/* Oculta colunas menos prioritárias em telas MUITO pequenas (Ex: iPhone 5/SE) */
+@media (max-width: 480px) {
+    /* Oculta as colunas de Data, Início e Término */
+    #tabelaRegistros th:nth-child(5), /* Coluna Data */
+    #tabelaRegistros td:nth-child(5),
+    #tabelaRegistros th:nth-child(6), /* Coluna Início */
+    #tabelaRegistros td:nth-child(6),
+    #tabelaRegistros th:nth-child(7), /* Coluna Término */
+    #tabelaRegistros td:nth-child(7) {
+        display: none;
+    }
+    
+    /* Aumenta ligeiramente a largura do posto e da mesa para compensar */
+    #tabelaRegistros th:nth-child(1),
+    #tabelaRegistros td:nth-child(1),
+    #tabelaRegistros th:nth-child(2),
+    #tabelaRegistros td:nth-child(2) {
+        min-width: 70px;
     }
 }
