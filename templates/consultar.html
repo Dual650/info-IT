@@ -44,7 +44,7 @@
         <form id="formFiltro" method="GET" action="{{ url_for('consultar_registro') }}">
             <div class="filtro-container">
                 <div class="filtro-item">
-                    <label for="posto">Posto de Trabalho:</label>
+                    <label for="posto">Posto:</label>
                     <select id="posto" name="posto" class="form-control">
                         <option value="Todos" {% if filtro_posto == 'Todos' %}selected{% endif %}>Todos os Postos</option>
                         {% for posto in postos %}
@@ -54,12 +54,12 @@
                 </div>
                 
                 <div class="filtro-item">
-                    <label for="data">Data Específica:</label>
+                    <label for="data">Data:</label>
                     <input type="date" id="data" name="data" class="form-control" value="{{ filtro_data }}">
                 </div>
 
                 <div class="filtro-item">
-                    <label for="coleta">Computador de Coleta?</label>
+                    <label for="coleta">Coleta de imagem?</label>
                     <select id="coleta" name="coleta" class="form-control">
                         <option value="Todos" {% if filtro_coleta == 'Todos' %}selected{% endif %}>Todos</option>
                         <option value="SIM" {% if filtro_coleta == 'SIM' %}selected{% endif %}>SIM</option>
@@ -85,7 +85,7 @@
                         <th>Data</th>
                         <th>Início</th>
                         <th>Término</th>
-                        <th class="procedimento-header">Procedimento (Resumo)</th>
+                        <th class="procedimento-header">Ação realizada</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -116,7 +116,7 @@
                 <span id="modalId" style="display: none;"></span> 
             </div>
 
-            <h4>Procedimento Realizado</h4>
+            <h4>Ação Realizada (Completa)</h4>
             <div id="modalProcedimentoContent" class="modal-procedimento-content"></div>
             
             <form id="formApagarIndividual" method="POST" action="">
@@ -144,7 +144,7 @@
                 <input type="hidden" name="coleta_filtro_hidden" value="{{ filtro_coleta }}">
 
                 <button type="submit" class="btn-primary btn-danger">
-                    <i class="fas fa-exclamation-triangle"></i> Sim, Apagar TUDO Agora
+                    <i class="fas fa-exclamaqtion-triangle"></i> Sim, Apagar TUDO Agora
                 </button>
             </form>
         </div>
