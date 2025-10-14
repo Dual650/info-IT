@@ -120,7 +120,10 @@ textarea {
 .btn-acao {
     background: none;
     border: 1px solid #ccc;
-    padding: 5px 8px; 
+    /* Ajuste para ícone puro */
+    padding: 8px 10px; 
+    font-size: 1.2em; /* Aumenta o tamanho do ícone */
+    /* Fim do Ajuste */
     cursor: pointer;
     border-radius: 4px;
     transition: background-color 0.3s, color 0.3s, border-color 0.3s;
@@ -130,10 +133,15 @@ textarea {
     align-items: center;
     justify-content: center;
     margin-left: 5px;
-    font-size: 1.0em;
+    line-height: 1; 
 }
 .btn-acao:hover {
     background-color: #e9e9e9;
+}
+
+/* Ocultar o texto do botão de exportar, imprimir e apagar no consultar.html */
+.header-acoes .btn-acao span {
+    display: none;
 }
 
 /* Botão de Consulta (na Index) */
@@ -193,8 +201,6 @@ textarea {
     flex-direction: column; /* FORÇA o empilhamento vertical (Label acima do Input) */
     gap: 5px; 
 }
-/* FIM DA REGRA DE CORREÇÃO */
-
 
 .form-group-full { 
     grid-column: 1 / 3; 
@@ -204,11 +210,6 @@ textarea {
     grid-column: 1 / 3; 
     margin-top: 10px; 
     font-size: 16px; 
-}
-
-/* Estilo para o campo condicional 'Qual?' */
-.form-group-compacto {
-    /* Não precisa de regras de layout, pois o .form-group já define o flex-direction: column */
 }
 
 .form-registro .form-group-compacto label {
@@ -271,6 +272,8 @@ textarea {
     padding: 10px;
     border: 1px solid #dee2e6; 
     font-size: 14px;
+    /* Remover cor de texto (deixando apenas o padrão #333 do body) */
+    color: inherit; 
 }
 #tabelaRegistros th {
     background-color: #e9ecef; 
@@ -285,10 +288,18 @@ textarea {
     background-color: #f0f0f0; 
 }
 
-/* Estilo para destaque de "Sim" na coluna Coleta */
-.coleta-negrito {
+/* NOVO: Classe para SIM (Fundo Verde + Negrito) */
+.fundo-sim {
+    background-color: #C6EFCE !important; /* Verde claro */
     font-weight: bold;
-    color: #007bff;
+    color: #155724; /* Cor de texto verde escura para contraste */
+}
+
+/* NOVO: Classe para NÃO (Fundo Vermelho + Negrito) */
+.fundo-nao {
+    background-color: #FFC7CE !important; /* Vermelho claro */
+    font-weight: bold;
+    color: #721c24; /* Cor de texto vermelha escura para contraste */
 }
 
 /* Estilo para Resumo de Procedimento */
