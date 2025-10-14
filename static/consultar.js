@@ -96,11 +96,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // 5. Função para abrir o Modal (ATUALIZADA)
+    // 5. Função para abrir o Modal (CORRIGIDA)
     function abrirModal(registro) {
         // Preenche todos os campos do modal
         modalId.textContent = registro.id; 
-        modalTitulo.textContent = `Detalhes do Registro (ID: ${registro.id})`; // Mantém o ID no título, mas não no corpo
+        // CORREÇÃO: Remove o ID da exibição no título.
+        modalTitulo.textContent = `Detalhes do Registro`; 
         modalPosto.textContent = registro.posto;
         modalMesa.textContent = registro.numero_mesa;
         modalRetaguarda.textContent = registro.retaguarda_display;
@@ -110,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
         modalHoraTermino.textContent = registro.hora_termino;
         modalContent.textContent = registro.procedimento_completo;
         
-        // Atualiza a URL do formulário de exclusão individual
+        // Atualiza a URL do formulário de exclusão individual (ainda precisa do ID internamente)
         formApagarIndividual.action = `/apagar/${registro.id}`;
         
         modal.style.display = 'block';
