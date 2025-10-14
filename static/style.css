@@ -58,6 +58,13 @@ h1, h2, h3 {
     font-size: 14px;
     width: 100%;
 }
+/* CORREÇÃO DO DROPDOWN: Garante que os dropdowns que usam o atributo 'size' */
+/* apareçam como uma lista com barra de rolagem, se necessário. */
+select[size] {
+    /* Altura definida pelo atributo size no HTML (ex: size="5") */
+    overflow-y: auto; /* Garante que a barra de rolagem apareça se houver muitas opções */
+}
+
 .disabled-input {
     background-color: #e9ecef !important;
 }
@@ -69,13 +76,6 @@ label {
 textarea { 
     resize: vertical; 
     min-height: 100px; 
-}
-
-/* NOVO: Limita a altura dos dropdowns (<select>) */
-.form-control:not(textarea):not(input) {
-    /* Define a altura máxima para 6 opções visíveis + padding */
-    max-height: 150px; 
-    overflow-y: auto; /* Adiciona barra de rolagem se o conteúdo exceder 150px */
 }
 
 /* Botão Primário (Azul) */
