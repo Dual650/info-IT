@@ -23,6 +23,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'uma_chave_secreta_muito_forte_e_dificil' 
 
 # --- Configuração do Banco de Dados ---
+# Substitui o "postgres://" por "postgresql://" para compatibilidade com SQLAlchemy 1.4+ no Heroku
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///site.db').replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -48,11 +49,8 @@ class Registro(db.Model):
     def __repr__(self):
         return f"Registro('{self.posto}', '{self.data}', '{self.hora_inicio}')"
 
-# Cria as tabelas do banco de dados (Será necessário DELETAR o arquivo 'site.db' local para recriar as tabelas com as novas colunas, se estiver usando SQLite)
+# Cria as tabelas do banco de dados (Necessário deletar site.db se estiver usando localmente)
 with app.app_context():
-    # ATENÇÃO: Se estiver usando SQLite localmente (site.db), você precisará deletar o arquivo
-    # site.db para que esta linha crie as novas colunas.
-    # Em produção, use migrações (Alembic/Flask-Migrate).
     db.create_all()
 
 # --- CONSTANTE para Resumo ---
@@ -60,7 +58,6 @@ RESUMO_MAX_CARACTERES = 70
 
 # Função auxiliar para aplicar filtros
 def aplicar_filtros(query, filtro_posto, filtro_data_html, filtro_coleta):
-    # A função original não precisa de filtro de mesa ou retaguarda por enquanto
     if filtro_posto and filtro_posto != 'Todos':
         query = query.filter(Registro.posto == filtro_posto)
             
@@ -88,14 +85,12 @@ def formulario_registro():
             posto = request.form.get('posto')
             computador_coleta = request.form.get('computador_coleta')
             
-            # NOVOS CAMPOS NO POST
             numero_mesa = request.form.get('numero_mesa')
             retaguarda_sim_nao = request.form.get('retaguarda_sim_nao')
             
-            # O campo retaguarda_destino só é obrigatório se for 'SIM'
             retaguarda_destino = request.form.get('retaguarda_destino')
             if retaguarda_sim_nao == 'NÃO':
-                retaguarda_destino = None # Armazena como NULL/None se a opção for NÃO
+                retaguarda_destino = None 
             elif retaguarda_sim_nao == 'SIM' and not retaguarda_destino:
                 flash('ERRO: Se "Retaguarda?" for SIM, o Destino é obrigatório.', 'danger')
                 return redirect(url_for('formulario_registro'))
@@ -130,7 +125,7 @@ def formulario_registro():
         'index.html', 
         postos=POSTOS, 
         data_de_hoje=data_de_hoje,
-        opcoes_mesa=OPCOES_MESA, # Passa as opções para o template
+        opcoes_mesa=OPCOES_MESA, 
         opcoes_retaguarda=OPCOES_RETAGUARDA_DESTINO
     )
 
@@ -172,13 +167,13 @@ def registros_json():
         if r.retaguarda_sim_nao == 'SIM' and r.retaguarda_destino:
             retaguarda_display = f"Retaguarda {r.retaguarda_destino}"
         else:
-            retaguarda_display = "NÃO" # Se não é SIM, exibe NÃO
+            retaguarda_display = "NÃO" 
             
         registros_formatados.append({
             'posto': r.posto,
             'computador_coleta': r.computador_coleta,
             'numero_mesa': r.numero_mesa,
-            'retaguarda_display': retaguarda_display, # AGORA COM O NOVO FORMATO
+            'retaguarda_display': retaguarda_display, 
             'data': r.data,
             'hora_inicio': r.hora_inicio,
             'hora_termino': r.hora_termino,
