@@ -21,70 +21,109 @@
         {% endwith %}
 
         <div class="header-section header-index">
-            <h2>Registro de Procedimento Técnico</h2>
-            
-            <a href="{{ url_for('consultar_registro') }}" class="btn-acao btn-consulta" title="Ir para a página de consulta">
-                <i class="fas fa-search"></i> Consultar Registros
-            </a>
+            <div class="header-titulo">
+                <h2>Registro de Procedimento Técnico</h2>
+            </div>
+            <div class="header-acoes">
+                <a href="{{ url_for('consultar_registro') }}" class="btn-primary btn-consulta" title="Ir para a página de consulta">
+                    <i class="fas fa-search"></i> Consultar Registros
+                </a>
+            </div>
         </div>
-        
-        <form method="POST" class="form-registro">
+
+        <form method="POST" action="{{ url_for('formulario_registro') }}" class="form-registro">
+            
             <div class="form-group">
                 <label for="posto">Posto de Trabalho:</label>
-                <select id="posto" name="posto" required class="form-control">
-                    <option value="">Selecione um Posto</option>
+                <select id="posto" name="posto" class="form-control" required>
+                    <option value="" disabled selected>Selecione o Posto</option>
                     {% for posto in postos %}
                     <option value="{{ posto }}">{{ posto }}</option>
                     {% endfor %}
                 </select>
             </div>
+
+            <div class="form-group">
+                <label for="data">Data do Registro:</label>
+                <input type="text" id="data" name="data" value="{{ data_de_hoje }}" class="form-control disabled-input" readonly>
+            </div>
             
             <div class="form-group">
-                <label for="computador_coleta">Computador da coleta?:</label>
-                <select id="computador_coleta" name="computador_coleta" required class="form-control">
-                    <option value="">Selecione...</option>
-                    <option value="SIM">Sim</option>
-                    <option value="NÃO">Não</option>
+                <label for="numero_mesa">Nº da Mesa:</label>
+                <select id="numero_mesa" name="numero_mesa" class="form-control" required>
+                    <option value="" disabled selected>Selecione o Local</option>
+                    {% for mesa in opcoes_mesa %}
+                    <option value="{{ mesa }}">{{ mesa }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="computador_coleta">Computador de Coleta de Imagem?</label>
+                <select id="computador_coleta" name="computador_coleta" class="form-control" required>
+                    <option value="NÃO">NÃO</option>
+                    <option value="SIM">SIM</option>
                 </select>
             </div>
             
             <div class="form-group">
-                <label for="data_atual">Data Atual:</label>
-                <input type="text" id="data_atual" value="{{ data_de_hoje }}" disabled class="form-control disabled-input">
+                <label for="retaguarda_sim_nao">Retaguarda?</label>
+                <select id="retaguarda_sim_nao" name="retaguarda_sim_nao" class="form-control" required onchange="toggleRetaguardaDestino()">
+                    <option value="NÃO">NÃO</option>
+                    <option value="SIM">SIM</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="grupo_retaguarda_destino" style="display: none;">
+                <label for="retaguarda_destino">Destino Retaguarda:</label>
+                <select id="retaguarda_destino" name="retaguarda_destino" class="form-control">
+                    <option value="" disabled selected>Selecione o Destino</option>
+                    {% for destino in opcoes_retaguarda %}
+                    <option value="{{ destino }}">{{ destino }}</option>
+                    {% endfor %}
+                </select>
             </div>
             
             <div class="form-group">
-            </div>
-            
-            <div class="form-group">
-                <label for="hora_inicio">Horário de Início (HH:MM):</label>
-                <input type="time" id="hora_inicio" name="hora_inicio" required class="form-control">
+                <label for="hora_inicio">Hora de Início:</label>
+                <input type="time" id="hora_inicio" name="hora_inicio" class="form-control" required>
             </div>
 
             <div class="form-group">
-                <label for="hora_termino">Horário do Término (HH:MM):</label>
-                <input type="time" id="hora_termino" name="hora_termino" required class="form-control">
+                <label for="hora_termino">Hora de Término:</label>
+                <input type="time" id="hora_termino" name="hora_termino" class="form-control" required>
             </div>
 
             <div class="form-group form-group-full">
-                <label for="procedimento">Procedimento Realizado:</label>
-                <textarea id="procedimento" name="procedimento" required placeholder="Descreva o procedimento realizado..." class="form-control"></textarea>
+                <label for="procedimento">Procedimento Realizado (Detalhado):</label>
+                <textarea id="procedimento" name="procedimento" class="form-control" required></textarea>
             </div>
 
-            <button type="submit" class="btn-primary">Registrar Procedimento</button>
+            <button type="submit" class="btn-primary">
+                <i class="fas fa-save"></i> Registrar Procedimento
+            </button>
         </form>
     </div>
 
     <script>
-        // Mantido para garantir usabilidade em campos de hora
-        document.getElementById('hora_inicio').addEventListener('click', function(e) {
-            e.preventDefault(); 
-            this.focus(); 
-        });
-        document.getElementById('hora_termino').addEventListener('click', function(e) {
-            e.preventDefault();
-            this.focus();
-        });
+        // Função para mostrar ou ocultar o campo Destino Retaguarda
+        function toggleRetaguardaDestino() {
+            const selectRetaguarda = document.getElementById('retaguarda_sim_nao');
+            const grupoDestino = document.getElementById('grupo_retaguarda_destino');
+            const selectDestino = document.getElementById('retaguarda_destino');
+
+            if (selectRetaguarda.value === 'SIM') {
+                grupoDestino.style.display = 'flex'; // Mostra o campo
+                selectDestino.setAttribute('required', 'required'); // Torna obrigatório
+            } else {
+                grupoDestino.style.display = 'none'; // Esconde o campo
+                selectDestino.removeAttribute('required'); // Remove a obrigatoriedade
+                selectDestino.value = ''; // Limpa o valor para evitar envio desnecessário
+            }
+        }
+        
+        // Aplica a função ao carregar a página para garantir o estado inicial
+        document.addEventListener('DOMContentLoaded', toggleRetaguardaDestino);
     </script>
 </body>
 </html>
