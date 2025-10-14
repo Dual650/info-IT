@@ -71,6 +71,13 @@ textarea {
     min-height: 100px; 
 }
 
+/* NOVO: Limita a altura dos dropdowns (<select>) */
+.form-control:not(textarea):not(input) {
+    /* Define a altura máxima para 6 opções visíveis + padding */
+    max-height: 150px; 
+    overflow-y: auto; /* Adiciona barra de rolagem se o conteúdo exceder 150px */
+}
+
 /* Botão Primário (Azul) */
 .btn-primary {
     padding: 10px 15px;
