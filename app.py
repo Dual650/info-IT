@@ -95,10 +95,11 @@ def registros_json():
     filtro_coleta = request.args.get('coleta')
 
     query = Registro.query
+    # A função aplicar_filtros já aplica o filtro e a ordenação (timestamp_registro.desc())
     query = aplicar_filtros(query, filtro_posto, filtro_data_html, filtro_coleta)
     
-    # CORREÇÃO: Ordenar por ID de forma decrescente para garantir que os mais recentes apareçam primeiro.
-    registros = query.order_by(Registro.id.desc()).all()
+    # CORREÇÃO: Removida a ordenação redundante que estava aqui.
+    registros = query.all()
 
     registros_formatados = []
     for r in registros:
