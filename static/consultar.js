@@ -32,7 +32,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let textoFoiAlterado = false;
     
     // 4. Atualizar link de exportação com os filtros atuais
-    btnExportar.href = `/exportar?${queryString}`;
+    if (btnExportar) {
+        btnExportar.href = `/exportar?${queryString}`;
+    }
     
     // 5. Função para abrir o Modal de Edição (Inicializa o rastreamento)
     window.editarProcedimento = function(registroId, procedimentoAtual) {
@@ -134,8 +136,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     const coletaSimNao = registro.computador_coleta === 'SIM';
                     const coletaCellClass = coletaSimNao ? 'fundo-sim' : 'fundo-nao';
-                    const retaguardaCellClass = ''; 
+                    const retaguardaCellClass = ''; // Mantido vazio, pois o valor retaguarda_display já é auto-explicativo
                     
+                    // Escapa o procedimento para ser passado corretamente na função JS
                     const procedimentoEscapado = registro.procedimento_completo
                         .replace(/'/g, "\\'")
                         .replace(/"/g, '\\"');
@@ -189,7 +192,13 @@ document.addEventListener('DOMContentLoaded', function() {
         modalHoraTermino.textContent = registro.hora_termino;
         modalContent.textContent = registro.procedimento_completo;
         
+        // Configura a URL de ação do formulário de apagar no modal de visualização
         formApagarIndividual.action = `/apagar/${registro.id}`;
+
+        // ADIÇÃO: Listener de confirmação para o botão de apagar dentro do modal
+        formApagarIndividual.onsubmit = function() {
+            return confirm(`Tem certeza que deseja apagar o registro ID ${registro.id}?`);
+        };
         
         modalVisualizacao.style.display = 'block';
     }
