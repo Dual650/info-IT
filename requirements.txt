@@ -4,3 +4,4 @@ pandas
 xlsxwriter
 gunicorn
 psycopg2-binary
+openpyxl
