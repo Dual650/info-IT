@@ -1,8 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
 from datetime import datetime
+from sqlalchemy import desc
 
 # Importações dos arquivos de configuração e modelo
-from config import POSTOS, OPCOES_MESA_ATENDIMENTO, OPCOES_LOCAIS, OPCOES_RETAGUARDA_DESTINO, OPCOES_SETORES_INTERNOS, RESUMO_MAX_CARACTERES, SENHA_MESTRA, aplicar_filtros
+# É CRUCIAL que o seu config.py defina estas variáveis:
+# POSTOS, OPCOES_LOCAIS, OPCOES_RETAGUARDA_DESTINO, OPCOES_SETORES_INTERNOS, RESUMO_MAX_CARACTERES, SENHA_MESTRA
+from config import POSTOS, OPCOES_LOCAIS, OPCOES_RETAGUARDA_DESTINO, OPCOES_SETORES_INTERNOS, RESUMO_MAX_CARACTERES, SENHA_MESTRA, aplicar_filtros 
 from models import db, Registro, init_db
 from export import exportar_registros_para_excel
 
@@ -29,11 +32,15 @@ def formulario_registro():
             
             # 1. Lógica de Consolidação: MESA/LOCAL (Salva em 'numero_mesa' no DB)
             mesa_sim_nao = request.form.get('mesa_sim_nao')
+            
+            # Se for SIM, o valor é o 'numero_mesa' (ex: "1", "35")
             if mesa_sim_nao == 'SIM':
                 numero_mesa_final = request.form.get('numero_mesa')
                 if not numero_mesa_final:
                     flash('ERRO: Se "Mesa?" é SIM, o Número da Mesa é obrigatório.', 'danger')
                     return redirect(url_for('formulario_registro'))
+            
+            # Se for NÃO, o valor é o 'local' (ex: "Sala médica")
             else: # mesa_sim_nao == 'NÃO'
                 numero_mesa_final = request.form.get('local')
                 if not numero_mesa_final:
@@ -42,11 +49,15 @@ def formulario_registro():
                 
             # 2. Lógica de Consolidação: RETAGUARDA (Salva em 'retaguarda_destino' no DB)
             retaguarda_sim_nao = request.form.get('retaguarda_sim_nao')
+            
+            # Se for SIM, o valor é o 'retaguarda_destino' (ex: "Detran", "Prefeitura")
             if retaguarda_sim_nao == 'SIM':
                 retaguarda_destino_final = request.form.get('retaguarda_destino')
                 if not retaguarda_destino_final:
                     flash('ERRO: Se "Retaguarda?" é SIM, o Destino (Órgão) é obrigatório.', 'danger')
                     return redirect(url_for('formulario_registro'))
+            
+            # Se for NÃO, o valor é o 'retaguarda_setor' (ex: "Atendimento", "COREN")
             else: # retaguarda_sim_nao == 'NÃO'
                 retaguarda_destino_final = request.form.get('retaguarda_setor')
                 if not retaguarda_destino_final:
@@ -80,17 +91,20 @@ def formulario_registro():
             flash(f'Erro ao registrar procedimento: {e}', 'danger')
             return redirect(url_for('formulario_registro'))
 
+    # Esta seção passa todas as listas de opções necessárias para o index.html
     return render_template(
         'index.html', 
         postos=POSTOS, 
         data_de_hoje=data_de_hoje,
-        opcoes_mesa=OPCOES_MESA_ATENDIMENTO, 
         opcoes_locais=OPCOES_LOCAIS,
         opcoes_retaguarda=OPCOES_RETAGUARDA_DESTINO,
-        opcoes_setores=OPCOES_SETORES_INTERNOS
+        opcoes_setores=OPCOES_SETORES_INTERNOS,
+        # Você pode querer definir uma lista de números de mesa no config.py
+        # Mas vamos gerá-la aqui como no seu original, de 1 a 35, se não estiver no config:
+        numeros_mesa=list(range(1, 36))
     )
 
-# --- Rota 2: Consulta de Registros Antigos ---
+# --- Rota 2: Consulta de Registros Antigos (Inalterada da última correção) ---
 @app.route('/consultar', methods=['GET'])
 def consultar_registro():
     filtro_posto = request.args.get('posto')
@@ -105,14 +119,15 @@ def consultar_registro():
         filtro_coleta=filtro_coleta or 'Todos'
     )
 
-# --- Rota: Retorna os dados em JSON para o JavaScript (COM NOVA FORMATAÇÃO) ---
+# --- Rota: Retorna os dados em JSON para o JavaScript (Inalterada da última correção) ---
 @app.route('/registros_json', methods=['GET'])
 def registros_json():
     filtro_posto = request.args.get('posto')
     filtro_data_html = request.args.get('data')
     filtro_coleta = request.args.get('coleta')
 
-    query = Registro.query
+    # Reordenar por timestamp_registro de forma descendente (mais recente primeiro)
+    query = Registro.query.order_by(desc(Registro.timestamp_registro))
     query = aplicar_filtros(query, filtro_posto, filtro_data_html, filtro_coleta)
     
     registros = query.all()
@@ -143,7 +158,6 @@ def registros_json():
         # 3. Coluna PROCEDIMENTO REALIZADO (Resumo, 7ª Coluna)
         procedimento_completo = r.procedimento
         procedimento_resumo = procedimento_completo
-        # RESUMO_MAX_CARACTERES é importado de config.py
         if len(procedimento_completo) > RESUMO_MAX_CARACTERES:
             procedimento_resumo = procedimento_completo[:RESUMO_MAX_CARACTERES] + '...'
             
@@ -157,13 +171,14 @@ def registros_json():
             'hora_termino': r.hora_termino, # 6ª Coluna
             'procedimento_resumo': procedimento_resumo, # 7ª Coluna (Resumo)
             'procedimento_completo': procedimento_completo, # Usado para Edição/Modal
-            'computador_coleta': r.computador_coleta # Usado para Modal
+            'computador_coleta': r.computador_coleta, # Usado para Modal
+            'retaguarda_sim_nao': r.retaguarda_sim_nao # Usado para o apagar individual
         })
 
     return jsonify(registros_formatados)
 
 
-# --- Rota: Editar, Apagar e Exportar (Rotas inalteradas) ---
+# --- Rotas de Ação (Apagar, Editar, Exportar) ---
 @app.route('/editar_procedimento/<int:registro_id>', methods=['POST'])
 def editar_procedimento(registro_id):
     try:
@@ -180,7 +195,6 @@ def editar_procedimento(registro_id):
         registro.procedimento = novo_procedimento
         db.session.commit()
         
-        # Retorna o novo resumo para o JS atualizar a linha da tabela
         procedimento_resumo = novo_procedimento
         if len(novo_procedimento) > RESUMO_MAX_CARACTERES:
             procedimento_resumo = novo_procedimento[:RESUMO_MAX_CARACTERES] + '...'
@@ -202,7 +216,7 @@ def apagar_registro(id):
         db.session.rollback()
         flash(f'Erro ao apagar registro {id}: {e}', 'danger')
         
-    # Redireciona para a consulta com os filtros atuais
+    # Usa os argumentos de filtro passados para redirecionar corretamente
     filtro_posto = request.args.get('posto')
     filtro_data = request.args.get('data')
     filtro_coleta = request.args.get('coleta')
