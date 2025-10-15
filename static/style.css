@@ -61,27 +61,36 @@ h1, h2, h3 {
 
 /* =====================================================
 CORREÇÃO CRUCIAL DO DROPDOWN (SELECT COM ATRIBUTO size)
-Esta regra tem alta especificidade para forçar o select a ser uma lista rolável.
+VERSÃO DE FORÇA BRUTA: Garante a visualização como lista rolável.
 =====================================================
 */
 .form-control[size] {
     /* Altura e Overflow: Força o elemento a respeitar o size e permite rolagem. */
     height: auto !important;
     min-height: 0 !important;
-    overflow-y: auto !important;
+    /* max-height de 150px é uma segurança para 5-6 opções */
+    max-height: 150px !important; 
+    overflow-y: scroll !important; /* Garante a barra de rolagem vertical SEMPRE */
     
-    /* Zera o padding vertical do .form-control para cálculo de altura correto */
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
+    /* Zera o padding do .form-control para cálculo de altura correto */
+    padding: 0 !important;
     
     /* Aparência: Remove a seta de dropdown (multi-browser) */
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
     background-image: none !important; 
+    
+    /* Adicionado o tamanho da fonte para ajudar a uniformizar a altura das opções */
+    font-size: 14px !important; 
     
     /* Opcional: Adiciona uma sombra interna para visualmente distinguir o campo de lista */
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); 
+}
+
+/* Regra extra para as opções dentro do select para controlar o espaçamento */
+.form-control[size] option {
+    padding: 8px 10px !important; /* Padding ajustado para cada opção */
 }
 
 
