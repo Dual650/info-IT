@@ -9,7 +9,6 @@ class Registro(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     
     # CAMPO DE ORDENAÇÃO CRÍTICO: Registra o momento exato da criação (GMT/UTC)
-    # ESSENCIAL para a ordenação correta na consulta.
     timestamp_registro = db.Column(db.DateTime, default=datetime.utcnow) 
     
     # Dados de Coleta e Ambiente
@@ -17,9 +16,11 @@ class Registro(db.Model):
     computador_coleta = db.Column(db.String(100), nullable=False)
     
     # Dados do Procedimento
-    numero_mesa = db.Column(db.String(20))
+    # Este campo agora armazena o Número da Mesa OU o Local
+    numero_mesa = db.Column(db.String(50)) 
     retaguarda_sim_nao = db.Column(db.String(10), default='NÃO') # SIM ou NÃO
-    retaguarda_destino = db.Column(db.String(100), nullable=True) # Nome do destino
+    # Este campo agora armazena o Destino/Órgão OU o Setor Interno
+    retaguarda_destino = db.Column(db.String(100), nullable=True) 
     
     # Dados de Tempo
     data = db.Column(db.String(10), nullable=False) # Ex: 01/05/2024
@@ -39,12 +40,10 @@ def init_db(app):
     database_url = os.environ.get('DATABASE_URL')
     
     if database_url:
-        # Substitui "postgres://" por "postgresql+psycopg2://" para compatibilidade moderna do SQLAlchemy
         if database_url.startswith("postgres://"):
             database_url = database_url.replace("postgres://", "postgresql+psycopg2://", 1)
         app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     else:
-        # SQLite para ambiente local (desenvolvimento)
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
     
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
