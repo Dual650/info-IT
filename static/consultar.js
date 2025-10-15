@@ -164,12 +164,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         </td>
                         <td class="acoes-cell">
-                            <button type="button" class="btn-acao btn-edit" title="Editar Ação Realizada" onclick="event.stopPropagation(); editarProcedimento(${registro.id}, '${procedimentoEscapado}');">
+                            <button type="button" class="btn-acao btn-warning" title="Editar Ação Realizada" onclick="event.stopPropagation(); editarProcedimento(${registro.id}, '${procedimentoEscapado}');">
                                 <i class="fas fa-edit"></i>
                             </button>
                             
                             <form method="POST" action="/apagar/${registro.id}" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja apagar o registro ID ${registro.id}?');">
-                                <button type="submit" class="btn-acao btn-danger-individual" title="Apagar registro individual" onclick="event.stopPropagation();">
+                                <button type="submit" class="btn-acao btn-danger" title="Apagar registro individual" onclick="event.stopPropagation();">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </form>
@@ -208,8 +208,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
         window.location.href = url + (params.length > 0 ? '?' + params.join('&') : '');
     }
+    
+    // 11. NOVO: Função para limpar filtros (TORNDA GLOBAL)
+    window.limparFiltros = function() {
+        // Redireciona para a página de consulta sem nenhum parâmetro
+        window.location.href = '/consultar';
+    }
 
-    // 11. Função para abrir o Modal de Visualização (TORNDA GLOBAL)
+
+    // 12. Função para abrir o Modal de Visualização (TORNDA GLOBAL)
     window.abrirModalVisualizacao = function(registro) {
         modalTitulo.textContent = `Detalhes do Registro (ID: ${registro.id})`; 
         modalPosto.textContent = registro.posto;
@@ -226,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
         modalVisualizacao.style.display = 'block';
     }
 
-    // 12. Fechar modal ao clicar fora dele (TORNDA GLOBAL)
+    // 13. Fechar modal ao clicar fora dele (TORNDA GLOBAL)
     window.onclick = function(event) {
         if (event.target == modalVisualizacao) {
             modalVisualizacao.style.display = "none";
@@ -239,7 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 13. Lógica para fechar as Flash Messages automaticamente
+    // 14. Lógica para fechar as Flash Messages automaticamente
     const flashAlerts = document.querySelectorAll('.alert-flash');
     flashAlerts.forEach(alert => {
         if (typeof bootstrap !== 'undefined' && bootstrap.Alert) {
