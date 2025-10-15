@@ -56,16 +56,40 @@
                 </div>
 
                 <div class="col-md-6 mb-4">
-                    <label for="numero_mesa" class="form-label">Mesa:</label>
-                    <select name="numero_mesa" id="numero_mesa" class="form-select" required>
-                        <option value="" disabled selected>Selecione a Mesa</option>
-                        {% for mesa in opcoes_mesa %}
-                            <option value="{{ mesa }}">{{ mesa }}</option>
-                        {% endfor %}
+                    <label for="mesa_sim_nao" class="form-label">Mesa de atendimento?:</label>
+                    <select name="mesa_sim_nao" id="mesa_sim_nao" class="form-select" required>
+                        <option value="" disabled>Selecione</option>
+                        <option value="SIM">SIM</option>
+                        <option value="NÃO" selected>NÃO</option>
                     </select>
                 </div>
             </div>
             
+            <div class="row" id="mesaLocalFields">
+                
+                <div class="col-12 mb-4" id="mesaNumeroDiv" style="display: none;">
+                    <label for="numero_mesa" class="form-label">Número da mesa:</label>
+                    <select name="numero_mesa" id="numero_mesa" class="form-select">
+                        <option value="" disabled selected>Selecione o número</option>
+                        {% for i in range(1, 36) %}
+                            <option value="{{ i }}">{{ i }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-12 mb-4" id="localDiv">
+                    <label for="local" class="form-label">Local?:</label>
+                    <select name="local" id="local" class="form-select">
+                        <option value="" disabled selected>Selecione o local</option>
+                        <option value="Sala médica">Sala médica</option>
+                        <option value="Exame teórico">Exame teórico</option>
+                        <option value="Recepção/Triagem">Recepção/Triagem</option>
+                        <option value="Despachante">Despachante</option>
+                        <option value="Serviços eletrônicos">Serviços eletrônicos</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="row">
                 <div class="col-md-6 mb-4">
                     <label for="retaguarda_sim_nao" class="form-label">Retaguarda?:</label>
