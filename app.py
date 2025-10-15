@@ -60,9 +60,9 @@ def formulario_registro():
             novo_registro = Registro(
                 posto=posto,
                 computador_coleta=computador_coleta,
-                numero_mesa=numero_mesa_final, # Consolidado
+                numero_mesa=numero_mesa_final, # Consolidado (Mesa ou Local)
                 retaguarda_sim_nao=retaguarda_sim_nao,
-                retaguarda_destino=retaguarda_destino_final, # Consolidado
+                retaguarda_destino=retaguarda_destino_final, # Consolidado (Destino ou Setor)
                 data=data_de_hoje,
                 hora_inicio=hora_inicio,
                 hora_termino=hora_termino,
@@ -105,7 +105,7 @@ def consultar_registro():
         filtro_coleta=filtro_coleta or 'Todos'
     )
 
-# --- Rota: Retorna os dados em JSON para o JavaScript (COM CORREÇÃO DE EXIBIÇÃO) ---
+# --- Rota: Retorna os dados em JSON para o JavaScript (COM NOVA FORMATAÇÃO) ---
 @app.route('/registros_json', methods=['GET'])
 def registros_json():
     filtro_posto = request.args.get('posto')
@@ -113,7 +113,6 @@ def registros_json():
     filtro_coleta = request.args.get('coleta')
 
     query = Registro.query
-    # Aplica filtros e, crucialmente, a ordenação pelo timestamp
     query = aplicar_filtros(query, filtro_posto, filtro_data_html, filtro_coleta)
     
     registros = query.all()
@@ -121,31 +120,44 @@ def registros_json():
     registros_formatados = []
     for r in registros:
         
+        # 1. Coluna MESA/LOCAL (3ª Coluna)
+        # O campo 'numero_mesa' no DB guarda o número da Mesa ou o nome do Local
+        if r.computador_coleta == 'SIM':
+            # Se for Coleta de Imagem, sobrescreve tudo
+            mesa_display = f"{r.numero_mesa} - Coleta de imagem" 
+        elif r.numero_mesa.isdigit():
+            # Se for Mesa de Atendimento (e não Coleta)
+            mesa_display = f"Mesa {r.numero_mesa}"
+        else:
+            # Se for Local (Mesa de atendimento? = NÃO)
+            mesa_display = r.numero_mesa 
+            
+        # 2. Coluna RETAGUARDA? (4ª Coluna)
+        # O campo 'retaguarda_destino' no DB guarda o Destino/Órgão ou o Setor
+        if r.retaguarda_sim_nao == 'SIM':
+            retaguarda_display = f"Retaguarda {r.retaguarda_destino}"
+        else:
+            # Se 'NÃO', exibe o Setor Interno (que está em retaguarda_destino)
+            retaguarda_display = f"Não ({r.retaguarda_destino})" 
+
+        # 3. Coluna PROCEDIMENTO REALIZADO (Resumo, 7ª Coluna)
         procedimento_completo = r.procedimento
         procedimento_resumo = procedimento_completo
         # RESUMO_MAX_CARACTERES é importado de config.py
         if len(procedimento_completo) > RESUMO_MAX_CARACTERES:
             procedimento_resumo = procedimento_completo[:RESUMO_MAX_CARACTERES] + '...'
             
-        # FORMATO DE EXIBIÇÃO: Usa o campo retaguarda_destino (consolidado)
-        if r.retaguarda_sim_nao == 'SIM':
-            # SIM: Destino/Órgão é o que está no DB
-            retaguarda_display = f"SIM ({r.retaguarda_destino})"
-        else:
-            # NÃO: Setor Interno é o que está no DB
-            retaguarda_display = f"NÃO ({r.retaguarda_destino})"
-
         registros_formatados.append({
+            'id': r.id,
             'posto': r.posto,
-            'computador_coleta': r.computador_coleta,
-            'numero_mesa': r.numero_mesa, # Agora contém Mesa OU Local
-            'retaguarda_display': retaguarda_display,
-            'data': r.data,
-            'hora_inicio': r.hora_inicio,
-            'hora_termino': r.hora_termino,
-            'procedimento_resumo': procedimento_resumo,
-            'procedimento_completo': procedimento_completo,
-            'id': r.id
+            'data': r.data, # 2ª Coluna
+            'mesa_display': mesa_display, # 3ª Coluna
+            'retaguarda_display': retaguarda_display, # 4ª Coluna
+            'hora_inicio': r.hora_inicio, # 5ª Coluna
+            'hora_termino': r.hora_termino, # 6ª Coluna
+            'procedimento_resumo': procedimento_resumo, # 7ª Coluna (Resumo)
+            'procedimento_completo': procedimento_completo, # Usado para Edição/Modal
+            'computador_coleta': r.computador_coleta # Usado para Modal
         })
 
     return jsonify(registros_formatados)
@@ -168,7 +180,12 @@ def editar_procedimento(registro_id):
         registro.procedimento = novo_procedimento
         db.session.commit()
         
-        return jsonify({'success': True, 'message': 'Registro atualizado com sucesso!'}), 200
+        # Retorna o novo resumo para o JS atualizar a linha da tabela
+        procedimento_resumo = novo_procedimento
+        if len(novo_procedimento) > RESUMO_MAX_CARACTERES:
+            procedimento_resumo = novo_procedimento[:RESUMO_MAX_CARACTERES] + '...'
+
+        return jsonify({'success': True, 'message': 'Registro atualizado com sucesso!', 'novo_resumo': procedimento_resumo}), 200
 
     except Exception as e:
         db.session.rollback()
@@ -185,7 +202,11 @@ def apagar_registro(id):
         db.session.rollback()
         flash(f'Erro ao apagar registro {id}: {e}', 'danger')
         
-    return redirect(url_for('consultar_registro'))
+    # Redireciona para a consulta com os filtros atuais
+    filtro_posto = request.args.get('posto')
+    filtro_data = request.args.get('data')
+    filtro_coleta = request.args.get('coleta')
+    return redirect(url_for('consultar_registro', posto=filtro_posto, data=filtro_data, coleta=filtro_coleta))
 
 @app.route('/apagar_todos', methods=['POST'])
 def apagar_todos_registros():
