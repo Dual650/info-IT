@@ -55,10 +55,9 @@ def formulario_registro():
             db.session.add(novo_registro)
             db.session.commit()
             
-            flash('Procedimento registrado com sucesso!', 'success')
-            
-            # CORREÇÃO CRÍTICA: Redireciona para a página de consulta, garantindo a atualização.
-            return redirect(url_for('consultar_registro'))
+            # ALTERAÇÃO: Redireciona de volta para a mesma página, limpando o formulário.
+            flash('Procedimento registrado com sucesso! Você pode consultar o registro agora.', 'success')
+            return redirect(url_for('formulario_registro'))
             
         except Exception as e:
             db.session.rollback()
