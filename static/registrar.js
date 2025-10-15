@@ -1,115 +1,87 @@
-// static/registrar.js
-
 document.addEventListener('DOMContentLoaded', function() {
-    
-    // ===========================================
-    // LÓGICA 1: RETAGUARDA (DESTINO / SETOR)
-    // ===========================================
 
-    // Função para exibir/ocultar o campo Destino (Órgão) OU o campo Setor Interno
-    function toggleRetaguardaDestinoSetor() {
-        var selectRetaguarda = document.getElementById('retaguarda_sim_nao');
-        
-        // Elementos SIM (Destino/Órgão)
-        var divDestino = document.getElementById('retaguardaDestinoDiv');
-        var selectDestino = document.getElementById('retaguarda_destino');
-        
-        // Elementos NÃO (Setor Interno)
-        var divSetor = document.getElementById('retaguardaSetorDiv');
-        var selectSetor = document.getElementById('retaguarda_setor');
+    // --- Elementos do formulário MESA / LOCAL ---
+    const mesaSimNaoSelect = document.getElementById('mesa_sim_nao');
+    const mesaNumeroDiv = document.getElementById('mesaNumeroDiv');
+    const localDiv = document.getElementById('localDiv');
+    const numeroMesaSelect = document.getElementById('numero_mesa');
+    const localSelect = document.getElementById('local');
 
-        if (selectRetaguarda.value === 'SIM') {
-            // Se SIM: Mostra Destino (Órgão), Oculta Setor
-            divDestino.style.display = 'block';
-            selectDestino.setAttribute('required', 'required');
-            
-            divSetor.style.display = 'none';
-            selectSetor.removeAttribute('required');
-            selectSetor.value = ''; // Reset
-            
-        } else if (selectRetaguarda.value === 'NÃO') {
-            // Se NÃO: Oculta Destino (Órgão), Mostra Setor Interno
-            divDestino.style.display = 'none';
-            selectDestino.removeAttribute('required');
-            selectDestino.value = ''; // Reset
-            
-            divSetor.style.display = 'block';
-            selectSetor.setAttribute('required', 'required');
-        } 
-        // Não há necessidade de 'else' (Seleção Vazia), pois o Flask exige um valor padrão
-    }
-    
-    // Inicialização da Retaguarda
-    const selectRetaguardaSimNao = document.getElementById('retaguarda_sim_nao');
-    if (selectRetaguardaSimNao) {
-        selectRetaguardaSimNao.addEventListener('change', toggleRetaguardaDestinoSetor);
-        toggleRetaguardaDestinoSetor(); // Chama no carregamento para definir o estado inicial
-    }
+    // --- Elementos do formulário RETAGUARDA ---
+    const retaguardaSimNaoSelect = document.getElementById('retaguarda_sim_nao');
+    const retaguardaDestinoDiv = document.getElementById('retaguardaDestinoDiv');
+    const retaguardaSetorDiv = document.getElementById('retaguardaSetorDiv');
+    const retaguardaDestinoSelect = document.getElementById('retaguarda_destino');
+    const retaguardaSetorSelect = document.getElementById('retaguarda_setor');
 
-
-    // ===========================================
-    // LÓGICA 2: MESA DE ATENDIMENTO / LOCAL
-    // ===========================================
-    
-    // Função para exibir o campo Número da Mesa ou o campo Local
-    function toggleMesaLocal() {
-        const selectMesaSimNao = document.getElementById('mesa_sim_nao');
-        const mesaNumeroDiv = document.getElementById('mesaNumeroDiv');
-        const localDiv = document.getElementById('localDiv');
-        const selectNumeroMesa = document.getElementById('numero_mesa');
-        const selectLocal = document.getElementById('local');
-
-        if (selectMesaSimNao.value === 'SIM') {
-            // Se SIM: Mostra Número da Mesa, Oculta Local
+    // Função para gerenciar a visibilidade MESA/LOCAL
+    function toggleMesaLocalFields() {
+        if (mesaSimNaoSelect.value === 'SIM') {
+            // Se SIM (Mesa de atendimento)
             mesaNumeroDiv.style.display = 'block';
             localDiv.style.display = 'none';
-            
-            // Requer o campo visível, desobriga e reseta o campo oculto
-            selectNumeroMesa.setAttribute('required', 'required');
-            selectLocal.removeAttribute('required');
-            selectLocal.value = ''; 
-
-        } else if (selectMesaSimNao.value === 'NÃO') {
-            // Se NÃO: Oculta Número da Mesa, Mostra Local
+            // Adiciona 'required' à mesa e remove do local
+            numeroMesaSelect.setAttribute('required', 'required');
+            localSelect.removeAttribute('required');
+        } else if (mesaSimNaoSelect.value === 'NÃO') {
+            // Se NÃO (Local)
             mesaNumeroDiv.style.display = 'none';
             localDiv.style.display = 'block';
-            
-            // Requer o campo visível, desobriga e reseta o campo oculto
-            selectLocal.setAttribute('required', 'required');
-            selectNumeroMesa.removeAttribute('required');
-            selectNumeroMesa.value = ''; 
-            
+            // Adiciona 'required' ao local e remove da mesa
+            localSelect.setAttribute('required', 'required');
+            numeroMesaSelect.removeAttribute('required');
         } else {
-            // Estado inicial/Seleção Vazia: Oculta ambos
+            // Estado inicial ou desabilitado
             mesaNumeroDiv.style.display = 'none';
             localDiv.style.display = 'none';
-            selectNumeroMesa.removeAttribute('required');
-            selectLocal.removeAttribute('required');
-            selectNumeroMesa.value = ''; 
-            selectLocal.value = ''; 
+            numeroMesaSelect.removeAttribute('required');
+            localSelect.removeAttribute('required');
         }
     }
 
-    // Inicialização da Mesa/Local
-    const selectMesaSimNao = document.getElementById('mesa_sim_nao');
-    if (selectMesaSimNao) {
-        selectMesaSimNao.addEventListener('change', toggleMesaLocal);
-        toggleMesaLocal(); // Chama no carregamento
-    }
-    
-    
-    // ===========================================
-    // LÓGICA 3: FLASH MESSAGES (Para o caso de o JS ser o único arquivo extra)
-    // ===========================================
-
-    // Lógica para fechar as Flash Messages automaticamente 
-    const flashAlerts = document.querySelectorAll('.alert-flash');
-    flashAlerts.forEach(alert => {
-        if (typeof bootstrap !== 'undefined' && bootstrap.Alert) {
-            setTimeout(() => {
-                const bsAlert = bootstrap.Alert.getInstance(alert) || new bootstrap.Alert(alert);
-                bsAlert.close();
-            }, 5000); 
+    // Função para gerenciar a visibilidade RETAGUARDA
+    function toggleRetaguardaFields() {
+        if (retaguardaSimNaoSelect.value === 'SIM') {
+            // Se SIM (Destino Externo)
+            retaguardaDestinoDiv.style.display = 'block';
+            retaguardaSetorDiv.style.display = 'none';
+            // Adiciona 'required' ao destino e remove do setor
+            retaguardaDestinoSelect.setAttribute('required', 'required');
+            retaguardaSetorSelect.removeAttribute('required');
+        } else if (retaguardaSimNaoSelect.value === 'NÃO') {
+            // Se NÃO (Setor Interno)
+            retaguardaDestinoDiv.style.display = 'none';
+            retaguardaSetorDiv.style.display = 'block';
+            // Adiciona 'required' ao setor e remove do destino
+            retaguardaSetorSelect.setAttribute('required', 'required');
+            retaguardaDestinoSelect.removeAttribute('required');
+        } else {
+            // Estado inicial ou desabilitado
+            retaguardaDestinoDiv.style.display = 'none';
+            retaguardaSetorDiv.style.display = 'none';
+            retaguardaDestinoSelect.removeAttribute('required');
+            retaguardaSetorSelect.removeAttribute('required');
         }
-    });
+    }
+
+    // Adiciona ouvintes de eventos
+    mesaSimNaoSelect.addEventListener('change', toggleMesaLocalFields);
+    retaguardaSimNaoSelect.addEventListener('change', toggleRetaguardaFields);
+
+    // Inicializa a visibilidade no carregamento da página com base nos valores selecionados (se houver)
+    // Os selects são inicializados com 'NÃO' selecionado no index.html, então eles chamarão a lógica para esconder
+    toggleMesaLocalFields();
+    toggleRetaguardaFields();
+
+    // --- Função para esconder o alerta flash após um tempo ---
+    const alertFlash = document.querySelector('.alert-flash');
+    if (alertFlash) {
+        setTimeout(() => {
+            alertFlash.classList.remove('show');
+            alertFlash.classList.add('fade');
+            // Remove o elemento do DOM após a transição de fade (opcional)
+            setTimeout(() => alertFlash.remove(), 500); 
+        }, 5000); // 5000 milissegundos = 5 segundos
+    }
+
 });
