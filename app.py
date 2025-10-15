@@ -19,6 +19,7 @@ init_db(app)
 # --- Rota 1: Registro de Novo Procedimento (Index) ---
 @app.route('/', methods=['GET', 'POST'])
 def formulario_registro():
+    # Formatando a data de hoje no padrão DD/MM/AAAA para o banco de dados
     data_de_hoje = datetime.now().strftime('%d/%m/%Y')
     
     if request.method == 'POST':
@@ -55,7 +56,9 @@ def formulario_registro():
             db.session.commit()
             
             flash('Procedimento registrado com sucesso!', 'success')
-            return redirect(url_for('formulario_registro'))
+            
+            # CORREÇÃO CRÍTICA: Redireciona para a página de consulta, garantindo a atualização.
+            return redirect(url_for('consultar_registro'))
             
         except Exception as e:
             db.session.rollback()
@@ -94,6 +97,7 @@ def registros_json():
 
     query = Registro.query
     query = aplicar_filtros(query, filtro_posto, filtro_data_html, filtro_coleta)
+    # Ordenar por timestamp de registro (ID) de forma decrescente para mostrar os mais recentes no topo
     registros = query.all()
 
     registros_formatados = []
@@ -213,4 +217,8 @@ def exportar_registros():
 
 
 if __name__ == '__main__':
+    # Cria as tabelas do BD, caso não existam
+    with app.app_context():
+        db.create_all()
+        
     app.run(debug=True)
