@@ -5,6 +5,8 @@
 :root {
     --primary-color: #004080; /* Azul Marinho Institucional */
     --secondary-color: #007bff; /* Azul Claro/Botão */
+    --success-color: #28a745; /* Verde para exportação/sucesso */
+    --danger-color: #dc3545; /* Vermelho para apagar */
     --background-color: #f4f6f9; /* Fundo Levemente Cinza */
     --text-dark: #343a40;
     --border-color: #e9ecef;
@@ -112,13 +114,11 @@ h1, h2, h3 {
 .filtro-item {
     display: flex;
     flex-direction: column;
-    /* Permite que o item cresça, mas com largura base */
     flex-grow: 1; 
     min-width: 150px; 
 }
 
 .botoes-filtro {
-    /* Garante que os botões fiquem alinhados verticalmente ao input */
     align-self: flex-end; 
     display: flex;
     gap: 10px;
@@ -141,14 +141,12 @@ h1, h2, h3 {
 
 /* Tabela */
 .table-responsive {
-    /* Controla a altura máxima da tabela no desktop */
     max-height: 75vh; 
     overflow-y: auto;
     border: 1px solid var(--border-color);
     border-radius: 8px;
 }
 #tabelaRegistros {
-    /* Garante que a tabela use 100% do container e não force o min-width */
     width: 100%; 
     margin-bottom: 0;
 }
@@ -161,7 +159,7 @@ h1, h2, h3 {
     z-index: 10;
     font-weight: 600;
     border: 1px solid #003366 !important;
-    white-space: nowrap; /* Impede que títulos quebrem */
+    white-space: nowrap; 
     text-align: center;
     padding: 10px 8px;
 }
@@ -172,17 +170,16 @@ h1, h2, h3 {
     vertical-align: middle;
 }
 #tabelaRegistros tbody tr:hover {
-    background-color: #e6f3ff; /* Fundo azul muito claro no hover */
+    background-color: #e6f3ff; 
     cursor: pointer;
 }
 
 /* Conteúdo se ajustando automaticamente */
 .procedimento-col {
-    /* Coluna do procedimento pode crescer mais */
     max-width: 300px;
     min-width: 150px;
     text-align: left !important;
-    overflow-wrap: break-word; /* Garante que o texto quebre */
+    overflow-wrap: break-word; 
 }
 
 /* Classes de cor SIM/NÃO */
@@ -200,17 +197,22 @@ h1, h2, h3 {
 
 /* Células de Ações (Ajuste para caber) */
 .acoes-cell {
-    white-space: nowrap; /* Impede que os botões de ação quebrem */
-    width: 1%; /* Tenta manter a coluna pequena */
+    white-space: nowrap; 
+    width: 1%; 
 }
 .btn-acao {
     padding: 6px 8px;
     font-size: 0.9em;
     margin: 0 2px;
+    border: 1px solid #ced4da;
+    background-color: #fff;
+    border-radius: 4px;
+}
+.btn-acao:hover {
+    background-color: var(--border-color);
 }
 .btn-edit { color: #ffc107; border: 1px solid #ffc107;}
-.btn-danger-individual { color: #dc3545; border: 1px solid #dc3545;}
-.btn-edit:hover, .btn-danger-individual:hover { background-color: #f8f9fa; }
+.btn-danger-individual { color: var(--danger-color); border: 1px solid var(--danger-color);}
 
 /* Botão de Visualização dentro da célula */
 .procedimento-resumo {
@@ -220,7 +222,6 @@ h1, h2, h3 {
     gap: 8px;
 }
 .procedimento-resumo span {
-    /* Garante que o texto ocupe o espaço e quebre a linha */
     flex-grow: 1;
     overflow: hidden; 
     text-overflow: ellipsis;
@@ -248,7 +249,6 @@ h1, h2, h3 {
 /* ========================================= */
 
 .modal {
-    /* Mantém o modal original do seu JS */
     display: none; 
     position: fixed; 
     z-index: 1050; 
@@ -313,7 +313,7 @@ h1, h2, h3 {
     font-size: 0.95em;
 }
 .modal-procedimento-content {
-    white-space: pre-wrap; /* Mantém quebras de linha e se ajusta ao container */
+    white-space: pre-wrap;
     background-color: #fff;
     border: 1px solid #ced4da;
     padding: 10px;
