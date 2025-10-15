@@ -1,7 +1,12 @@
 // static/registrar.js
 
 document.addEventListener('DOMContentLoaded', function() {
-    // 1. Função para exibir/ocultar o campo de destino da Retaguarda
+    
+    // ===========================================
+    // LÓGICA 1: RETAGUARDA
+    // ===========================================
+
+    // Função para exibir/ocultar o campo de destino da Retaguarda
     function toggleRetaguardaDestino() {
         var selectRetaguarda = document.getElementById('retaguarda_sim_nao');
         var divDestino = document.getElementById('retaguardaDestinoDiv');
@@ -17,20 +22,72 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // 2. Chama a função no carregamento inicial para o estado correto
-    toggleRetaguardaDestino();
-
-    // 3. Adiciona o listener de mudança ao select
+    // Inicialização da Retaguarda
     const selectRetaguardaSimNao = document.getElementById('retaguarda_sim_nao');
     if (selectRetaguardaSimNao) {
         selectRetaguardaSimNao.addEventListener('change', toggleRetaguardaDestino);
+        toggleRetaguardaDestino(); // Chama no carregamento
     }
 
 
-    // 4. Lógica para fechar as Flash Messages automaticamente (assumindo Bootstrap JS está carregado)
+    // ===========================================
+    // LÓGICA 2: MESA DE ATENDIMENTO / LOCAL
+    // ===========================================
+    
+    // Função para exibir o campo Número da Mesa ou o campo Local
+    function toggleMesaLocal() {
+        const selectMesaSimNao = document.getElementById('mesa_sim_nao');
+        const mesaNumeroDiv = document.getElementById('mesaNumeroDiv');
+        const localDiv = document.getElementById('localDiv');
+        const selectNumeroMesa = document.getElementById('numero_mesa');
+        const selectLocal = document.getElementById('local');
+
+        if (selectMesaSimNao.value === 'SIM') {
+            // Se SIM: Mostra Número da Mesa, Oculta Local
+            mesaNumeroDiv.style.display = 'block';
+            localDiv.style.display = 'none';
+            
+            // Requer o campo visível, desobriga e reseta o campo oculto
+            selectNumeroMesa.setAttribute('required', 'required');
+            selectLocal.removeAttribute('required');
+            selectLocal.value = ''; 
+
+        } else if (selectMesaSimNao.value === 'NÃO') {
+            // Se NÃO: Oculta Número da Mesa, Mostra Local
+            mesaNumeroDiv.style.display = 'none';
+            localDiv.style.display = 'block';
+            
+            // Requer o campo visível, desobriga e reseta o campo oculto
+            selectLocal.setAttribute('required', 'required');
+            selectNumeroMesa.removeAttribute('required');
+            selectNumeroMesa.value = ''; 
+            
+        } else {
+            // Estado inicial/Seleção Vazia: Oculta ambos
+            mesaNumeroDiv.style.display = 'none';
+            localDiv.style.display = 'none';
+            selectNumeroMesa.removeAttribute('required');
+            selectLocal.removeAttribute('required');
+            selectNumeroMesa.value = ''; 
+            selectLocal.value = ''; 
+        }
+    }
+
+    // Inicialização da Mesa/Local
+    const selectMesaSimNao = document.getElementById('mesa_sim_nao');
+    if (selectMesaSimNao) {
+        selectMesaSimNao.addEventListener('change', toggleMesaLocal);
+        toggleMesaLocal(); // Chama no carregamento
+    }
+    
+    
+    // ===========================================
+    // LÓGICA 3: FLASH MESSAGES
+    // ===========================================
+
+    // Lógica para fechar as Flash Messages automaticamente 
     const flashAlerts = document.querySelectorAll('.alert-flash');
     flashAlerts.forEach(alert => {
-        // Verifica se a classe 'bootstrap' está disponível
         if (typeof bootstrap !== 'undefined' && bootstrap.Alert) {
             setTimeout(() => {
                 const bsAlert = bootstrap.Alert.getInstance(alert) || new bootstrap.Alert(alert);
