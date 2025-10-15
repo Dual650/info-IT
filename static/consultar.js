@@ -1,263 +1,267 @@
-// static/consultar.js
+// ===============================================
+// FUNÇÕES AUXILIARES DE FORMATAÇÃO E RESUMO
+// ===============================================
 
-document.addEventListener('DOMContentLoaded', function() {
-    // 1. URL da API para buscar os dados (usa os filtros da URL atual)
-    const urlParams = new URLSearchParams(window.location.search);
-    const queryString = urlParams.toString();
-    const apiUrl = `/registros_json?${queryString}`;
+// Função auxiliar para limitar o texto e adicionar reticências
+function resumirProcedimento(texto, limite = 120) {
+    if (!texto) return '';
+    // Remove quebras de linha e múltiplos espaços em branco
+    const textoLimpo = texto.replace(/(\r\n|\n|\r)/gm, ' ').replace(/\s+/g, ' ').trim();
     
-    // 2. Elementos DOM
+    if (textoLimpo.length <= limite) {
+        return textoLimpo;
+    }
+    
+    // Retorna o resumo
+    return textoLimpo.substring(0, limite) + '...';
+}
+
+// ===============================================
+// FUNÇÃO PRINCIPAL DE RENDERIZAÇÃO DA TABELA
+// ===============================================
+
+function renderizarTabela(dados) {
     const corpoTabela = document.getElementById('corpoTabela');
+    const tabela = document.getElementById('tabelaRegistros');
     const avisoVazio = document.getElementById('avisoVazio');
-    const modalVisualizacao = document.getElementById('modalVisualizacao');
-    const modalEdicao = document.getElementById('modalEdicao'); 
-    const modalApagarTudo = document.getElementById('modalApagarTudo');
 
-    // Referências do Modal de Edição
-    const editIdHidden = document.getElementById('editIdHidden');
-    const editProcedimento = document.getElementById('editProcedimento'); 
-    const formEditarProcedimento = document.getElementById('formEditarProcedimento');
-    
-    // Referências do Modal de Visualização
-    const modalTitulo = document.getElementById('modalTitulo');
-    const modalPosto = document.getElementById('modalPosto');
-    const modalMesa = document.getElementById('modalMesa');
-    const modalRetaguarda = document.getElementById('modalRetaguarda');
-    const modalColeta = document.getElementById('modalColeta');
-    const modalData = document.getElementById('modalData');
-    const modalHoraInicio = document.getElementById('modalHoraInicio');
-    const modalHoraTermino = document.getElementById('modalHoraTermino');
-    const modalContent = document.getElementById('modalProcedimentoContent');
-    const formApagarIndividual = document.getElementById('formApagarIndividual');
-    const btnExportar = document.getElementById('btnExportar');
+    // Limpa a tabela
+    corpoTabela.innerHTML = '';
 
-    // 3. Variável de estado para verificar se houve alteração
-    let textoFoiAlterado = false;
-    
-    // 4. Atualizar link de exportação com os filtros atuais
-    btnExportar.href = `/exportar?${queryString}`;
-    
-    // 5. Função para abrir o Modal de Edição (TORNDA GLOBAL)
-    window.editarProcedimento = function(registroId, procedimentoAtual) {
-        editIdHidden.value = registroId;
-        editProcedimento.value = procedimentoAtual;
-        editProcedimento.setAttribute('data-original-value', procedimentoAtual);
-        textoFoiAlterado = false;
+    if (dados.length === 0) {
+        tabela.style.display = 'none';
+        avisoVazio.style.display = 'block';
+        return;
+    }
+
+    // Oculta o aviso e mostra a tabela
+    avisoVazio.style.display = 'none';
+    tabela.style.display = 'table';
+
+    dados.forEach(registro => {
+        const tr = document.createElement('tr');
         
-        formEditarProcedimento.action = `/editar_procedimento/${registroId}`;
+        // Atributo para JS/Modal
+        tr.setAttribute('data-registro-id', registro.id); 
+        // A linha inteira é clicável para abrir o modal de visualização
+        tr.setAttribute('onclick', `abrirModalVisualizacao(${registro.id})`);
+
+        // ===============================================
+        // LÓGICA DE FORMATAÇÃO DAS NOVAS COLUNAS
+        // ===============================================
+
+        // 1. COLUNA MESA
+        let colunaMesa = '';
+        const numMesa = registro.numero_mesa || 'XX'; 
         
-        modalEdicao.style.display = 'block';
-        if(modalVisualizacao) modalVisualizacao.style.display = 'none';
-    }
-
-    // 6. Listener para rastrear alterações no campo de texto
-    if (editProcedimento) {
-        editProcedimento.addEventListener('input', function() {
-            const originalValue = editProcedimento.getAttribute('data-original-value');
-            textoFoiAlterado = this.value !== originalValue;
-        });
-    }
-
-    // 7. Função para tentar fechar o modal de edição (com confirmação) (TORNDA GLOBAL)
-    window.tentarFecharEdicao = function() {
-        if (textoFoiAlterado) {
-            const fechar = confirm("Você tem alterações não salvas. Deseja realmente fechar a janela e descartar as modificações?");
-            if (fechar) {
-                modalEdicao.style.display = 'none';
-                textoFoiAlterado = false; 
-            }
-        } else {
-            modalEdicao.style.display = 'none';
+        if (registro.coleta_imagem === 'SIM') {
+            // Regra 1: Coleta de imagem? = SIM
+            colunaMesa = `${numMesa} - Coleta de imagem`;
+        } 
+        else if (registro.mesa_atendimento === 'SIM') {
+            // Regra 2: Mesa de atendimento? = SIM
+            colunaMesa = `Mesa ${numMesa}`;
         }
-    }
+        else {
+            // Regra 3: Mesa de atendimento? = NÃO (Usa o campo 'Local')
+            colunaMesa = registro.local || 'N/D';
+        }
 
-
-    // 8. Listener para submissão do formulário de edição (AJAX)
-    if (formEditarProcedimento) {
-        formEditarProcedimento.addEventListener('submit', function(e) {
-            e.preventDefault(); 
-            
-            const registroId = editIdHidden.value;
-            const novoProcedimento = editProcedimento.value;
-            
-            fetch(`/editar_procedimento/${registroId}`, {
-                method: 'POST', 
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    'procedimento_completo': novoProcedimento 
-                })
-            })
-            .then(response => {
-                if (response.ok) {
-                    document.getElementById('modalEdicao').style.display = 'none';
-                    alert('Ação realizada atualizada com sucesso!');
-                    textoFoiAlterado = false;
-                    carregarRegistros(); 
-                } else {
-                    alert('Erro ao atualizar. Verifique a conexão e o servidor.');
-                }
-            })
-            .catch(error => {
-                console.error('Erro de rede:', error);
-                alert('Erro de conexão ao tentar atualizar o registro.');
-            });
-        });
-    }
-
-
-    // 9. Função para carregar e renderizar os dados (TORNDA GLOBAL)
-    window.carregarRegistros = function() {
-        if (!corpoTabela) return; // Evita erro se o elemento não existir
+        // 2. COLUNA RETAGUARDA?
+        let colunaRetaguarda = 'NÃO';
+        let classeRetaguarda = 'fundo-nao';
+        if (registro.retaguarda === 'SIM') {
+            const orgao = registro.qual_orgao || 'N/D';
+            colunaRetaguarda = `Retaguarda ${orgao}`;
+            classeRetaguarda = 'fundo-sim';
+        }
         
-        fetch(apiUrl)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Erro HTTP: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(registros => {
-                corpoTabela.innerHTML = ''; 
-
-                const tabelaRegistros = document.getElementById('tabelaRegistros');
-                if (registros.length === 0) {
-                    avisoVazio.style.display = 'block';
-                    if(tabelaRegistros) tabelaRegistros.style.display = 'none';
-                    return;
-                }
-
-                avisoVazio.style.display = 'none';
-                if(tabelaRegistros) tabelaRegistros.style.display = 'table';
-
-                registros.forEach(registro => {
-                    const row = corpoTabela.insertRow();
-                    
-                    const coletaSimNao = registro.computador_coleta === 'SIM';
-                    const coletaCellClass = coletaSimNao ? 'fundo-sim' : 'fundo-nao';
-                    const retaguardaCellClass = registro.retaguarda_display.toLowerCase().includes('sim') ? 'fundo-sim' : '';
-                    
-                    // Escapa o procedimento para o onclick
-                    const procedimentoEscapado = registro.procedimento_completo
-                        .replace(/'/g, "\\'")
-                        .replace(/"/g, '\\"');
-                    
-                    // Stringify e escape para passar o objeto completo no onclick de visualização
-                    const registroJsonEscapado = JSON.stringify(registro).replace(/"/g, '&quot;');
-                    
-                    row.innerHTML = `
-                        <td>${registro.id}</td> 
-                        <td>${registro.posto}</td>
-                        <td>${registro.numero_mesa}</td>
-                        <td class="${coletaCellClass}">${registro.computador_coleta}</td>
-                        <td class="${retaguardaCellClass}">${registro.retaguarda_display}</td>
-                        <td>${registro.data}</td>
-                        <td>${registro.hora_inicio}</td>
-                        <td>${registro.hora_termino}</td>
-                        <td class="procedimento-col">
-                            <div class="procedimento-resumo" title="${registro.procedimento_completo}">
-                                <span>${registro.procedimento_resumo}</span>
-                                <button type="button" class="btn btn-sm btn-outline-secondary p-0 px-1" title="Ver detalhes" onclick="event.stopPropagation(); abrirModalVisualizacao('${registroJsonEscapado}');">
-                                     <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </td>
-                        <td class="acoes-cell">
-                            <button type="button" class="btn-acao btn-warning" title="Editar Ação Realizada" onclick="event.stopPropagation(); editarProcedimento(${registro.id}, '${procedimentoEscapado}');">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            
-                            <form method="POST" action="/apagar/${registro.id}" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja apagar o registro ID ${registro.id}?');">
-                                <button type="submit" class="btn-acao btn-danger" title="Apagar registro individual" onclick="event.stopPropagation();">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </form>
-                        </td>
-                    `;
-                    
-                    // Adiciona listener na linha para abrir o modal de visualização (se não for botão de ação)
-                    row.addEventListener('click', function(event) {
-                        if (!event.target.closest('.btn-acao') && !event.target.closest('button')) {
-                            // Reverte o JSON escapado para objeto JS
-                            const registroObjeto = JSON.parse(registroJsonEscapado.replace(/&quot;/g, '"'));
-                            abrirModalVisualizacao(registroObjeto);
-                        }
-                    });
-                });
-            })
-            .catch(error => {
-                console.error('Erro ao buscar registros:', error);
-                corpoTabela.innerHTML = `<tr><td colspan="10">Erro ao carregar dados. Tente recarregar a página.</td></tr>`;
-                avisoVazio.style.display = 'none';
-                if(tabelaRegistros) tabelaRegistros.style.display = 'table';
-            });
-    }
-    
-    // 10. Função para aplicar filtros (Faz o redirecionamento com os filtros na URL) (TORNDA GLOBAL)
-    window.aplicarFiltros = function() {
-        const posto = document.getElementById('filtroPosto').value;
-        const data = document.getElementById('filtroData').value;
-        const coleta = document.getElementById('filtroColeta').value;
-
-        let url = '/consultar';
-        let params = [];
-        if (posto !== 'Todos') params.push(`posto=${posto}`);
-        if (data) params.push(`data=${data}`);
-        if (coleta !== 'Todos') params.push(`coleta=${coleta}`);
-
-        window.location.href = url + (params.length > 0 ? '?' + params.join('&') : '');
-    }
-    
-    // 11. NOVO: Função para limpar filtros (TORNDA GLOBAL)
-    window.limparFiltros = function() {
-        // Redireciona para a página de consulta sem nenhum parâmetro
-        window.location.href = '/consultar';
-    }
+        // 3. COLUNA PROCEDIMENTO (RESUMO)
+        const resumo = resumirProcedimento(registro.procedimento_completo);
 
 
-    // 12. Função para abrir o Modal de Visualização (TORNDA GLOBAL)
-    window.abrirModalVisualizacao = function(registro) {
-        modalTitulo.textContent = `Detalhes do Registro (ID: ${registro.id})`; 
-        modalPosto.textContent = registro.posto;
-        modalMesa.textContent = registro.numero_mesa;
-        modalRetaguarda.textContent = registro.retaguarda_display;
-        modalColeta.textContent = registro.computador_coleta;
-        modalData.textContent = registro.data;
-        modalHoraInicio.textContent = registro.hora_inicio;
-        modalHoraTermino.textContent = registro.hora_termino;
-        modalContent.textContent = registro.procedimento_completo;
+        // ===============================================
+        // MONTAGEM DAS CÉLULAS DA TABELA (8 Colunas no total)
+        // ===============================================
         
-        formApagarIndividual.action = `/apagar/${registro.id}`;
+        // Coluna 1: Posto
+        tr.insertCell().textContent = registro.posto;
+
+        // Coluna 2: Data
+        tr.insertCell().textContent = registro.data; 
+
+        // Coluna 3: Mesa
+        tr.insertCell().textContent = colunaMesa;
+
+        // Coluna 4: Retaguarda?
+        const cellRetaguarda = tr.insertCell();
+        cellRetaguarda.textContent = colunaRetaguarda;
+        cellRetaguarda.classList.add(classeRetaguarda);
+        cellRetaguarda.style.textAlign = 'center';
+
+        // Coluna 5: Horário de Início
+        tr.insertCell().textContent = registro.hora_inicio;
+
+        // Coluna 6: Horário do Término
+        tr.insertCell().textContent = registro.hora_termino;
+
+        // Coluna 7: Procedimento Realizado (Resumo)
+        const cellProcedimento = tr.insertCell();
+        cellProcedimento.classList.add('procedimento-col');
         
-        modalVisualizacao.style.display = 'block';
-    }
+        cellProcedimento.innerHTML = `
+            <div class="procedimento-resumo">
+                <span>${resumo}</span>
+            </div>
+        `;
+        // Impedir que o clique na célula dispare o modal se o clique original foi no TR
+        cellProcedimento.parentNode.removeAttribute('onclick');
+        tr.setAttribute('onclick', `abrirModalVisualizacao(${registro.id})`);
 
-    // 13. Fechar modal ao clicar fora dele (TORNDA GLOBAL)
-    window.onclick = function(event) {
-        if (event.target == modalVisualizacao) {
-            modalVisualizacao.style.display = "none";
-        }
-        if (event.target == modalEdicao) { 
-            tentarFecharEdicao();
-        }
-        if (event.target == modalApagarTudo) {
-            modalApagarTudo.style.display = "none";
-        }
-    }
+        // Coluna 8: Ações (Ícones de Edição e Apagar)
+        const cellAcoes = tr.insertCell();
+        cellAcoes.classList.add('acoes-cell');
+        
+        // Escapa aspas simples no procedimento completo para o onclick do JS
+        const procedimentoEscapado = registro.procedimento_completo ? registro.procedimento_completo.replace(/'/g, "\\'") : '';
 
-    // 14. Lógica para fechar as Flash Messages automaticamente
-    const flashAlerts = document.querySelectorAll('.alert-flash');
-    flashAlerts.forEach(alert => {
-        if (typeof bootstrap !== 'undefined' && bootstrap.Alert) {
-            setTimeout(() => {
-                const bsAlert = bootstrap.Alert.getInstance(alert) || new bootstrap.Alert(alert);
-                bsAlert.close();
-            }, 5000); 
-        }
+        cellAcoes.innerHTML = `
+            <button class="btn-acao btn-warning" title="Editar Procedimento" onclick="event.stopPropagation(); abrirModalEdicao(${registro.id}, '${procedimentoEscapado}')">
+                <i class="fas fa-edit"></i>
+            </button>
+            <form method="POST" action="/apagar/${registro.id}" style="display:inline;" onsubmit="event.stopPropagation(); return confirm('Tem certeza que deseja apagar o registro ${registro.id}?');">
+                <button type="submit" class="btn-acao btn-danger" title="Apagar Registro">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </form>
+        `;
+
+        corpoTabela.appendChild(tr);
     });
+}
 
+// ===============================================
+// FUNÇÕES DE FILTRO E CHAMADA DE DADOS (Exemplo)
+// ===============================================
 
-    // Inicia o carregamento dos registros ao carregar a página
-    carregarRegistros();
-});
+// OBSERVAÇÃO: A função 'carregarRegistros' deve ser ajustada 
+// no seu backend Flask para retornar todos os dados do formulário 
+// (posto, data, coleta_imagem, mesa_atendimento, numero_mesa, local, 
+// retaguarda, qual_orgao, hora_inicio, hora_termino, procedimento_completo, id)
+// para que a lógica acima funcione corretamente.
+
+function aplicarFiltros() {
+    const posto = document.getElementById('filtroPosto').value;
+    const data = document.getElementById('filtroData').value;
+    const coleta = document.getElementById('filtroColeta').value;
+    
+    // Supondo que você tenha uma URL de API para buscar dados filtrados
+    const url = `/api/registros?posto=${posto}&data=${data}&coleta=${coleta}`; 
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            renderizarTabela(data.registros); // Assumindo que a resposta JSON tem uma chave 'registros'
+        })
+        .catch(error => console.error('Erro ao carregar registros:', error));
+}
+
+function limparFiltros() {
+    document.getElementById('filtroPosto').value = 'Todos';
+    document.getElementById('filtroData').value = '';
+    document.getElementById('filtroColeta').value = 'Todos';
+    aplicarFiltros(); // Recarrega a tabela sem filtros
+}
+
+// Chamar a função de filtro ao carregar a página
+window.onload = function() {
+    aplicarFiltros();
+};
+
+// ===============================================
+// LÓGICA DE MODAIS (Ajustada para o novo formato)
+// ===============================================
+
+function abrirModalVisualizacao(id) {
+    const registro = dadosAtuais.find(r => r.id === id); // 'dadosAtuais' deve ser carregado pela sua função de filtro.
+    if (!registro) return;
+
+    document.getElementById('modalPosto').textContent = registro.posto || 'N/D';
+    document.getElementById('modalData').textContent = registro.data || 'N/D';
+
+    // Lógica para preencher o MODAL MESA (igual à lógica da tabela)
+    let modalMesaContent = '';
+    const numMesa = registro.numero_mesa || 'XX'; 
+    if (registro.coleta_imagem === 'SIM') {
+        modalMesaContent = `${numMesa} - Coleta de imagem`;
+    } else if (registro.mesa_atendimento === 'SIM') {
+        modalMesaContent = `Mesa ${numMesa}`;
+    } else {
+        modalMesaContent = registro.local || 'N/D';
+    }
+    document.getElementById('modalMesa').textContent = modalMesaContent;
+    
+    // Lógica para preencher o MODAL RETAGUARDA (igual à lógica da tabela)
+    let modalRetaguardaContent = 'NÃO';
+    if (registro.retaguarda === 'SIM') {
+        const orgao = registro.qual_orgao || 'N/D';
+        modalRetaguardaContent = `Retaguarda ${orgao}`;
+    }
+    document.getElementById('modalRetaguarda').textContent = modalRetaguardaContent;
+
+    document.getElementById('modalColeta').textContent = registro.coleta_imagem || 'N/D';
+    document.getElementById('modalHoraInicio').textContent = registro.hora_inicio || 'N/D';
+    document.getElementById('modalHoraTermino').textContent = registro.hora_termino || 'N/D';
+    document.getElementById('modalProcedimentoContent').textContent = registro.procedimento_completo || 'N/D';
+
+    // Atualiza o formulário de apagar individual no footer do modal
+    const formApagar = document.getElementById('formApagarIndividual');
+    formApagar.action = `/apagar/${registro.id}`; 
+
+    document.getElementById('modalVisualizacao').style.display = 'block';
+}
+
+let procedimentoOriginal = '';
+function abrirModalEdicao(id, procedimento) {
+    procedimentoOriginal = procedimento;
+    document.getElementById('editIdHidden').value = id;
+    document.getElementById('editProcedimento').value = procedimento;
+    
+    // Define a action do formulário para o ID correto
+    const formEditar = document.getElementById('formEditarProcedimento');
+    formEditar.action = `/editar/${id}`;
+    
+    document.getElementById('modalEdicao').style.display = 'block';
+}
+
+function tentarFecharEdicao() {
+    const procedimentoAtual = document.getElementById('editProcedimento').value;
+    if (procedimentoAtual !== procedimentoOriginal && procedimentoOriginal !== '') {
+        if (!confirm('Você tem alterações não salvas. Deseja descartá-las?')) {
+            return;
+        }
+    }
+    document.getElementById('modalEdicao').style.display = 'none';
+    procedimentoOriginal = ''; // Reseta a variável
+}
+
+// Variavel global para armazenar os dados e permitir o acesso pelos modais
+let dadosAtuais = []; 
+// Sobrescreva a função aplicarFiltros para preencher a variavel dadosAtuais
+// (Isso é crucial para o modal de visualização funcionar)
+
+function aplicarFiltros() {
+    const posto = document.getElementById('filtroPosto').value;
+    const data = document.getElementById('filtroData').value;
+    const coleta = document.getElementById('filtroColeta').value;
+    
+    const url = `/api/registros?posto=${posto}&data=${data}&coleta=${coleta}`; 
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            dadosAtuais = data.registros; // Preenche a variável global para uso dos modais
+            renderizarTabela(dadosAtuais);
+        })
+        .catch(error => console.error('Erro ao carregar registros:', error));
+}
