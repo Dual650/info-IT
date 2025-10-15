@@ -1,23 +1,20 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from app import app # Importa a instância do app Flask
-from config import DATABASE_URL
+from config import DATABASE_URL # Mantém a importação da URL aqui
 
-# Configuração do Banco de Dados
-app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+# 1. Cria a instância do SQLAlchemy SEM a aplicação (app)
+db = SQLAlchemy()
 
-# Definição do Modelo (Tabela) do Banco de Dados
+# 2. Definição do Modelo (Tabela) do Banco de Dados (Permanece igual)
 class Registro(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     posto = db.Column(db.String(50), nullable=False)
     computador_coleta = db.Column(db.String(3), nullable=False) # 'SIM' ou 'NÃO'
     
     # NOVOS CAMPOS ADICIONADOS
-    numero_mesa = db.Column(db.String(50), nullable=False) # Ex: 1 a 40, Sala médica, COREN, etc.
-    retaguarda_sim_nao = db.Column(db.String(4), nullable=False) # 'SIM' ou 'NÃO'
-    retaguarda_destino = db.Column(db.String(50), nullable=True) # Destino (apenas se SIM)
+    numero_mesa = db.Column(db.String(50), nullable=False)
+    retaguarda_sim_nao = db.Column(db.String(4), nullable=False)
+    retaguarda_destino = db.Column(db.String(50), nullable=True)
     
     data = db.Column(db.String(10), nullable=False) # 'DD/MM/YYYY'
     hora_inicio = db.Column(db.String(5), nullable=False)
@@ -28,6 +25,13 @@ class Registro(db.Model):
     def __repr__(self):
         return f"Registro('{self.posto}', '{self.data}', '{self.hora_inicio}')"
 
-# Cria as tabelas do banco de dados (Necessário deletar site.db se estiver usando localmente)
-with app.app_context():
-    db.create_all()
+# 3. Função para inicializar o DB que será chamada em app.py
+def init_db(app):
+    app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    db.init_app(app) # Conecta a instância db com a aplicação Flask
+
+    with app.app_context():
+        db.create_all()
+
+    return db
