@@ -27,26 +27,24 @@ h1, h2, h3 {
     max-width: 95%;
 }
 
-/* Flash Messages */
+/* Flash Messages (Ajustado para funcionar com as classes do Bootstrap no HTML) */
+.alert-flash {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050; /* Garante que fique acima de modais */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+/* Os estilos .success, .danger, etc., serão agora tratados pelas classes alert-success, alert-danger do Bootstrap.
+   As classes .flashes e .flashes li foram mantidas se você ainda as usa em outras partes. */
 .flashes {
     list-style: none;
-    padding: 10px 15px;
-    margin-bottom: 20px;
-    border-radius: 5px;
+    padding: 0;
+    margin: 0;
 }
 .flashes li {
     font-weight: bold;
     font-size: 1.1em;
-}
-.success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
-.danger, .warning {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
 }
 
 /* Estilos de Formulário (Inputs, Selects, Textareas) */
@@ -58,6 +56,30 @@ h1, h2, h3 {
     font-size: 14px;
     width: 100%;
 }
+
+/*
+ * =========================================
+ * ATUALIZADO: REGRAS PARA AJUSTAR A LARGURA DOS SELECTS
+ * =========================================
+ */
+.form-select {
+    /* Força o elemento a ser tão largo quanto o seu conteúdo mais longo */
+    width: max-content; 
+    /* Garante um tamanho mínimo razoável */
+    min-width: 150px;
+    /* Impede que fique maior que o container pai em layouts responsivos */
+    max-width: 100%; 
+}
+
+/* Ajuste específico para os selects da seção de filtro (consultar.html) */
+/* Se estiver dentro de .filtro-item, ele deve preencher a largura do item */
+.filtro-item .form-select {
+    width: 100%; 
+    min-width: 120px;
+    max-width: 100%;
+}
+
+
 /* CORREÇÃO DO DROPDOWN: Garante que os dropdowns que usam o atributo 'size' */
 /* apareçam como uma lista com barra de rolagem, se necessário. */
 select[size] {
@@ -224,6 +246,9 @@ textarea {
 /* ESTILOS DA INDEX.HTML (Formulário) */
 /* ========================================= */
 
+/* OBS: No HTML final, estamos usando as classes de grid e espaçamento do Bootstrap (row, col-md-6, mb-3),
+        então essa estrutura de GRID pode ser menos relevante, mas a mantemos para a compatibilidade
+        com seu código original. */
 .form-registro { 
     display: grid; 
     grid-template-columns: 1fr 1fr; 
@@ -290,15 +315,23 @@ textarea {
     margin-top: 20px;
 }
 
-
 /* Estilos da Tabela */
-.tabela-wrapper {
-    overflow-x: auto;
+.table-responsive {
+    /* Mantém a tabela rolável verticalmente se o conteúdo for muito longo */
+    max-height: 70vh; 
+    overflow-y: auto;
+}
+.tabela-cabecalho th {
+    /* Fixa o cabeçalho da tabela no topo da área rolável */
+    position: sticky;
+    top: 0;
+    background-color: #e9ecef; /* Cor do cabeçalho */
+    z-index: 10;
 }
 #tabelaRegistros {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 15px;
+    margin-top: 0; /* Removido o margin-top para ficar junto do wrapper */
     background-color: white;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     min-width: 800px;
@@ -311,7 +344,6 @@ textarea {
     padding: 10px;
     border: 1px solid #dee2e6; 
     font-size: 14px;
-    /* Remover cor de texto (deixando apenas o padrão #333 do body) */
     color: inherit; 
 }
 #tabelaRegistros th {
@@ -348,14 +380,21 @@ textarea {
 #tabelaRegistros .procedimento-resumo {
     text-align: left;
     max-width: 350px; 
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap; 
+    /* overflow: hidden; -- Removido para funcionar com o resumo cortado do Flask/Vue */
+    /* text-overflow: ellipsis; -- Removido */
+    /* white-space: nowrap; -- Removido */
+}
+/* Nova classe para a coluna de procedimento (sem resumo, usada na tabela Vue) */
+.procedimento-col {
+    max-width: 300px; 
+    word-break: break-word; /* Permite que palavras longas quebrem */
 }
 
 
 /* ========================================= */
 /* ESTILOS DO MODAL (Pop-up de Procedimento) */
+/* OBS: Estes estilos de modal nativos foram mantidos, mas a melhor prática 
+   no HTML final é usar as classes de modal do Bootstrap (modal, modal-dialog, etc.) */
 /* ========================================= */
 
 .modal {
@@ -483,7 +522,8 @@ textarea {
     }
     
     /* Faz o procedimento completo caber na impressão */
-    #tabelaRegistros .procedimento-resumo {
+    /* Remove a quebra forçada do resumo */
+    #tabelaRegistros .procedimento-col {
         white-space: normal;
         overflow: visible;
         max-width: none;
@@ -507,12 +547,11 @@ textarea {
 #tabelaRegistros td {
     padding: 8px 6px; /* Ajustado de 10px para 8px 6px */
     font-size: 0.8em; /* Fonte um pouco menor para caber mais conteúdo */
-    /* Mantém o white-space: nowrap para a tabela ser rolável horizontalmente */
 }
 
 /* Otimiza a coluna de Procedimento para telas pequenas, permitindo que ela quebre */
-#tabelaRegistros td.procedimento-resumo {
-    white-space: normal; /* Permite que o texto do resumo quebre a linha */
+#tabelaRegistros td.procedimento-col {
+    white-space: normal; /* Permite que o texto quebre a linha */
     max-width: 150px; /* Define uma largura máxima para não monopolizar a tela */
 }
 
@@ -598,20 +637,22 @@ textarea {
 /* Oculta colunas menos prioritárias em telas MUITO pequenas (Ex: iPhone 5/SE) */
 @media (max-width: 480px) {
     /* Oculta as colunas de Data, Início e Término */
-    #tabelaRegistros th:nth-child(5), /* Coluna Data */
-    #tabelaRegistros td:nth-child(5),
-    #tabelaRegistros th:nth-child(6), /* Coluna Início */
+    /* ATENÇÃO: Os índices devem ser ajustados se o seu Jinja renderizar o ID antes do Posto/Mesa, etc.
+       Estou usando a contagem do HTML que enviei anteriormente, onde Posto é 2, Mesa 3, Coleta 4, Retaguarda 5, Data 6, Início 7, Término 8. */
+    #tabelaRegistros th:nth-child(6), /* Coluna Data */
     #tabelaRegistros td:nth-child(6),
-    #tabelaRegistros th:nth-child(7), /* Coluna Término */
-    #tabelaRegistros td:nth-child(7) {
+    #tabelaRegistros th:nth-child(7), /* Coluna Início */
+    #tabelaRegistros td:nth-child(7),
+    #tabelaRegistros th:nth-child(8), /* Coluna Término */
+    #tabelaRegistros td:nth-child(8) {
         display: none;
     }
     
     /* Aumenta ligeiramente a largura do posto e da mesa para compensar */
-    #tabelaRegistros th:nth-child(1),
-    #tabelaRegistros td:nth-child(1),
     #tabelaRegistros th:nth-child(2),
-    #tabelaRegistros td:nth-child(2) {
+    #tabelaRegistros td:nth-child(2),
+    #tabelaRegistros th:nth-child(3),
+    #tabelaRegistros td:nth-child(3) {
         min-width: 70px;
     }
 }
