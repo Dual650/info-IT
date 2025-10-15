@@ -42,10 +42,10 @@
                     <input type="text" id="data" class="form-control" value="{{ data_de_hoje }}" disabled>
                     <input type="hidden" name="data" value="{{ data_de_hoje }}">
                 </div>
-
             </div>
 
-            <div class="row g-3 mb-4">
+            <h5 class="mt-4 mb-3 text-secondary">1. Localização do Atendimento</h5>
+            <div class="row g-3 mb-4 border p-3 rounded-3 bg-light">
                  <div class="col-md-4">
                     <label for="computador_coleta" class="form-label required">Computador de Coleta</label>
                     <select name="computador_coleta" id="computador_coleta" class="form-select" required>
@@ -56,25 +56,46 @@
                 </div>
                 
                 <div class="col-md-4">
-                    <label for="numero_mesa" class="form-label required">Mesa / Local de Atendimento</label>
-                    <select name="numero_mesa" id="numero_mesa" class="form-select" required>
-                        <option value="" disabled selected>Selecione a mesa/local...</option>
+                    <label for="mesa_sim_nao" class="form-label required">Atendimento em Mesa?</label>
+                    <select name="mesa_sim_nao" id="mesa_sim_nao" class="form-select" required>
+                        <option value="SIM" selected>SIM</option>
+                        <option value="NÃO">NÃO</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4" id="mesaNumeroDiv">
+                    <label for="numero_mesa" class="form-label required">Número da Mesa</label>
+                    <select name="numero_mesa" id="numero_mesa" class="form-select">
+                        <option value="" disabled selected>Selecione a mesa...</option>
                         {% for mesa in opcoes_mesa %}
                             <option value="{{ mesa }}">{{ mesa }}</option>
                         {% endfor %}
                     </select>
                 </div>
 
-                <div class="col-md-4">
-                    <label for="retaguarda_sim_nao" class="form-label required">Enviado para Retaguarda?</label>
-                    <select name="retaguarda_sim_nao" id="retaguarda_sim_nao" class="form-select" required onchange="toggleRetaguardaDestino(this.value)">
-                        <option value="NÃO" selected>NÃO</option>
-                        <option value="SIM">SIM</option>
+                <div class="col-12" id="localDiv" style="display:none;">
+                    <label for="local" class="form-label required">Local de Atendimento</label>
+                    <select name="local" id="local" class="form-select">
+                        <option value="" disabled selected>Selecione o local...</option>
+                        {% for local in opcoes_locais %}
+                            <option value="{{ local }}">{{ local }}</option>
+                        {% endfor %}
                     </select>
                 </div>
-                
-                <div class="col-12" id="divRetaguardaDestino" style="display:none;">
-                    <label for="retaguarda_destino" class="form-label required">Destino da Retaguarda</label>
+            </div>
+
+            <h5 class="mt-4 mb-3 text-secondary">2. Encaminhamento e Retaguarda</h5>
+            <div class="row g-3 mb-4 border p-3 rounded-3 bg-light">
+                <div class="col-md-4">
+                    <label for="retaguarda_sim_nao" class="form-label required">Encaminhado para Retaguarda?</label>
+                    <select name="retaguarda_sim_nao" id="retaguarda_sim_nao" class="form-select" required>
+                        <option value="SIM" selected>SIM</option>
+                        <option value="NÃO">NÃO</option>
+                    </select>
+                </div>
+
+                <div class="col-md-8" id="retaguardaDestinoDiv">
+                    <label for="retaguarda_destino" class="form-label required">Destino (Órgão) da Retaguarda</label>
                     <select name="retaguarda_destino" id="retaguarda_destino" class="form-select">
                         <option value="" disabled selected>Selecione o destino...</option>
                         {% for destino in opcoes_retaguarda %}
@@ -82,9 +103,20 @@
                         {% endfor %}
                     </select>
                 </div>
+
+                <div class="col-md-8" id="retaguardaSetorDiv" style="display:none;">
+                    <label for="retaguarda_setor" class="form-label required">Setor Interno de Resolução</label>
+                    <select name="retaguarda_setor" id="retaguarda_setor" class="form-select">
+                        <option value="" disabled selected>Selecione o setor...</option>
+                        {% for setor in opcoes_setores %}
+                            <option value="{{ setor }}">{{ setor }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
 
-            <div class="row g-3 mb-4">
+            <h5 class="mt-4 mb-3 text-secondary">3. Procedimento e Tempo</h5>
+            <div class="row g-3 mb-4 border p-3 rounded-3 bg-light">
                 <div class="col-md-6">
                     <label for="hora_inicio" class="form-label required">Hora de Início</label>
                     <input type="time" name="hora_inicio" id="hora_inicio" class="form-control" required>
@@ -114,24 +146,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Função para mostrar/esconder o campo de destino da retaguarda
-        function toggleRetaguardaDestino(value) {
-            const div = document.getElementById('divRetaguardaDestino');
-            const select = document.getElementById('retaguarda_destino');
-            if (value === 'SIM') {
-                div.style.display = 'block';
-                select.setAttribute('required', 'required'); 
-            } else {
-                div.style.display = 'none';
-                select.removeAttribute('required');
-                select.value = ""; 
-            }
-        }
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            toggleRetaguardaDestino(document.getElementById('retaguarda_sim_nao').value);
-        });
-    </script>
+    <script src="{{ url_for('static', filename='registrar.js') }}"></script>
 </body>
 </html>
