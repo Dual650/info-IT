@@ -263,32 +263,3 @@ body {
     
     .btn-consulta {
         width: 100%;
-        margin-bottom: 5px;
-    }
-
-    .filtro-container {
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .filtro-item {
-        min-width: 100%;
-    }
-    
-    .botoes-filtro {
-        width: 100%;
-        justify-content: stretch;
-    }
-
-    .botoes-filtro button {
-        flex-grow: 1;
-    }
-    
-    /* Oculta colunas menos essenciais em telas pequenas */
-    #tabelaRegistros th:nth-child(5), 
-    #tabelaRegistros td:nth-child(5),
-    #tabelaRegistros th:nth-child(6), 
-    #tabelaRegistros td:nth-child(6) {
-        display: none;
-    }
-}
