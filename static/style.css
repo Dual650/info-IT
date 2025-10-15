@@ -1,31 +1,49 @@
 /* ========================================= */
-/* ESTILOS GLOBAIS E DE FORMULÁRIO (REVISADO) */
+/* ESTILOS GLOBAIS E DE LAYOUT (FORMAL/RESPONSIVO) */
 /* ========================================= */
+
+:root {
+    --primary-color: #004080; /* Azul Marinho Institucional */
+    --secondary-color: #007bff; /* Azul Claro/Botão */
+    --background-color: #f4f6f9; /* Fundo Levemente Cinza */
+    --text-dark: #343a40;
+    --border-color: #e9ecef;
+}
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #eef1f5; /* Cinza claro suave */
-    color: #343a40; /* Texto escuro */
+    background-color: var(--background-color);
+    color: var(--text-dark);
 }
 
 h1, h2, h3 {
-    color: #004080; /* Azul Marinho (Mais profissional) */
+    color: var(--primary-color);
     font-weight: 600;
 }
 
-/* Containers Padronizados (Index e Consulta) */
-.container {
-    padding: 30px; /* Mais padding */
+/* Containers Centrais */
+.container-formal {
+    padding: 30px;
     background-color: #fff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra mais suave e evidente */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.08); /* Sombra suave para elevação */
     margin: 30px auto;
-    border-radius: 10px; /* Bordas arredondadas */
+    border-radius: 8px;
+    border-top: 5px solid var(--secondary-color); /* Detalhe institucional */
 }
+
+/* Index (Formulário) */
 .container-index { 
-    max-width: 700px; /* Levemente mais estreito para formulário */
+    max-width: 700px;
 }
-.container:not(.container-index) { 
-    max-width: 95%;
+
+/* Header da Página (Título e Botões) */
+.header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; 
+    margin-bottom: 25px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border-color); 
 }
 
 /* Flash Messages */
@@ -34,137 +52,187 @@ h1, h2, h3 {
     top: 20px;
     right: 20px;
     z-index: 1050;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     border-radius: 5px;
 }
 
-/* Estilos de Formulário (Ajustes de UX) */
+/* Formulário e Inputs */
 .form-control, .form-select {
     border: 1px solid #ced4da;
-    border-radius: 5px;
-    transition: border-color 0.3s, box-shadow 0.3s;
+    border-radius: 4px;
+    transition: border-color 0.2s;
 }
 .form-control:focus, .form-select:focus {
-    border-color: #80bdff;
+    border-color: var(--secondary-color);
     box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
-}
-
-/* REGRAS PARA AJUSTAR A LARGURA DOS SELECTS (Mantido, mas usando form-select do Bootstrap) */
-.form-select {
-    width: max-content; 
-    min-width: 150px;
-    max-width: 100%; 
-}
-
-.filtro-item .form-select {
-    width: 100%; 
-    min-width: 120px;
-}
-
-label { 
-    margin-bottom: 5px; 
-    font-weight: 600; /* Mais destaque no label */
-    color: #495057; 
 }
 .disabled-input {
     background-color: #f8f9fa !important;
 }
 
-/* Botão Primário (Azul) */
+/* Botões */
 .btn-primary {
-    background-color: #007bff; 
-    border-color: #007bff;
+    background-color: var(--secondary-color); 
+    border-color: var(--secondary-color);
     font-weight: 600;
-    transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
 }
 .btn-primary:hover {
     background-color: #0056b3;
     border-color: #0056b3;
-    transform: translateY(-1px);
 }
-.btn-secondary {
-    background-color: #6c757d;
-    border-color: #6c757d;
-}
-.btn-secondary:hover {
-    background-color: #5a6268;
-    border-color: #5a6268;
-}
-
-/* ========================================= */
-/* ESTRUTURA HEADER */
-/* ========================================= */
-
-.header-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: center; 
-    margin-bottom: 25px;
-    padding-bottom: 10px;
-    border-bottom: 3px solid #007bff; /* Linha de destaque */
-}
-
-.header-acoes {
-    display: flex;
-    align-items: center;
-    gap: 10px; /* Menos espaço */
-}
-
-/* Botão de Ação (Ícones) */
-.btn-acao {
-    border: 1px solid #ddd;
-    background-color: #f8f9fa;
-    padding: 8px; /* Mais compacto */
-    font-size: 1em;
-}
-.btn-acao:hover {
-    background-color: #e9ecef;
-    border-color: #ccc;
-}
-
-/* Cores dos Ícones */
-.btn-acao .fa-file-excel { color: #28a745; } /* Verde - Mais visível */
-.btn-acao .fa-print { color: #6c757d; } /* Cinza */
-.btn-acao .fa-trash-alt { color: #dc3545; } /* Vermelho */
-.btn-acao .fa-edit { color: #ffc107; } /* Amarelo */
-
-/* Botão de Consulta/Novo Registro (na Index) */
 .btn-consulta {
     background-color: #f8f9fa;
-    color: #004080; 
-    border: 1px solid #007bff;
+    color: var(--primary-color); 
+    border: 1px solid var(--primary-color);
     font-weight: 600;
+    transition: background-color 0.2s;
 }
 .btn-consulta:hover {
-    background-color: #e9f5ff;
+    background-color: var(--border-color);
 }
 
+
 /* ========================================= */
-/* ESTILOS DA CONSULTAR.HTML (Filtro e Tabela) */
+/* ESTILOS DA CONSULTAR.HTML (Filtros e Tabela) */
 /* ========================================= */
 
 .filtro-container {
     display: flex;
     flex-wrap: wrap; 
-    gap: 20px;
+    gap: 15px;
     align-items: flex-end;
-    margin-bottom: 30px;
+    margin-bottom: 25px;
     padding: 20px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
-    background-color: #ffffff; /* Fundo branco para se destacar do body */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
+
 .filtro-item {
     display: flex;
     flex-direction: column;
-    min-width: 180px;
+    /* Permite que o item cresça, mas com largura base */
+    flex-grow: 1; 
+    min-width: 150px; 
 }
+
 .botoes-filtro {
+    /* Garante que os botões fiquem alinhados verticalmente ao input */
     align-self: flex-end; 
     display: flex;
     gap: 10px;
 }
+
+/* Oculta o texto em telas pequenas para deixar espaço para os ícones */
+@media (max-width: 768px) {
+    .botoes-filtro span {
+        display: none;
+    }
+    .botoes-filtro button, .botoes-filtro a {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+    .filtro-item {
+        min-width: 100%;
+    }
+}
+
+
+/* Tabela */
+.table-responsive {
+    /* Controla a altura máxima da tabela no desktop */
+    max-height: 75vh; 
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+#tabelaRegistros {
+    /* Garante que a tabela use 100% do container e não force o min-width */
+    width: 100%; 
+    margin-bottom: 0;
+}
+
+.tabela-cabecalho th {
+    position: sticky;
+    top: 0;
+    background-color: var(--primary-color); 
+    color: white;
+    z-index: 10;
+    font-weight: 600;
+    border: 1px solid #003366 !important;
+    white-space: nowrap; /* Impede que títulos quebrem */
+    text-align: center;
+    padding: 10px 8px;
+}
+
+#tabelaRegistros td {
+    padding: 10px 8px;
+    font-size: 0.95em;
+    vertical-align: middle;
+}
+#tabelaRegistros tbody tr:hover {
+    background-color: #e6f3ff; /* Fundo azul muito claro no hover */
+    cursor: pointer;
+}
+
+/* Conteúdo se ajustando automaticamente */
+.procedimento-col {
+    /* Coluna do procedimento pode crescer mais */
+    max-width: 300px;
+    min-width: 150px;
+    text-align: left !important;
+    overflow-wrap: break-word; /* Garante que o texto quebre */
+}
+
+/* Classes de cor SIM/NÃO */
+.fundo-sim {
+    background-color: #d4edda !important; 
+    font-weight: bold;
+    color: #155724;
+}
+
+.fundo-nao {
+    background-color: #f8d7da !important; 
+    font-weight: bold;
+    color: #721c24;
+}
+
+/* Células de Ações (Ajuste para caber) */
+.acoes-cell {
+    white-space: nowrap; /* Impede que os botões de ação quebrem */
+    width: 1%; /* Tenta manter a coluna pequena */
+}
+.btn-acao {
+    padding: 6px 8px;
+    font-size: 0.9em;
+    margin: 0 2px;
+}
+.btn-edit { color: #ffc107; border: 1px solid #ffc107;}
+.btn-danger-individual { color: #dc3545; border: 1px solid #dc3545;}
+.btn-edit:hover, .btn-danger-individual:hover { background-color: #f8f9fa; }
+
+/* Botão de Visualização dentro da célula */
+.procedimento-resumo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+.procedimento-resumo span {
+    /* Garante que o texto ocupe o espaço e quebre a linha */
+    flex-grow: 1;
+    overflow: hidden; 
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Limita a 2 linhas para resumo */
+    -webkit-box-orient: vertical;
+    line-height: 1.4;
+    max-height: 2.8em;
+}
+
+
+/* Aviso Vazio */
 .aviso-vazio {
     padding: 40px;
     border: 2px dashed #adb5bd;
@@ -174,105 +242,89 @@ label {
     color: #6c757d;
 }
 
-/* Estilos da Tabela */
-.table-responsive {
-    max-height: 75vh; 
-    overflow-y: auto;
-}
-.tabela-cabecalho th {
-    position: sticky;
+
+/* ========================================= */
+/* ESTILOS DE MODAL (Customizados Formal) */
+/* ========================================= */
+
+.modal {
+    /* Mantém o modal original do seu JS */
+    display: none; 
+    position: fixed; 
+    z-index: 1050; 
+    left: 0;
     top: 0;
-    background-color: #004080; /* Azul escuro no cabeçalho */
-    color: white;
-    z-index: 10;
-    font-weight: 600;
-    border: 1px solid #003366 !important;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.6); 
+    padding-top: 50px;
 }
-#tabelaRegistros {
-    min-width: 900px; /* Garante que a tabela não fique muito estreita */
-    background-color: white;
-    border: 1px solid #dee2e6;
-}
-
-#tabelaRegistros th,
-#tabelaRegistros td {
-    text-align: center;
-    padding: 12px 8px;
-    border: 1px solid #f8f9fa; /* Borda mais clara para visual mais clean */
-    font-size: 14px;
-}
-
-#tabelaRegistros tbody tr:hover {
-    background-color: #e9f5ff; /* Fundo azul claro no hover */
-}
-
-/* Cores de Destaque SIM/NÃO */
-.fundo-sim {
-    background-color: #d4edda !important; /* Verde claro */
-    font-weight: bold;
-    color: #155724;
-}
-
-.fundo-nao {
-    background-color: #f8d7da !important; /* Vermelho claro */
-    font-weight: bold;
-    color: #721c24;
-}
-
-/* Estilo para Resumo de Procedimento */
-.procedimento-col {
-    text-align: left !important;
-    max-width: 350px; 
-    word-break: break-word;
-}
-.procedimento-resumo {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 5px;
-}
-.procedimento-resumo button {
-    flex-shrink: 0;
-}
-
-/* ========================================= */
-/* ESTILOS DE MODAL (Mantidos customizados, mas melhorados) */
-/* ========================================= */
 
 .modal-content {
-    /* Ajustes para o novo visual */
-    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    background-color: #fff;
+    margin: auto;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 700px; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    animation-name: animatetop;
+    animation-duration: 0.4s
+}
+
+@keyframes animatetop {
+    from {top: -300px; opacity: 0}
+    to {top: 0; opacity: 1}
 }
 
 .modal-header {
-    /* Estilo para cabeçalho do modal */
-    padding: 15px;
-    border-bottom: 1px solid #e9ecef;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px 8px 0 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #004080; /* Azul marinho */
-    color: white;
-    border-radius: 8px 8px 0 0;
+    border-bottom: 1px solid #003366;
 }
+
 .modal-header .close-button {
     color: white;
-    opacity: 0.8;
-    transition: opacity 0.2s;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
 }
-.modal-header .close-button:hover {
-    opacity: 1;
+
+.modal-body {
+    padding: 20px;
+    line-height: 1.6;
 }
-.modal-footer {
+.modal-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
     padding: 15px;
-    border-top: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.95em;
+}
+.modal-procedimento-content {
+    white-space: pre-wrap; /* Mantém quebras de linha e se ajusta ao container */
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    padding: 10px;
+    border-radius: 4px;
+    min-height: 100px;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid var(--border-color);
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-}
-
-.modal-info-grid {
-    border: 1px solid #e9ecef;
-    background-color: #f8f9fa;
-    padding: 15px;
 }
