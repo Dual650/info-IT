@@ -1,38 +1,36 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Procedimento Técnico</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>Registro de procedimento técnico</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
     <div class="container container-index">
-        
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <ul class="flashes">
-                {% for category, message in messages %}
-                    <li class="{{ category }}">{{ message }}</li>
-                {% endfor %}
-                </ul>
-            {% endif %}
-        {% endwith %}
-
         <div class="header-section header-index">
-            <div class="header-titulo">
-                <h2>Registro de Procedimento Técnico</h2>
-            </div>
+            <h2 class="header-titulo">Registro de Ação Técnica</h2>
             <div class="header-acoes">
-                <a href="{{ url_for('consultar_registro') }}" class="btn-primary btn-consulta" title="Ir para a página de consulta">
-                    <i class="fas fa-search"></i> Consultar Registros
+                <a href="{{ url_for('consultar_registro') }}" class="btn-primary btn-consulta">
+                    <i class="fas fa-search"></i>
+                    <span>Consultar Registros</span>
                 </a>
             </div>
         </div>
 
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul class="flashes">
+            {% for category, message in messages %}
+                <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+        {% endwith %}
+
         <form method="POST" action="{{ url_for('formulario_registro') }}" class="form-registro">
-            
+
             <div class="form-group">
                 <label for="posto">Posto de Trabalho:</label>
                 <select id="posto" name="posto" class="form-control" required>
@@ -42,90 +40,88 @@
                     {% endfor %}
                 </select>
             </div>
-
-            <div class="form-group">
-                <label for="data">Data do Registro:</label>
-                <input type="text" id="data" name="data" value="{{ data_de_hoje }}" class="form-control disabled-input" readonly>
-            </div>
             
             <div class="form-group">
-                <label for="numero_mesa">Nº da Mesa:</label>
-                <select id="numero_mesa" name="numero_mesa" class="form-control" required>
-                    <option value="" disabled selected>Selecione o Local</option>
+                <label for="numero_mesa">Número da Mesa/Local de Ação:</label>
+                <select id="numero_mesa" name="numero_mesa" class="listbox-filter" size="5" required>
                     {% for mesa in opcoes_mesa %}
                     <option value="{{ mesa }}">{{ mesa }}</option>
                     {% endfor %}
                 </select>
             </div>
 
-            <div class="form-group">
-                <label for="computador_coleta">Computador de Coleta de Imagem?</label>
-                <select id="computador_coleta" name="computador_coleta" class="form-control" required>
-                    <option value="NÃO">NÃO</option>
-                    <option value="SIM">SIM</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="retaguarda_sim_nao">Retaguarda?</label>
-                <select id="retaguarda_sim_nao" name="retaguarda_sim_nao" class="form-control" required onchange="toggleRetaguardaDestino()">
-                    <option value="NÃO">NÃO</option>
-                    <option value="SIM">SIM</option>
-                </select>
+            <div class="form-group form-group-compacto">
+                <label>Retaguarda?</label>
+                <div style="display: flex; gap: 15px;">
+                    <label style="font-weight: normal;"><input type="radio" name="retaguarda_sim_nao" value="SIM" required onclick="toggleRetaguarda(true)"> SIM</label>
+                    <label style="font-weight: normal;"><input type="radio" name="retaguarda_sim_nao" value="NÃO" required onclick="toggleRetaguarda(false)" checked> NÃO</label>
+                </div>
             </div>
 
-            <div class="form-group form-group-compacto" id="grupo_retaguarda_destino" style="display: none;">
-                <label for="retaguarda_destino">Qual?</label>
-                <select id="retaguarda_destino" name="retaguarda_destino" class="form-control">
-                    <option value="" disabled selected>Selecione o Destino</option>
+            <div class="form-group">
+                <label for="retaguarda_destino">Destino Retaguarda:</label>
+                <select id="retaguarda_destino" name="retaguarda_destino" class="form-control disabled-input" disabled>
+                    <option value="" selected>Selecione...</option>
                     {% for destino in opcoes_retaguarda %}
                     <option value="{{ destino }}">{{ destino }}</option>
                     {% endfor %}
                 </select>
             </div>
-            
-            <div class="form-group">
-                <label for="hora_inicio">Hora de Início:</label>
-                <input type="time" id="hora_inicio" name="hora_inicio" class="form-control" required>
+
+            <div class="form-group form-group-compacto">
+                <label>Computador de Coleta de Imagem?</label>
+                <div style="display: flex; gap: 15px;">
+                    <label style="font-weight: normal;"><input type="radio" name="computador_coleta" value="SIM" required> SIM</label>
+                    <label style="font-weight: normal;"><input type="radio" name="computador_coleta" value="NÃO" required checked> NÃO</label>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="hora_termino">Hora de Término:</label>
-                <input type="time" id="hora_termino" name="hora_termino" class="form-control" required>
+            <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <label for="hora_inicio">Hora Início:</label>
+                    <input type="time" id="hora_inicio" name="hora_inicio" class="form-control" required>
+                </div>
+                <div>
+                    <label for="hora_termino">Hora Término:</label>
+                    <input type="time" id="hora_termino" name="hora_termino" class="form-control" required>
+                </div>
             </div>
 
             <div class="form-group form-group-full">
-                <label for="procedimento">Procedimento Realizado (Detalhado):</label>
-                <textarea id="procedimento" name="procedimento" class="form-control" required></textarea>
+                <label for="procedimento">Procedimento Realizado (Detalhes):</label>
+                <textarea id="procedimento" name="procedimento" class="form-control" placeholder="Descreva detalhadamente o que foi feito..." required></textarea>
             </div>
 
             <button type="submit" class="btn-primary">
-                <i class="fas fa-save"></i> Registrar Procedimento
+                <i class="fas fa-save"></i>
+                Registrar Procedimento
             </button>
         </form>
     </div>
 
     <script>
-        // Função para mostrar ou ocultar o campo Destino Retaguarda
-        function toggleRetaguardaDestino() {
-            const selectRetaguarda = document.getElementById('retaguarda_sim_nao');
-            const grupoDestino = document.getElementById('grupo_retaguarda_destino');
-            const selectDestino = document.getElementById('retaguarda_destino');
-
-            if (selectRetaguarda.value === 'SIM') {
-                // Usamos 'flex' aqui para garantir que ele apareça, e confiamos no CSS
-                // para definir a direção como coluna.
-                grupoDestino.style.display = 'flex'; 
-                selectDestino.setAttribute('required', 'required'); 
+        // JS para habilitar/desabilitar o campo de Destino da Retaguarda
+        function toggleRetaguarda(isRetaguarda) {
+            const destinoSelect = document.getElementById('retaguarda_destino');
+            if (isRetaguarda) {
+                destinoSelect.disabled = false;
+                destinoSelect.classList.remove('disabled-input');
             } else {
-                grupoDestino.style.display = 'none'; 
-                selectDestino.removeAttribute('required');
-                selectDestino.value = ''; 
+                destinoSelect.disabled = true;
+                destinoSelect.classList.add('disabled-input');
+                destinoSelect.value = ""; // Limpa a seleção
             }
         }
         
-        // Aplica a função ao carregar a página para garantir o estado inicial
-        document.addEventListener('DOMContentLoaded', toggleRetaguardaDestino);
+        // Inicializa o estado com base no valor padrão (se houver, senão assume NÃO)
+        document.addEventListener('DOMContentLoaded', function() {
+            const retaguardaSimNao = document.querySelector('input[name="retaguarda_sim_nao"]:checked');
+            if (retaguardaSimNao && retaguardaSimNao.value === 'SIM') {
+                toggleRetaguarda(true);
+            } else {
+                 toggleRetaguarda(false);
+            }
+        });
     </script>
 </body>
 </html>
