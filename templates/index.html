@@ -36,7 +36,7 @@
         <form method="POST" action="/" class="p-3">
             
             <div class="mb-4">
-                <label for="posto" class="form-label">Posto de Atendimento</label>
+                <label for="posto" class="form-label">Posto de Atendimento:</label>
                 <select name="posto" id="posto" class="form-select" required>
                     <option value="" disabled selected>Selecione o Posto</option>
                     {% for posto in postos %}
@@ -47,16 +47,16 @@
 
             <div class="row">
                 <div class="col-md-6 mb-4">
-                    <label for="computador_coleta" class="form-label">Coleta de imagem?</label>
+                    <label for="computador_coleta" class="form-label">Coleta de imagem?:</label>
                     <select name="computador_coleta" id="computador_coleta" class="form-select" required>
-                        <option value="" disabled selected>Selecione</option>
+                        <option value="" disabled>Selecione</option>
                         <option value="SIM">SIM</option>
-                        <option value="NÃO">NÃO</option>
+                        <option value="NÃO" selected>NÃO</option>
                     </select>
                 </div>
 
                 <div class="col-md-6 mb-4">
-                    <label for="numero_mesa" class="form-label">Mesa</label>
+                    <label for="numero_mesa" class="form-label">Mesa:</label>
                     <select name="numero_mesa" id="numero_mesa" class="form-select" required>
                         <option value="" disabled selected>Selecione a Mesa</option>
                         {% for mesa in opcoes_mesa %}
@@ -68,16 +68,16 @@
             
             <div class="row">
                 <div class="col-md-6 mb-4">
-                    <label for="retaguarda_sim_nao" class="form-label">Retaguarda (SIM/NÃO)</label>
+                    <label for="retaguarda_sim_nao" class="form-label">Retaguarda?:</label>
                     <select name="retaguarda_sim_nao" id="retaguarda_sim_nao" class="form-select" required>
-                        <option value="" disabled selected>Selecione</option>
+                        <option value="" disabled>Selecione</option>
                         <option value="SIM">SIM</option>
-                        <option value="NÃO">NÃO</option>
+                        <option value="NÃO" selected>NÃO</option>
                     </select>
                 </div>
                 
                 <div class="col-md-6 mb-4" id="retaguardaDestinoDiv" style="display: none;">
-                    <label for="retaguarda_destino" class="form-label">Destino da Retaguarda</label>
+                    <label for="retaguarda_destino" class="form-label">Qual órgão?:</label>
                     <select name="retaguarda_destino" id="retaguarda_destino" class="form-select">
                         <option value="" disabled selected>Selecione o Destino</option>
                         {% for destino in opcoes_retaguarda %}
@@ -89,21 +89,21 @@
 
             <div class="row">
                 <div class="col-12 col-md-4 mb-4">
-                    <label for="data" class="form-label">Data</label>
+                    <label for="data" class="form-label">Data:</label>
                     <input type="text" name="data" id="data" class="form-control disabled-input" value="{{ data_de_hoje }}" readonly>
                 </div>
                 <div class="col-12 col-md-4 mb-4">
-                    <label for="hora_inicio" class="form-label">Hora Início</label>
+                    <label for="hora_inicio" class="form-label">Hora Início:</label>
                     <input type="time" name="hora_inicio" id="hora_inicio" class="form-control" required>
                 </div>
                 <div class="col-12 col-md-4 mb-4">
-                    <label for="hora_termino" class="form-label">Hora Término</label>
+                    <label for="hora_termino" class="form-label">Hora Término:</label>
                     <input type="time" name="hora_termino" id="hora_termino" class="form-control" required>
                 </div>
             </div>
 
             <div class="mb-4">
-                <label for="procedimento" class="form-label">Procedimento realizado</label>
+                <label for="procedimento" class="form-label">Procedimento realizado:</label>
                 <textarea name="procedimento" id="procedimento" class="form-control" rows="6" placeholder="Descreva em detalhes o procedimento realizado, problema encontrado e solução aplicada." required></textarea>
             </div>
 
