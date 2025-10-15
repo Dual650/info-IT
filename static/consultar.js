@@ -7,8 +7,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // 2. Elementos DOM
     const corpoTabela = document.getElementById('corpoTabela');
     const avisoVazio = document.getElementById('avisoVazio');
-    const modalVisualizacao = document.getElementById('modalProcedimento');
+    
+    // Modais customizados do seu JS
+    const modalVisualizacao = document.getElementById('modalVisualizacao'); // ID alterado para evitar conflito com Bootstrap
     const modalEdicao = document.getElementById('modalEdicao'); 
+    const modalApagarTudo = document.getElementById('modalApagarTudo'); // Novo ID para o modal de exclusão em massa
 
     // Referências do Modal de Edição
     const editIdHidden = document.getElementById('editIdHidden');
@@ -47,6 +50,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 5c. Exibe o modal
         modalEdicao.style.display = 'block';
+        
+        // Fecha o modal de visualização caso estivesse aberto
+        if(modalVisualizacao) modalVisualizacao.style.display = 'none';
     }
 
     // 6. Listener para rastrear alterações no campo de texto
@@ -109,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // 9. Função para carregar e renderizar os dados
-    function carregarRegistros() {
+    window.carregarRegistros = function() { // Tornada global para poder ser chamada pelo botão de filtro
         fetch(apiUrl)
             .then(response => {
                 if (!response.ok) {
@@ -132,6 +138,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 registros.forEach(registro => {
                     const row = corpoTabela.insertRow();
                     
+                    // Coloca o ID no primeiro TD, como na estrutura anterior que você tinha com 9 colunas.
+                    // Para bater com o CSS (Posto é 2, Mesa é 3, etc. - como o CSS conta a partir de 1 e o TH do ID é o primeiro)
+                    // Precisa garantir que a coluna ID exista.
+                    
                     const coletaSimNao = registro.computador_coleta === 'SIM';
                     const coletaCellClass = coletaSimNao ? 'fundo-sim' : 'fundo-nao';
                     const retaguardaCellClass = ''; 
@@ -140,11 +150,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         .replace(/'/g, "\\'")
                         .replace(/"/g, '\\"');
                     
+                    // O HTML está esperando 10 colunas (ID, Posto, Mesa, Coleta, Retaguarda, Data, Início, Término, Procedimento, Ações)
                     row.innerHTML = `
+                        <td>${registro.id}</td> 
                         <td>${registro.posto}</td>
                         <td>${registro.numero_mesa}</td>
-                        <td class="${retaguardaCellClass}">${registro.retaguarda_display}</td>
                         <td class="${coletaCellClass}">${registro.computador_coleta}</td>
+                        <td class="${retaguardaCellClass}">${registro.retaguarda_display}</td>
                         <td>${registro.data}</td>
                         <td>${registro.hora_inicio}</td>
                         <td>${registro.hora_termino}</td>
@@ -171,10 +183,26 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Erro ao buscar registros:', error);
-                corpoTabela.innerHTML = `<tr><td colspan="9">Erro ao carregar dados. Tente recarregar a página.</td></tr>`;
+                corpoTabela.innerHTML = `<tr><td colspan="10">Erro ao carregar dados. Tente recarregar a página.</td></tr>`;
                 avisoVazio.style.display = 'none';
                 document.getElementById('tabelaRegistros').style.display = 'table';
             });
+    }
+    
+    // 12. Função para aplicar filtros (simula a submissão do formulário no Flask)
+    window.aplicarFiltros = function() {
+        const posto = document.getElementById('filtroPosto').value;
+        const data = document.getElementById('filtroData').value;
+        const coleta = document.getElementById('filtroColeta').value;
+
+        let url = '{{ url_for('consultar_registro') }}';
+        let params = [];
+        if (posto !== 'Todos') params.push(`posto=${posto}`);
+        if (data) params.push(`data=${data}`);
+        if (coleta !== 'Todos') params.push(`coleta=${coleta}`);
+
+        // Redireciona a página para a URL com os filtros
+        window.location.href = url + (params.length > 0 ? '?' + params.join('&') : '');
     }
 
     // 10. Função para abrir o Modal de Visualização
@@ -189,6 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
         modalHoraTermino.textContent = registro.hora_termino;
         modalContent.textContent = registro.procedimento_completo;
         
+        // Atualiza a URL de ação do formulário de apagar individual (dentro do modal)
         formApagarIndividual.action = `/apagar/${registro.id}`;
         
         modalVisualizacao.style.display = 'block';
@@ -203,8 +232,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Se o clique for no fundo do modal de edição, chama a função de confirmação
             tentarFecharEdicao();
         }
-        if (event.target == document.getElementById('modalApagarTudo')) {
-            document.getElementById('modalApagarTudo').style.display = "none";
+        if (event.target == modalApagarTudo) { // Usa o novo ID
+            modalApagarTudo.style.display = "none";
         }
     }
 
