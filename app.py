@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, f
 from datetime import datetime
 
 # Importações dos arquivos de configuração e modelo
-from config import POSTOS, OPCOES_MESA, OPCOES_RETAGUARDA_DESTINO, RESUMO_MAX_CARACTERES, SENHA_MESTRA, aplicar_filtros
+from config import POSTOS, OPCOES_MESA_ATENDIMENTO, OPCOES_LOCAIS, OPCOES_RETAGUARDA_DESTINO, OPCOES_SETORES_INTERNOS, RESUMO_MAX_CARACTERES, SENHA_MESTRA, aplicar_filtros
 from models import db, Registro, init_db
 from export import exportar_registros_para_excel
 
@@ -27,15 +27,31 @@ def formulario_registro():
             posto = request.form.get('posto')
             computador_coleta = request.form.get('computador_coleta')
             
-            numero_mesa = request.form.get('numero_mesa')
+            # 1. Lógica de Consolidação: MESA/LOCAL (Salva em 'numero_mesa' no DB)
+            mesa_sim_nao = request.form.get('mesa_sim_nao')
+            if mesa_sim_nao == 'SIM':
+                numero_mesa_final = request.form.get('numero_mesa')
+                if not numero_mesa_final:
+                    flash('ERRO: Se "Mesa?" é SIM, o Número da Mesa é obrigatório.', 'danger')
+                    return redirect(url_for('formulario_registro'))
+            else: # mesa_sim_nao == 'NÃO'
+                numero_mesa_final = request.form.get('local')
+                if not numero_mesa_final:
+                    flash('ERRO: Se "Mesa?" é NÃO, o Local é obrigatório.', 'danger')
+                    return redirect(url_for('formulario_registro'))
+                
+            # 2. Lógica de Consolidação: RETAGUARDA (Salva em 'retaguarda_destino' no DB)
             retaguarda_sim_nao = request.form.get('retaguarda_sim_nao')
-            
-            retaguarda_destino = request.form.get('retaguarda_destino')
-            if retaguarda_sim_nao == 'NÃO':
-                retaguarda_destino = None
-            elif retaguarda_sim_nao == 'SIM' and not retaguarda_destino:
-                flash('ERRO: Se "Retaguarda?" for SIM, o Destino é obrigatório.', 'danger')
-                return redirect(url_for('formulario_registro'))
+            if retaguarda_sim_nao == 'SIM':
+                retaguarda_destino_final = request.form.get('retaguarda_destino')
+                if not retaguarda_destino_final:
+                    flash('ERRO: Se "Retaguarda?" é SIM, o Destino (Órgão) é obrigatório.', 'danger')
+                    return redirect(url_for('formulario_registro'))
+            else: # retaguarda_sim_nao == 'NÃO'
+                retaguarda_destino_final = request.form.get('retaguarda_setor')
+                if not retaguarda_destino_final:
+                    flash('ERRO: Se "Retaguarda?" é NÃO, o Setor Interno é obrigatório.', 'danger')
+                    return redirect(url_for('formulario_registro'))
 
             hora_inicio = request.form.get('hora_inicio')
             hora_termino = request.form.get('hora_termino')
@@ -44,9 +60,9 @@ def formulario_registro():
             novo_registro = Registro(
                 posto=posto,
                 computador_coleta=computador_coleta,
-                numero_mesa=numero_mesa,
+                numero_mesa=numero_mesa_final, # Consolidado
                 retaguarda_sim_nao=retaguarda_sim_nao,
-                retaguarda_destino=retaguarda_destino,
+                retaguarda_destino=retaguarda_destino_final, # Consolidado
                 data=data_de_hoje,
                 hora_inicio=hora_inicio,
                 hora_termino=hora_termino,
@@ -68,8 +84,10 @@ def formulario_registro():
         'index.html', 
         postos=POSTOS, 
         data_de_hoje=data_de_hoje,
-        opcoes_mesa=OPCOES_MESA, 
-        opcoes_retaguarda=OPCOES_RETAGUARDA_DESTINO
+        opcoes_mesa=OPCOES_MESA_ATENDIMENTO, 
+        opcoes_locais=OPCOES_LOCAIS,
+        opcoes_retaguarda=OPCOES_RETAGUARDA_DESTINO,
+        opcoes_setores=OPCOES_SETORES_INTERNOS
     )
 
 # --- Rota 2: Consulta de Registros Antigos ---
@@ -87,7 +105,7 @@ def consultar_registro():
         filtro_coleta=filtro_coleta or 'Todos'
     )
 
-# --- Rota: Retorna os dados em JSON para o JavaScript ---
+# --- Rota: Retorna os dados em JSON para o JavaScript (COM CORREÇÃO DE EXIBIÇÃO) ---
 @app.route('/registros_json', methods=['GET'])
 def registros_json():
     filtro_posto = request.args.get('posto')
@@ -95,7 +113,7 @@ def registros_json():
     filtro_coleta = request.args.get('coleta')
 
     query = Registro.query
-    # Aplica filtros e, crucialmente, a ordenação pelo timestamp (do config.py)
+    # Aplica filtros e, crucialmente, a ordenação pelo timestamp
     query = aplicar_filtros(query, filtro_posto, filtro_data_html, filtro_coleta)
     
     registros = query.all()
@@ -105,19 +123,22 @@ def registros_json():
         
         procedimento_completo = r.procedimento
         procedimento_resumo = procedimento_completo
+        # RESUMO_MAX_CARACTERES é importado de config.py
         if len(procedimento_completo) > RESUMO_MAX_CARACTERES:
             procedimento_resumo = procedimento_completo[:RESUMO_MAX_CARACTERES] + '...'
             
-        # FORMATO DE EXIBIÇÃO PARA CONSULTA: "SIM (Destino)" ou "NÃO"
-        if r.retaguarda_sim_nao == 'SIM' and r.retaguarda_destino:
-            retaguarda_display = f"{r.retaguarda_sim_nao} ({r.retaguarda_destino})"
+        # FORMATO DE EXIBIÇÃO: Usa o campo retaguarda_destino (consolidado)
+        if r.retaguarda_sim_nao == 'SIM':
+            # SIM: Destino/Órgão é o que está no DB
+            retaguarda_display = f"SIM ({r.retaguarda_destino})"
         else:
-            retaguarda_display = r.retaguarda_sim_nao
-            
+            # NÃO: Setor Interno é o que está no DB
+            retaguarda_display = f"NÃO ({r.retaguarda_destino})"
+
         registros_formatados.append({
             'posto': r.posto,
             'computador_coleta': r.computador_coleta,
-            'numero_mesa': r.numero_mesa,
+            'numero_mesa': r.numero_mesa, # Agora contém Mesa OU Local
             'retaguarda_display': retaguarda_display,
             'data': r.data,
             'hora_inicio': r.hora_inicio,
@@ -130,7 +151,7 @@ def registros_json():
     return jsonify(registros_formatados)
 
 
-# --- Rota: Editar Ação Realizada (AJAX POST) ---
+# --- Rota: Editar, Apagar e Exportar (Rotas inalteradas) ---
 @app.route('/editar_procedimento/<int:registro_id>', methods=['POST'])
 def editar_procedimento(registro_id):
     try:
@@ -139,11 +160,7 @@ def editar_procedimento(registro_id):
         
         if not novo_procedimento:
             return jsonify({'success': False, 'message': 'Procedimento não fornecido.'}), 400
-            
-    except Exception as e:
-        return jsonify({'success': False, 'message': 'Formato de dado inválido.'}), 400
 
-    try:
         registro = Registro.query.get(registro_id)
         if not registro:
             return jsonify({'success': False, 'message': 'Registro não encontrado.'}), 404
@@ -157,8 +174,6 @@ def editar_procedimento(registro_id):
         db.session.rollback()
         return jsonify({'success': False, 'message': 'Erro interno do servidor ao atualizar o BD.'}), 500
 
-
-# --- Rota: Apagar um Registro Individual (POST) ---
 @app.route('/apagar/<int:id>', methods=['POST'])
 def apagar_registro(id):
     registro_a_apagar = Registro.query.get_or_404(id)
@@ -172,8 +187,6 @@ def apagar_registro(id):
         
     return redirect(url_for('consultar_registro'))
 
-
-# --- Rota: Apagar TODOS os Registros (CRÍTICO - POST com Senha) ---
 @app.route('/apagar_todos', methods=['POST'])
 def apagar_todos_registros():
     senha_digitada = request.form.get('senha_confirmacao')
@@ -200,8 +213,6 @@ def apagar_todos_registros():
         flash(f'Erro CRÍTICO ao apagar todos os registros: {e}', 'danger')
         return redirect(url_for('consultar_registro'))
 
-
-# --- Rota: Exportar para XLSX (Usa a função de export.py) ---
 @app.route('/exportar', methods=['GET'])
 def exportar_registros():
     filtro_posto = request.args.get('posto')
@@ -212,9 +223,7 @@ def exportar_registros():
 
 
 if __name__ == '__main__':
-    # Cria as tabelas do BD, caso não existam
     with app.app_context():
-        # Esta linha tentará criar a tabela, incluindo o campo timestamp_registro
         db.create_all() 
         
     app.run(debug=True)
