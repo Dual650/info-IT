@@ -4,173 +4,337 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consulta de Registros</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+
 </head>
-<body>
-    <div class="container">
-        
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <ul class="flashes">
-                {% for category, message in messages %}
-                    <li class="{{ category }}">{{ message }}</li>
-                {% endfor %}
-                </ul>
-            {% endif %}
-        {% endwith %}
+<body class="bg-light">
 
-        <div class="header-section">
-            <div class="header-titulo">
-                <h2>Consulta e Exportação de Registros</h2>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show alert-flash" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="container-fluid py-5" id="app">
+        <h2 class="mb-4 text-center text-primary">Consulta e Filtro de Registros</h2>
+
+        <form id="formFiltros" class="bg-white p-3 rounded shadow-sm mb-4 filtro-container">
+            
+            <div class="filtro-item">
+                <label for="filtroPosto" class="form-label">Filtrar por Posto</label>
+                <select name="posto" id="filtroPosto" class="form-select" v-model="filtro.posto">
+                    <option value="Todos">Todos</option>
+                    {% for posto in postos %}
+                        <option value="{{ posto }}">{{ posto }}</option>
+                    {% endfor %}
+                </select>
             </div>
-            <div class="header-acoes">
-                <a href="{{ url_for('formulario_registro') }}" class="btn-primary btn-consulta" title="Voltar para a página de registro">
-                    <i class="fas fa-arrow-left"></i> Novo Registro
-                </a>
-                
-                <button class="btn-acao" onclick="window.print()" title="Imprimir a tabela">
-                    <i class="fas fa-print"></i> <span>Imprimir</span>
+            
+            <div class="filtro-item">
+                <label for="filtroData" class="form-label">Filtrar por Data</label>
+                <input type="date" name="data" id="filtroData" class="form-control" v-model="filtro.data">
+            </div>
+            
+            <div class="filtro-item">
+                <label for="filtroColeta" class="form-label">Coleta Imagem/Biometria</label>
+                <select name="coleta" id="filtroColeta" class="form-select" v-model="filtro.coleta">
+                    <option value="Todos">Todos</option>
+                    <option value="SIM">SIM</option>
+                    <option value="NÃO">NÃO</option>
+                </select>
+            </div>
+            
+            <div class="botoes-filtro">
+                <button type="button" class="btn btn-primary" @click="aplicarFiltros">
+                    <i class="fas fa-filter"></i> Aplicar Filtros
                 </button>
-                <a id="btnExportar" href="#" class="btn-acao" title="Exportar dados filtrados para Excel">
-                    <i class="fas fa-file-excel"></i> <span>Exportar (.xlsx)</span>
+                <a :href="exportarUrl" class="btn btn-success">
+                    <i class="fas fa-file-excel"></i> Exportar
                 </a>
-                <button type="button" class="btn-acao btn-danger" onclick="document.getElementById('modalApagarTudo').style.display='block'" title="Apagar TODOS os registros (Atenção!)">
-                    <i class="fas fa-trash-alt"></i> <span>Apagar Tudo</span>
+                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalApagarTodos">
+                    <i class="fas fa-trash-alt"></i> Apagar Todos
                 </button>
             </div>
-        </div>
 
-        <form id="formFiltro" method="GET" action="{{ url_for('consultar_registro') }}">
-            <div class="filtro-container">
-                <div class="filtro-item">
-                    <label for="posto">Posto:</label>
-                    <select id="posto" name="posto" class="form-control" **size="5"**>
-                        <option value="Todos" {% if filtro_posto == 'Todos' %}selected{% endif %}>Todos os Postos</option>
-                        {% for posto in postos %}
-                        <option value="{{ posto }}" {% if filtro_posto == posto %}selected{% endif %}>{{ posto }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="filtro-item">
-                    <label for="data">Data:</label>
-                    <input type="date" id="data" name="data" class="form-control" value="{{ filtro_data }}">
-                </div>
-
-                <div class="filtro-item">
-                    <label for="coleta">Coleta de imagem?</label>
-                    <select id="coleta" name="coleta" class="form-control">
-                        <option value="Todos" {% if filtro_coleta == 'Todos' %}selected{% endif %}>Todos</option>
-                        <option value="SIM" {% if filtro_coleta == 'SIM' %}selected{% endif %}>SIM</option>
-                        <option value="NÃO" {% if filtro_coleta == 'NÃO' %}selected{% endif %}>NÃO</option>
-                    </select>
-                </div>
-
-                <div class="botoes-filtro">
-                    <button type="submit" class="btn-primary"><i class="fas fa-filter"></i> Aplicar Filtros</button>
-                    <button type="button" class="btn-acao" onclick="window.location.href='{{ url_for('consultar_registro') }}'"><i class="fas fa-sync"></i> Limpar Filtros</button>
-                </div>
+            <div class="mt-3 w-100">
+                <a href="{{ url_for('formulario_registro') }}" class="btn btn-info btn-sm">
+                    <i class="fas fa-plus"></i> Novo Registro
+                </a>
             </div>
+
         </form>
 
-        <div class="tabela-wrapper">
-            <table id="tabelaRegistros">
-                <thead>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover table-bordered" id="tabelaRegistros">
+                <thead class="tabela-cabecalho">
                     <tr>
+                        <th>ID</th>
                         <th>Posto</th>
                         <th>Mesa</th>
-                        <th>Retaguarda</th>
                         <th>Coleta?</th>
+                        <th>Retaguarda</th>
                         <th>Data</th>
                         <th>Início</th>
                         <th>Término</th>
-                        <th class="procedimento-header">Ação realizada</th>
+                        <th class="procedimento-col">Procedimento</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
-                <tbody id="corpoTabela">
-                    </tbody>
-                
+                <tbody>
+                    <tr v-if="registros.length === 0">
+                        <td colspan="10" class="text-center">Nenhum registro encontrado com os filtros aplicados.</td>
+                    </tr>
+                    <tr v-for="registro in registros" :key="registro.id">
+                        <td>[[ registro.id ]]</td>
+                        <td>[[ registro.posto ]]</td>
+                        <td>[[ registro.numero_mesa ]]</td>
+                        <td :class="{'fundo-sim': registro.computador_coleta === 'SIM', 'fundo-nao': registro.computador_coleta === 'NÃO'}">
+                            [[ registro.computador_coleta ]]
+                        </td>
+                        <td>[[ registro.retaguarda_display ]]</td>
+                        <td>[[ registro.data ]]</td>
+                        <td>[[ registro.hora_inicio ]]</td>
+                        <td>[[ registro.hora_termino ]]</td>
+                        <td class="procedimento-col">
+                            [[ registro.procedimento_resumo ]]
+                            <button v-if="registro.procedimento_resumo.endsWith('...')" 
+                                    @click="verDetalhes(registro)" 
+                                    class="btn btn-sm btn-outline-secondary ms-1 p-0 px-1"
+                                    title="Ver detalhes">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button @click="editarProcedimento(registro)" 
+                                    class="btn btn-sm btn-outline-primary ms-1 p-0 px-1"
+                                    title="Editar procedimento">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                        <td class="acoes-cell">
+                            <form :action="'{{ url_for('apagar_registro', id=0) }}'.replace('0', registro.id)" method="POST" onsubmit="return confirm('Tem certeza que deseja apagar este registro?');">
+                                <button type="submit" class="btn btn-danger btn-sm btn-danger-individual" title="Apagar Registro">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
             </table>
-            
-            <div id="avisoVazio" class="aviso-vazio" style="display: none;">
-                Não há registros encontrados para os filtros aplicados.
-            </div>
         </div>
-
-    </div>
-
-    <div id="modalProcedimento" class="modal">
-        <div class="modal-content">
-            <span class="close-button" onclick="document.getElementById('modalProcedimento').style.display='none'">&times;</span>
-            <h3 id="modalTitulo">Detalhes do Registro</h3>
-            
-            <div class="modal-info-grid">
-                <p><strong>Posto:</strong> <span id="modalPosto"></span></p>
-                <p><strong>Mesa:</strong> <span id="modalMesa"></span></p>
-                <p><strong>Retaguarda:</strong> <span id="modalRetaguarda"></span></p>
-                <p><strong>Coleta de Imagem:</strong> <span id="modalColeta"></span></p>
-                <p><strong>Data:</strong> <span id="modalData"></span></p>
-                <p><strong>Início:</strong> <span id="modalHoraInicio"></span></p>
-                <p><strong>Término:</strong> <span id="modalHoraTermino"></span></p>
-                <span id="modalId" style="display: none;"></span> 
-            </div>
-
-            <h4>Ação realizada</h4>
-            <div id="modalProcedimentoContent" class="modal-procedimento-content"></div>
-            
-            <form id="formApagarIndividual" method="POST" action="">
-                <input type="hidden" name="_method" value="DELETE">
-                <button type="submit" class="btn-primary btn-danger-individual" style="margin-top: 15px;">
-                    <i class="fas fa-trash"></i> Apagar Este Registro
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <div id="modalEdicao" class="modal">
-        <div class="modal-content">
-            <span class="close-button" onclick="tentarFecharEdicao()">&times;</span> 
-            <h3>Edição da Ação Realizada</h3>
-
-            <form id="formEditarProcedimento" method="POST" action="">
-                <input type="hidden" id="editIdHidden" name="id_registro">
-                
-                <div class="form-group form-group-full" style="margin-top: 20px;">
-                    <label for="editProcedimento">Ação realizada</label>
-                    <textarea id="editProcedimento" name="procedimento_completo" class="form-control" rows="8" required data-original-value=""></textarea> 
+        
+        <div class="modal fade" id="modalDetalhes" tabindex="-1" aria-labelledby="modalDetalhesLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="modalDetalhesLabel">Detalhes do Procedimento</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>ID:</strong> [[ registroSelecionado.id ]]</p>
+                        <p><strong>Posto:</strong> [[ registroSelecionado.posto ]]</p>
+                        <hr>
+                        <p class="modal-procedimento-content">[[ registroSelecionado.procedimento_completo ]]</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        <button type="button" class="btn btn-primary" @click="editarProcedimento(registroSelecionado)" data-bs-dismiss="modal">
+                             <i class="fas fa-edit"></i> Editar
+                        </button>
+                    </div>
                 </div>
-                
-                <button type="submit" class="btn-primary" style="margin-top: 20px;">
-                    <i class="fas fa-save"></i> Salvar Edição
-                </button>
-            </form>
+            </div>
         </div>
-    </div>
-    
-    <div id="modalApagarTudo" class="modal">
-        <div class="modal-content">
-            <span class="close-button" onclick="document.getElementById('modalApagarTudo').style.display='none'">&times;</span>
-            <h3>Atenção: Exclusão Permanente!</h3>
-            <p>Tem certeza que deseja apagar **TODOS** os registros do banco de dados?</p>
-            <p style="color: red; font-weight: bold;">Essa ação é IRREVERSÍVEL.</p>
 
-            <form method="POST" action="{{ url_for('apagar_todos_registros') }}" style="margin-top: 20px;">
-                <label for="senha_confirmacao">Para confirmar, digite a senha mestra:</label>
-                <input type="password" id="senha_confirmacao" name="senha_confirmacao" class="form-control" required style="margin-bottom: 10px;">
-                
-                <input type="hidden" name="posto_filtro_hidden" value="{{ filtro_posto }}">
-                <input type="hidden" name="data_filtro_hidden" value="{{ filtro_data }}">
-                <input type="hidden" name="coleta_filtro_hidden" value="{{ filtro_coleta }}">
-
-                <button type="submit" class="btn-primary btn-danger">
-                    <i class="fas fa-exclamaqtion-triangle"></i> Sim, Apagar TUDO Agora
-                </button>
-            </form>
+        <div class="modal fade" id="modalEdicao" tabindex="-1" aria-labelledby="modalEdicaoLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="modalEdicaoLabel">Editar Procedimento (ID: [[ registroEmEdicao.id ]])</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>Posto:</strong> [[ registroEmEdicao.posto ]]</p>
+                        <p><strong>Data:</strong> [[ registroEmEdicao.data ]] | <strong>Mesa:</strong> [[ registroEmEdicao.numero_mesa ]]</p>
+                        <label for="novoProcedimento" class="form-label mt-2">Novo Procedimento:</label>
+                        <textarea id="novoProcedimento" class="form-control" rows="8" v-model="registroEmEdicao.procedimento_completo"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-success" @click="salvarEdicao">
+                            <i class="fas fa-save"></i> Salvar Edição
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
+        
+        <div class="modal fade" id="modalApagarTodos" tabindex="-1" aria-labelledby="modalApagarTodosLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" id="modalApagarTodosLabel">Confirmação de Exclusão em Massa</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form action="{{ url_for('apagar_todos_registros') }}" method="POST">
+                        <div class="modal-body">
+                            <p class="text-danger fw-bold">ATENÇÃO: Esta ação é irreversível e apagará TODOS os registros!</p>
+                            <div class="mb-3">
+                                <label for="senha_confirmacao" class="form-label">Digite a Senha Mestra para confirmar:</label>
+                                <input type="password" name="senha_confirmacao" class="form-control" id="senha_confirmacao" required>
+                                
+                                <input type="hidden" name="posto_filtro_hidden" :value="filtro.posto">
+                                <input type="hidden" name="data_filtro_hidden" :value="filtro.data">
+                                <input type="hidden" name="coleta_filtro_hidden" :value="filtro.coleta">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-danger">APAGAR TUDO</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <script src="{{ url_for('static', filename='consultar.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Inicializa o Vue
+        new Vue({
+            el: '#app',
+            delimiters: ['[[', ']]'], // Define delimitadores para evitar conflito com Jinja
+            data: {
+                registros: [],
+                // Valores iniciais puxados do Jinja (Flask)
+                filtro: {
+                    posto: '{{ filtro_posto }}',
+                    data: '{{ filtro_data or '' }}',
+                    coleta: '{{ filtro_coleta }}'
+                },
+                registroSelecionado: {},
+                registroEmEdicao: {}
+            },
+            computed: {
+                // Constrói a URL de exportação baseada nos filtros atuais
+                exportarUrl() {
+                    let url = '{{ url_for('exportar') }}';
+                    let params = [];
+                    if (this.filtro.posto !== 'Todos') {
+                        params.push(`posto=${this.filtro.posto}`);
+                    }
+                    if (this.filtro.data) {
+                        params.push(`data=${this.filtro.data}`);
+                    }
+                    if (this.filtro.coleta !== 'Todos') {
+                        params.push(`coleta=${this.filtro.coleta}`);
+                    }
+                    
+                    if (params.length > 0) {
+                        url += '?' + params.join('&');
+                    }
+                    return url;
+                }
+            },
+            mounted() {
+                // Carrega os dados ao iniciar a página (usando os filtros iniciais do Jinja)
+                this.aplicarFiltros();
+            },
+            methods: {
+                aplicarFiltros() {
+                    let url = '{{ url_for('registros_json') }}';
+                    let params = [];
+
+                    if (this.filtro.posto && this.filtro.posto !== 'Todos') {
+                        params.push(`posto=${this.filtro.posto}`);
+                    }
+                    if (this.filtro.data) {
+                        params.push(`data=${this.filtro.data}`);
+                    }
+                    if (this.filtro.coleta && this.filtro.coleta !== 'Todos') {
+                        params.push(`coleta=${this.filtro.coleta}`);
+                    }
+                    
+                    if (params.length > 0) {
+                        url += '?' + params.join('&');
+                    }
+                    
+                    fetch(url)
+                        .then(response => response.json())
+                        .then(data => {
+                            this.registros = data;
+                            
+                            // Atualiza a URL do navegador sem recarregar a página
+                            const novaUrl = new URL(window.location.href.split('?')[0]);
+                            params.forEach(param => {
+                                const [key, value] = param.split('=');
+                                novaUrl.searchParams.set(key, value);
+                            });
+                            history.pushState(null, '', novaUrl.toString());
+                        })
+                        .catch(error => console.error('Erro ao buscar registros:', error));
+                },
+                verDetalhes(registro) {
+                    this.registroSelecionado = { ...registro };
+                    const modalDetalhes = new bootstrap.Modal(document.getElementById('modalDetalhes'));
+                    modalDetalhes.show();
+                },
+                editarProcedimento(registro) {
+                    this.registroEmEdicao = { ...registro }; // Clona o objeto
+                    const modalEdicao = new bootstrap.Modal(document.getElementById('modalEdicao'));
+                    modalEdicao.show();
+                },
+                async salvarEdicao() {
+                    const id = this.registroEmEdicao.id;
+                    const novoProcedimento = this.registroEmEdicao.procedimento_completo;
+                    
+                    try {
+                        const response = await fetch(`/editar_procedimento/${id}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ procedimento_completo: novoProcedimento })
+                        });
+
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            // O ideal é recarregar a página para o Flask mostrar a flash message
+                            location.reload(); 
+                        } else {
+                            alert('Erro ao salvar edição: ' + result.message);
+                        }
+                    } catch (error) {
+                        console.error('Erro de rede/servidor:', error);
+                        alert('Erro de comunicação com o servidor ao salvar edição.');
+                    } finally {
+                        const modalEdicao = bootstrap.Modal.getInstance(document.getElementById('modalEdicao'));
+                        if (modalEdicao) {
+                            modalEdicao.hide();
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Timeout para as flash messages
+        const flashAlerts = document.querySelectorAll('.alert-flash');
+        flashAlerts.forEach(alert => {
+            setTimeout(() => {
+                const bsAlert = bootstrap.Alert.getInstance(alert) || new bootstrap.Alert(alert);
+                bsAlert.close();
+            }, 5000); // Fecha após 5 segundos
+        });
+    </script>
 </body>
 </html>
