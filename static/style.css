@@ -53,6 +53,13 @@ h1, h2, h3 {
     border-bottom: 2px solid var(--border-color); 
 }
 
+/* Garante que os botões dentro do header fiquem na horizontal e alinhados */
+.header-acoes {
+    display: flex; 
+    align-items: center;
+    gap: 10px; /* Adiciona espaçamento entre os botões */
+}
+
 /* Flash Messages */
 .alert-flash {
     position: fixed;
@@ -158,6 +165,9 @@ h1, h2, h3 {
     }
     .filtro-item {
         min-width: 100%;
+    }
+    .header-acoes {
+        flex-wrap: wrap; /* Permite que os botões quebrem a linha em telas muito pequenas */
     }
 }
 
