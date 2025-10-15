@@ -96,8 +96,9 @@ def registros_json():
 
     query = Registro.query
     query = aplicar_filtros(query, filtro_posto, filtro_data_html, filtro_coleta)
-    # Ordenar por timestamp de registro (ID) de forma decrescente para mostrar os mais recentes no topo
-    registros = query.all()
+    
+    # CORREÇÃO: Ordenar por ID de forma decrescente para garantir que os mais recentes apareçam primeiro.
+    registros = query.order_by(Registro.id.desc()).all()
 
     registros_formatados = []
     for r in registros:
