@@ -30,11 +30,13 @@ function showFlashMessage(message, category) {
     
     container.insertBefore(alertDiv, container.firstChild);
     
-    setTimeout(() => {
-        // Tenta fechar usando a API do Bootstrap
-        const bsAlert = bootstrap.Alert.getInstance(alertDiv) || new bootstrap.Alert(alertDiv);
-        bsAlert.close();
-    }, 5000);
+    // Auto-fechar o alerta
+    if (typeof bootstrap !== 'undefined' && bootstrap.Alert) {
+        setTimeout(() => {
+            const bsAlert = bootstrap.Alert.getInstance(alertDiv) || new bootstrap.Alert(alertDiv);
+            bsAlert.close();
+        }, 5000); 
+    }
 }
 
 
@@ -102,25 +104,31 @@ async function carregarRegistros() {
             
             registros.forEach(registro => {
                 const row = corpoTabela.insertRow();
-                // O campo retaguarda_display já traz o SIM/NÃO e o destino/setor
+                // Adiciona um atributo de dados com o ID do registro para referência
+                row.setAttribute('data-id', registro.id); 
+                
                 row.innerHTML = `
-                    <td>${registro.posto}</td>
-                    <td>${registro.data}</td>
-                    <td>${registro.numero_mesa} (${registro.computador_coleta})</td>
-                    <td>${registro.retaguarda_display}</td>
-                    <td>${registro.hora_inicio}</td>
-                    <td>${registro.hora_termino || '-'}</td>
-                    <td>
-                        <span class="procedimento-resumo" data-bs-toggle="tooltip" title="${registro.procedimento_completo}">
+                    <td>${registro.posto}</td> <td>${registro.data}</td> <td>${registro.mesa_display}</td> <td>${registro.retaguarda_display}</td> <td>${registro.hora_inicio}</td> <td>${registro.hora_termino || '-'}</td> <td class="procedimento-resumo-cell">
+                        <span class="procedimento-resumo" 
+                              data-bs-toggle="tooltip" 
+                              title="${registro.procedimento_completo}"
+                              data-procedimento-completo="${registro.procedimento_completo.replace(/"/g, '&quot;')}"
+                              >
                             ${registro.procedimento_resumo}
                         </span>
                     </td>
                     <td class="acoes-cell">
-                        <button class="btn btn-info btn-sm icon-action" onclick="abrirModalVisualizacao(${registro.id}, this)" title="Visualizar/Apagar">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn btn-warning btn-sm icon-action" onclick="abrirModalEdicao(${registro.id}, '${registro.procedimento_completo.replace(/'/g, "\\'")}')" title="Editar">
+                        <button class="btn btn-warning btn-sm icon-action" 
+                                onclick="abrirModalEdicao(${registro.id}, this)" 
+                                title="Editar Procedimento"
+                                >
                             <i class="fas fa-pen"></i>
+                        </button>
+                        <button class="btn btn-info btn-sm icon-action ms-1" 
+                                onclick="abrirModalVisualizacao(${registro.id}, this)" 
+                                title="Visualizar Detalhes/Apagar"
+                                >
+                            <i class="fas fa-eye"></i>
                         </button>
                     </td>
                 `;
@@ -144,31 +152,41 @@ async function carregarRegistros() {
  */
 function abrirModalVisualizacao(id, element) {
     const row = element.closest('tr'); // Encontra a linha da tabela
-    const cells = row.querySelectorAll('td');
-
-    // Mapeamento dos dados para a modal
-    const mesa_coleta_split = cells[2].textContent.match(/(.*) \((.*)\)/); // Ex: Mesa/Local (Coleta)
-    // Extrai o SIM/NÃO e o Destino/Setor (o app.py já envia formatado, ex: SIM (COREN) ou NÃO (RH))
-    const retaguarda_split = cells[3].textContent.match(/(SIM|NÃO)(?: \((.*)\))?/); 
-
-    document.getElementById('modalPosto').textContent = cells[0].textContent;
-    document.getElementById('modalData').textContent = cells[1].textContent;
+    const procedimentoSpan = row.querySelector('.procedimento-resumo');
     
-    document.getElementById('modalMesa').textContent = mesa_coleta_split ? mesa_coleta_split[1] : cells[2].textContent;
-    document.getElementById('modalColeta').textContent = mesa_coleta_split ? mesa_coleta_split[2] : 'NÃO';
+    // 1. Coleta dados da linha
+    const posto = row.cells[0].textContent;
+    const data = row.cells[1].textContent;
+    const mesaDisplay = row.cells[2].textContent;
+    const retaguardaDisplay = row.cells[3].textContent;
+    const horaInicio = row.cells[4].textContent;
+    const horaTermino = row.cells[5].textContent;
+    const procedimentoCompleto = procedimentoSpan.getAttribute('data-procedimento-completo');
 
-    document.getElementById('modalRetaguarda').textContent = retaguarda_split[0];
-    
-    document.getElementById('modalHoraInicio').textContent = cells[4].textContent;
-    document.getElementById('modalHoraTermino').textContent = cells[5].textContent;
-    
-    const procedimentoCompleto = row.querySelector('.procedimento-resumo').title;
+    // Tenta extrair Coleta? para a Modal de Visualização (Não está na coluna principal)
+    let coletaSimNao = 'NÃO';
+    if (mesaDisplay.includes('Coleta de imagem')) {
+        coletaSimNao = 'SIM';
+    } else if (mesaDisplay.includes('Mesa')) {
+        // Se for Mesa, mas não for Coleta de Imagem, Coleta é NÂO
+        coletaSimNao = 'NÃO';
+    }
+
+
+    // 2. Preenche a modal
+    document.getElementById('modalPosto').textContent = posto;
+    document.getElementById('modalData').textContent = data;
+    document.getElementById('modalMesaDisplay').textContent = mesaDisplay; 
+    document.getElementById('modalRetaguardaDisplay').textContent = retaguardaDisplay; 
+    document.getElementById('modalColeta').textContent = coletaSimNao;
+    document.getElementById('modalHoraInicio').textContent = horaInicio;
+    document.getElementById('modalHoraTermino').textContent = horaTermino;
     document.getElementById('modalProcedimentoContent').textContent = procedimentoCompleto;
 
-    // Atualiza o formulário de exclusão individual
+    // 3. Atualiza o formulário de exclusão individual (inclui filtros para redirecionamento)
     const formApagar = document.getElementById('formApagarIndividual');
-    formApagar.action = `/apagar/${id}`;
-    
+    formApagar.action = `/apagar/${id}?posto=${filtroPosto.value}&data=${filtroData.value}&coleta=${filtroColeta.value}`;
+
     modalVisualizacao.style.display = 'block';
 }
 
@@ -185,11 +203,20 @@ function handleApagarRegistro(event, form) {
 }
 
 /**
- * Abre a modal de edição.
+ * Abre a modal de edição, buscando o procedimento completo na linha da tabela.
  */
-function abrirModalEdicao(id, procedimento) {
-    document.getElementById('editProcedimento').value = procedimento;
-    formEditarProcedimento.action = `/editar_procedimento/${id}`;
+function abrirModalEdicao(id, element) {
+    const row = element.closest('tr');
+    const procedimentoSpan = row.querySelector('.procedimento-resumo');
+    
+    // Pega o procedimento completo do atributo de dados
+    const procedimentoCompleto = procedimentoSpan.getAttribute('data-procedimento-completo'); 
+
+    document.getElementById('editProcedimento').value = procedimentoCompleto;
+    
+    // O ID é necessário no handler de submissão do formulário
+    formEditarProcedimento.setAttribute('data-registro-id', id); 
+    
     modalEdicao.style.display = 'block';
 }
 
@@ -198,7 +225,8 @@ formEditarProcedimento.addEventListener('submit', async function(event) {
     event.preventDefault();
     
     const novoProcedimento = document.getElementById('editProcedimento').value;
-    const actionUrl = this.action;
+    const registroId = this.getAttribute('data-registro-id');
+    const actionUrl = `/editar_procedimento/${registroId}`;
 
     try {
         const response = await fetch(actionUrl, {
@@ -214,7 +242,30 @@ formEditarProcedimento.addEventListener('submit', async function(event) {
         if (result.success) {
             showFlashMessage('Procedimento atualizado com sucesso!', 'success');
             modalEdicao.style.display = 'none';
-            carregarRegistros(); // Recarrega a tabela para mostrar o item atualizado
+
+            // --- ATUALIZA A LINHA DA TABELA (7ª COLUNA) SEM RECARREGAR TUDO ---
+            const row = corpoTabela.querySelector(`tr[data-id="${registroId}"]`);
+            if (row) {
+                const resumoSpan = row.querySelector('.procedimento-resumo');
+                
+                // 1. Atualiza o resumo visível
+                resumoSpan.textContent = result.novo_resumo;
+                
+                // 2. Atualiza os atributos de dados (tooltip e completo)
+                resumoSpan.title = novoProcedimento;
+                resumoSpan.setAttribute('data-procedimento-completo', novoProcedimento);
+
+                // Re-inicializa o tooltip se necessário (depende da versão do Bootstrap)
+                if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                    const tooltipInstance = bootstrap.Tooltip.getInstance(resumoSpan);
+                    if (tooltipInstance) {
+                        tooltipInstance.dispose(); // Remove o antigo
+                    }
+                    new bootstrap.Tooltip(resumoSpan); // Cria o novo
+                }
+            }
+            // -------------------------------------------------------------------
+
         } else {
             showFlashMessage(result.message || 'Erro desconhecido ao atualizar.', 'danger');
         }
