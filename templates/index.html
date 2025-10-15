@@ -6,10 +6,12 @@
     <title>Registro de Procedimento</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
 </head>
 <body class="bg-light">
-
+    
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -21,62 +23,68 @@
         {% endif %}
     {% endwith %}
 
-    <div class="container-fluid container-formal py-4">
-        <h2 class="text-center mb-4 header-titulo"><i class="fas fa-edit me-2"></i> Registro de Procedimento</h2>
-        
-        <form method="POST" action="{{ url_for('formulario_registro') }}">
+    <div class="container container-formal container-index py-4"> 
+        <div class="header-section mb-4">
+            <h2 class="header-titulo">Registro de procedimento</h2>
+            <div class="header-acoes">
+                   <a href="{{ url_for('consultar_registro') }}" class="btn btn-consulta">
+                       <i class="fas fa-list-alt me-1"></i> Consultar
+                   </a>
+            </div>
+        </div>
 
-            <div class="row g-3 mb-4">
-                <div class="col-md-6">
-                    <label for="posto" class="form-label required">Posto de Trabalho</label>
-                    <select name="posto" id="posto" class="form-select" required>
-                        <option value="" disabled selected>Selecione o posto...</option>
-                        {% for posto in postos %}
-                            <option value="{{ posto }}">{{ posto }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="col-md-6">
-                    <label for="data" class="form-label">Data</label>
-                    <input type="text" id="data" class="form-control" value="{{ data_de_hoje }}" disabled>
-                    <input type="hidden" name="data" value="{{ data_de_hoje }}">
-                </div>
+        <form method="POST" action="/" class="p-3">
+            
+            <div class="mb-4">
+                <label for="posto" class="form-label">Posto:</label>
+                <select name="posto" id="posto" class="form-select" required>
+                    <option value="" disabled selected>Selecione o Posto</option>
+                    {# Utiliza a lista 'postos' passada pelo app.py #}
+                    {% for posto in postos %}
+                        <option value="{{ posto }}">{{ posto }}</option>
+                    {% endfor %}
+                </select>
             </div>
 
-            <h5 class="mt-4 mb-3 text-secondary">1. Localização do Atendimento</h5>
-            <div class="row g-3 mb-4 border p-3 rounded-3 bg-light">
-                 <div class="col-md-4">
-                    <label for="computador_coleta" class="form-label required">Computador de Coleta</label>
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <label for="computador_coleta" class="form-label">Coleta de imagem?:</label>
                     <select name="computador_coleta" id="computador_coleta" class="form-select" required>
-                        <option value="" disabled selected>Selecione...</option>
+                        <option value="" disabled>Selecione</option>
                         <option value="SIM">SIM</option>
-                        <option value="NÃO">NÃO</option>
-                    </select>
-                </div>
-                
-                <div class="col-md-4">
-                    <label for="mesa_sim_nao" class="form-label required">Atendimento em Mesa?</label>
-                    <select name="mesa_sim_nao" id="mesa_sim_nao" class="form-select" required>
-                        <option value="SIM" selected>SIM</option>
-                        <option value="NÃO">NÃO</option>
+                        <option value="NÃO" selected>NÃO</option>
                     </select>
                 </div>
 
-                <div class="col-md-4" id="mesaNumeroDiv">
-                    <label for="numero_mesa" class="form-label required">Número da Mesa</label>
+                <div class="col-md-6 mb-4">
+                    <label for="mesa_sim_nao" class="form-label">Mesa de atendimento?:</label>
+                    <select name="mesa_sim_nao" id="mesa_sim_nao" class="form-select" required>
+                        <option value="" disabled>Selecione</option>
+                        <option value="SIM">SIM</option>
+                        <option value="NÃO" selected>NÃO</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="row" id="mesaLocalFields">
+                
+                <div class="col-12 mb-4" id="mesaNumeroDiv" style="display: none;">
+                    <label for="numero_mesa" class="form-label">Número da mesa:</label>
                     <select name="numero_mesa" id="numero_mesa" class="form-select">
-                        <option value="" disabled selected>Selecione a mesa...</option>
-                        {% for mesa in opcoes_mesa %}
-                            <option value="{{ mesa }}">{{ mesa }}</option>
+                        <option value="" disabled selected>Selecione o número</option>
+                        {# Usa a lista 'numeros_mesa' passada pelo app.py (gerada de 1 a 35) #}
+                        {% for i in numeros_mesa %}
+                            <option value="{{ i }}">{{ i }}</option>
                         {% endfor %}
                     </select>
                 </div>
 
-                <div class="col-12" id="localDiv" style="display:none;">
-                    <label for="local" class="form-label required">Local de Atendimento</label>
+                <div class="col-12 mb-4" id="localDiv" style="display: none;">
+                    <label for="local" class="form-label">Local?:</label>
                     <select name="local" id="local" class="form-select">
-                        <option value="" disabled selected>Selecione o local...</option>
+                        <option value="" disabled selected>Selecione o local</option>
+                        {# Utiliza a lista 'opcoes_locais' passada pelo app.py. #}
+                        {# O seu HTML original tinha opções fixas, atualizei para usar a lista do config. #}
                         {% for local in opcoes_locais %}
                             <option value="{{ local }}">{{ local }}</option>
                         {% endfor %}
@@ -84,64 +92,64 @@
                 </div>
             </div>
 
-            <h5 class="mt-4 mb-3 text-secondary">2. Encaminhamento e Retaguarda</h5>
-            <div class="row g-3 mb-4 border p-3 rounded-3 bg-light">
-                <div class="col-md-4">
-                    <label for="retaguarda_sim_nao" class="form-label required">Encaminhado para Retaguarda?</label>
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <label for="retaguarda_sim_nao" class="form-label">Retaguarda?:</label>
                     <select name="retaguarda_sim_nao" id="retaguarda_sim_nao" class="form-select" required>
-                        <option value="SIM" selected>SIM</option>
-                        <option value="NÃO">NÃO</option>
+                        <option value="" disabled>Selecione</option>
+                        <option value="SIM">SIM</option>
+                        <option value="NÃO" selected>NÃO</option>
                     </select>
                 </div>
+                
+                <div class="col-md-6 mb-4">
+                    <div id="retaguardaDestinoDiv" style="display: none;">
+                        <label for="retaguarda_destino" class="form-label">Qual órgão?:</label>
+                        <select name="retaguarda_destino" id="retaguarda_destino" class="form-select">
+                            <option value="" disabled selected>Selecione o Destino</option>
+                            {# Utiliza a lista 'opcoes_retaguarda' passada pelo app.py #}
+                            {% for destino in opcoes_retaguarda %}
+                                <option value="{{ destino }}">{{ destino }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-                <div class="col-md-8" id="retaguardaDestinoDiv">
-                    <label for="retaguarda_destino" class="form-label required">Destino (Órgão) da Retaguarda</label>
-                    <select name="retaguarda_destino" id="retaguarda_destino" class="form-select">
-                        <option value="" disabled selected>Selecione o destino...</option>
-                        {% for destino in opcoes_retaguarda %}
-                            <option value="{{ destino }}">{{ destino }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="col-md-8" id="retaguardaSetorDiv" style="display:none;">
-                    <label for="retaguarda_setor" class="form-label required">Setor Interno de Resolução</label>
-                    <select name="retaguarda_setor" id="retaguarda_setor" class="form-select">
-                        <option value="" disabled selected>Selecione o setor...</option>
-                        {% for setor in opcoes_setores %}
-                            <option value="{{ setor }}">{{ setor }}</option>
-                        {% endfor %}
-                    </select>
+                    <div id="retaguardaSetorDiv" style="display: none;">
+                        <label for="retaguarda_setor" class="form-label">Qual setor?:</label>
+                        <select name="retaguarda_setor" id="retaguarda_setor" class="form-select">
+                            <option value="" disabled selected>Selecione o Setor</option>
+                             {# Utiliza a lista 'opcoes_setores' passada pelo app.py #}
+                            {% for setor in opcoes_setores %}
+                                <option value="{{ setor }}">{{ setor }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
             </div>
 
-            <h5 class="mt-4 mb-3 text-secondary">3. Procedimento e Tempo</h5>
-            <div class="row g-3 mb-4 border p-3 rounded-3 bg-light">
-                <div class="col-md-6">
-                    <label for="hora_inicio" class="form-label required">Hora de Início</label>
+            <div class="row">
+                <div class="col-12 col-md-4 mb-4">
+                    <label for="data" class="form-label">Data:</label>
+                    <input type="text" name="data" id="data" class="form-control disabled-input" value="{{ data_de_hoje }}" readonly>
+                </div>
+                <div class="col-12 col-md-4 mb-4">
+                    <label for="hora_inicio" class="form-label">Horário de início:</label>
                     <input type="time" name="hora_inicio" id="hora_inicio" class="form-control" required>
                 </div>
-
-                <div class="col-md-6">
-                    <label for="hora_termino" class="form-label">Hora do Término</label>
-                    <input type="time" name="hora_termino" id="hora_termino" class="form-control">
+                <div class="col-12 col-md-4 mb-4">
+                    <label for="hora_termino" class="form-label">Horário do término:</label>
+                    <input type="time" name="hora_termino" id="hora_termino" class="form-control" required>
                 </div>
             </div>
 
             <div class="mb-4">
-                <label for="procedimento" class="form-label required">Detalhes do Procedimento Realizado</label>
-                <textarea name="procedimento" id="procedimento" class="form-control" rows="6" required placeholder="Descreva o procedimento completo, problemas encontrados, e a solução."></textarea>
+                <label for="procedimento" class="form-label">Procedimento realizado:</label>
+                <textarea name="procedimento" id="procedimento" class="form-control" rows="6" placeholder="Descreva em detalhes o procedimento realizado, problema encontrado e solução aplicada." required></textarea>
             </div>
 
-            <div class="form-actions d-flex justify-content-between align-items-center">
-                <a href="{{ url_for('consultar_registro') }}" class="btn btn-secondary">
-                    <i class="fas fa-table me-1"></i> Ir para Consulta
-                </a>
-                <button type="submit" class="btn btn-primary btn-submit">
-                    <i class="fas fa-save me-1"></i> Registrar Procedimento
-                </button>
-            </div>
-            
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-save me-2"></i> Registrar Procedimento
+            </button>
         </form>
     </div>
 
