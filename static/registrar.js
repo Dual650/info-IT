@@ -3,18 +3,18 @@
 document.addEventListener('DOMContentLoaded', function() {
     
     // ===========================================
-    // LÓGICA 1: RETAGUARDA (ÓRGÃO OU SETOR)
+    // LÓGICA 1: RETAGUARDA (DESTINO / SETOR)
     // ===========================================
 
-    // Função para exibir/ocultar o campo Qual Órgão OU o campo Qual Setor
-    function toggleRetaguardaDestino() {
+    // Função para exibir/ocultar o campo Destino (Órgão) OU o campo Setor Interno
+    function toggleRetaguardaDestinoSetor() {
         var selectRetaguarda = document.getElementById('retaguarda_sim_nao');
         
         // Elementos SIM (Destino/Órgão)
         var divDestino = document.getElementById('retaguardaDestinoDiv');
         var selectDestino = document.getElementById('retaguarda_destino');
         
-        // Elementos NÃO (Setor)
+        // Elementos NÃO (Setor Interno)
         var divSetor = document.getElementById('retaguardaSetorDiv');
         var selectSetor = document.getElementById('retaguarda_setor');
 
@@ -28,35 +28,27 @@ document.addEventListener('DOMContentLoaded', function() {
             selectSetor.value = ''; // Reset
             
         } else if (selectRetaguarda.value === 'NÃO') {
-            // Se NÃO: Oculta Destino (Órgão), Mostra Setor
+            // Se NÃO: Oculta Destino (Órgão), Mostra Setor Interno
             divDestino.style.display = 'none';
             selectDestino.removeAttribute('required');
             selectDestino.value = ''; // Reset
             
             divSetor.style.display = 'block';
             selectSetor.setAttribute('required', 'required');
-        } else {
-            // Default ou Vazio: Oculta ambos
-            divDestino.style.display = 'none';
-            selectDestino.removeAttribute('required');
-            selectDestino.value = '';
-
-            divSetor.style.display = 'none';
-            selectSetor.removeAttribute('required');
-            selectSetor.value = '';
-        }
+        } 
+        // Não há necessidade de 'else' (Seleção Vazia), pois o Flask exige um valor padrão
     }
     
     // Inicialização da Retaguarda
     const selectRetaguardaSimNao = document.getElementById('retaguarda_sim_nao');
     if (selectRetaguardaSimNao) {
-        selectRetaguardaSimNao.addEventListener('change', toggleRetaguardaDestino);
-        toggleRetaguardaDestino(); // Chama no carregamento para definir o estado inicial ("NÃO" -> mostra Setor)
+        selectRetaguardaSimNao.addEventListener('change', toggleRetaguardaDestinoSetor);
+        toggleRetaguardaDestinoSetor(); // Chama no carregamento para definir o estado inicial
     }
 
 
     // ===========================================
-    // LÓGICA 2: MESA DE ATENDIMENTO / LOCAL (Inalterada)
+    // LÓGICA 2: MESA DE ATENDIMENTO / LOCAL
     // ===========================================
     
     // Função para exibir o campo Número da Mesa ou o campo Local
@@ -107,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     
     // ===========================================
-    // LÓGICA 3: FLASH MESSAGES (Inalterada)
+    // LÓGICA 3: FLASH MESSAGES (Para o caso de o JS ser o único arquivo extra)
     // ===========================================
 
     // Lógica para fechar as Flash Messages automaticamente 
