@@ -27,7 +27,19 @@
         <div class="header-section mb-4">
             <h2 class="header-titulo">Consulta e Filtro de Registros</h2>
             <div class="header-acoes">
-                 <a href="{{ url_for('formulario_registro') }}" class="btn btn-consulta">
+                 <a href="/exportar" id="btnExportar" class="btn icon-action btn-success" title="Exportar para Excel">
+                     <i class="fas fa-file-excel"></i>
+                 </a>
+                 
+                 <button type="button" class="btn icon-action btn-secondary" onclick="window.print()" title="Imprimir Registros">
+                     <i class="fas fa-print"></i>
+                 </button>
+                 
+                 <button type="button" class="btn icon-action btn-danger" title="Apagar Todos os Registros" onclick="document.getElementById('modalApagarTudo').style.display='block';">
+                     <i class="fas fa-trash-alt"></i>
+                 </button>
+
+                 <a href="{{ url_for('formulario_registro') }}" class="btn btn-consulta ms-3">
                      <i class="fas fa-plus me-1"></i> Novo Registro
                  </a>
             </div>
@@ -66,18 +78,6 @@
                 
                 <button type="button" class="btn btn-secondary" onclick="limparFiltros()">
                     <i class="fas fa-eraser"></i> <span>Limpar Filtros</span>
-                </button>
-                
-                <a href="/exportar" id="btnExportar" class="btn icon-action btn-success" title="Exportar para Excel">
-                    <i class="fas fa-file-excel"></i>
-                </a>
-                
-                <button type="button" class="btn icon-action btn-secondary" onclick="window.print()" title="Imprimir Registros">
-                    <i class="fas fa-print"></i>
-                </button>
-                
-                <button type="button" class="btn icon-action btn-danger" title="Apagar Todos os Registros" onclick="document.getElementById('modalApagarTudo').style.display='block';">
-                    <i class="fas fa-trash-alt"></i>
                 </button>
             </div>
 
