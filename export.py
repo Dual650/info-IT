@@ -100,15 +100,15 @@ def exportar_registros_para_excel(filtro_posto, filtro_data_html, filtro_coleta)
                 sheet.write(row_xlsx, cols_to_format['Horário de Término'], row_data['Horário de Término'], time_format)
                 sheet.write(row_xlsx, cols_to_format['Procedimento Realizado'], row_data['Procedimento Realizado'], proc_format)
                 
-                # Formato para Coleta?
+                # --- CORREÇÃO AQUI: Formato condicional APENAS para Coleta de imagem? ---
                 coleta_value = row_data['Coleta de imagem?']
                 coleta_format = sim_format if coleta_value == 'SIM' else nao_format
                 sheet.write(row_xlsx, cols_to_format['Coleta de imagem?'], coleta_value, coleta_format)
                 
-                # Formato para Retaguarda
+                # Formato padrão para Retaguarda
                 retaguarda_value = row_data['Retaguarda']
-                retaguarda_format = sim_format if 'Retaguarda' in retaguarda_value else nao_format
-                sheet.write(row_xlsx, cols_to_format['Retaguarda'], retaguarda_value, retaguarda_format)
+                # Retaguarda agora usa o formato padrão de dados
+                sheet.write(row_xlsx, cols_to_format['Retaguarda'], retaguarda_value, default_data_format)
 
                 # Formato padrão para as demais colunas
                 for col_idx, col_name in enumerate(df.columns):
