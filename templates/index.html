@@ -6,12 +6,10 @@
     <title>Registro de Procedimento</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    
 </head>
 <body class="bg-light">
-    
+
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -23,134 +21,117 @@
         {% endif %}
     {% endwith %}
 
-    <div class="container container-formal container-index py-4"> 
-        <div class="header-section mb-4">
-            <h2 class="header-titulo">Registro de procedimento</h2>
-            <div class="header-acoes">
-                 <a href="{{ url_for('consultar_registro') }}" class="btn btn-consulta">
-                     <i class="fas fa-list-alt me-1"></i> Consultar
-                 </a>
-            </div>
-        </div>
+    <div class="container-fluid container-formal py-4">
+        <h2 class="text-center mb-4 header-titulo"><i class="fas fa-edit me-2"></i> Registro de Procedimento</h2>
+        
+        <form method="POST" action="{{ url_for('formulario_registro') }}">
 
-        <form method="POST" action="/" class="p-3">
-            
-            <div class="mb-4">
-                <label for="posto" class="form-label">Posto:</label>
-                <select name="posto" id="posto" class="form-select" required>
-                    <option value="" disabled selected>Selecione o Posto</option>
-                    {% for posto in postos %}
-                        <option value="{{ posto }}">{{ posto }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="row">
-                <div class="col-md-6 mb-4">
-                    <label for="computador_coleta" class="form-label">Coleta de imagem?:</label>
-                    <select name="computador_coleta" id="computador_coleta" class="form-select" required>
-                        <option value="" disabled>Selecione</option>
-                        <option value="SIM">SIM</option>
-                        <option value="NÃO" selected>NÃO</option>
-                    </select>
-                </div>
-
-                <div class="col-md-6 mb-4">
-                    <label for="mesa_sim_nao" class="form-label">Mesa de atendimento?:</label>
-                    <select name="mesa_sim_nao" id="mesa_sim_nao" class="form-select" required>
-                        <option value="" disabled>Selecione</option>
-                        <option value="SIM">SIM</option>
-                        <option value="NÃO" selected>NÃO</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="row" id="mesaLocalFields">
-                
-                <div class="col-12 mb-4" id="mesaNumeroDiv" style="display: none;">
-                    <label for="numero_mesa" class="form-label">Número da mesa:</label>
-                    <select name="numero_mesa" id="numero_mesa" class="form-select">
-                        <option value="" disabled selected>Selecione o número</option>
-                        {% for i in range(1, 36) %}
-                            <option value="{{ i }}">{{ i }}</option>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label for="posto" class="form-label required">Posto de Trabalho</label>
+                    <select name="posto" id="posto" class="form-select" required>
+                        <option value="" disabled selected>Selecione o posto...</option>
+                        {% for posto in postos %}
+                            <option value="{{ posto }}">{{ posto }}</option>
                         {% endfor %}
                     </select>
                 </div>
 
-                <div class="col-12 mb-4" id="localDiv" style="display: none;">
-                    <label for="local" class="form-label">Local?:</label>
-                    <select name="local" id="local" class="form-select">
-                        <option value="" disabled selected>Selecione o local</option>
-                        <option value="Sala médica">Sala médica</option>
-                        <option value="Exame teórico">Exame teórico</option>
-                        <option value="Recepção/Triagem">Recepção/Triagem</option>
-                        <option value="Despachante">Despachante</option>
-                        <option value="Serviços eletrônicos">Serviços eletrônicos</option>
-                    </select>
+                <div class="col-md-6">
+                    <label for="data" class="form-label">Data</label>
+                    <input type="text" id="data" class="form-control" value="{{ data_de_hoje }}" disabled>
+                    <input type="hidden" name="data" value="{{ data_de_hoje }}">
                 </div>
+
             </div>
 
-            <div class="row">
-                <div class="col-md-6 mb-4">
-                    <label for="retaguarda_sim_nao" class="form-label">Retaguarda?:</label>
-                    <select name="retaguarda_sim_nao" id="retaguarda_sim_nao" class="form-select" required>
-                        <option value="" disabled>Selecione</option>
+            <div class="row g-3 mb-4">
+                 <div class="col-md-4">
+                    <label for="computador_coleta" class="form-label required">Computador de Coleta</label>
+                    <select name="computador_coleta" id="computador_coleta" class="form-select" required>
+                        <option value="" disabled selected>Selecione...</option>
                         <option value="SIM">SIM</option>
-                        <option value="NÃO" selected>NÃO</option>
+                        <option value="NÃO">NÃO</option>
                     </select>
                 </div>
                 
-                <div class="col-md-6 mb-4">
-                    <div id="retaguardaDestinoDiv" style="display: none;">
-                        <label for="retaguarda_destino" class="form-label">Qual órgão?:</label>
-                        <select name="retaguarda_destino" id="retaguarda_destino" class="form-select">
-                            <option value="" disabled selected>Selecione o Destino</option>
-                            {% for destino in opcoes_retaguarda %}
-                                <option value="{{ destino }}">{{ destino }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+                <div class="col-md-4">
+                    <label for="numero_mesa" class="form-label required">Mesa / Local de Atendimento</label>
+                    <select name="numero_mesa" id="numero_mesa" class="form-select" required>
+                        <option value="" disabled selected>Selecione a mesa/local...</option>
+                        {% for mesa in opcoes_mesa %}
+                            <option value="{{ mesa }}">{{ mesa }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-                    <div id="retaguardaSetorDiv" style="display: none;">
-                        <label for="retaguarda_setor" class="form-label">Qual setor?:</label>
-                        <select name="retaguarda_setor" id="retaguarda_setor" class="form-select">
-                            <option value="" disabled selected>Selecione o Setor</option>
-                            <option value="Atendimento">Atendimento</option>
-                            <option value="COREN">COREN</option>
-                            <option value="Sabesp">Sabesp</option>
-                            <option value="Fazenda">Fazenda</option>
-                        </select>
-                    </div>
+                <div class="col-md-4">
+                    <label for="retaguarda_sim_nao" class="form-label required">Enviado para Retaguarda?</label>
+                    <select name="retaguarda_sim_nao" id="retaguarda_sim_nao" class="form-select" required onchange="toggleRetaguardaDestino(this.value)">
+                        <option value="NÃO" selected>NÃO</option>
+                        <option value="SIM">SIM</option>
+                    </select>
+                </div>
+                
+                <div class="col-12" id="divRetaguardaDestino" style="display:none;">
+                    <label for="retaguarda_destino" class="form-label required">Destino da Retaguarda</label>
+                    <select name="retaguarda_destino" id="retaguarda_destino" class="form-select">
+                        <option value="" disabled selected>Selecione o destino...</option>
+                        {% for destino in opcoes_retaguarda %}
+                            <option value="{{ destino }}">{{ destino }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-12 col-md-4 mb-4">
-                    <label for="data" class="form-label">Data:</label>
-                    <input type="text" name="data" id="data" class="form-control disabled-input" value="{{ data_de_hoje }}" readonly>
-                </div>
-                <div class="col-12 col-md-4 mb-4">
-                    <label for="hora_inicio" class="form-label">Horário de início:</label>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label for="hora_inicio" class="form-label required">Hora de Início</label>
                     <input type="time" name="hora_inicio" id="hora_inicio" class="form-control" required>
                 </div>
-                <div class="col-12 col-md-4 mb-4">
-                    <label for="hora_termino" class="form-label">Horário do término:</label>
-                    <input type="time" name="hora_termino" id="hora_termino" class="form-control" required>
+
+                <div class="col-md-6">
+                    <label for="hora_termino" class="form-label">Hora do Término</label>
+                    <input type="time" name="hora_termino" id="hora_termino" class="form-control">
                 </div>
             </div>
 
             <div class="mb-4">
-                <label for="procedimento" class="form-label">Procedimento realizado:</label>
-                <textarea name="procedimento" id="procedimento" class="form-control" rows="6" placeholder="Descreva em detalhes o procedimento realizado, problema encontrado e solução aplicada." required></textarea>
+                <label for="procedimento" class="form-label required">Detalhes do Procedimento Realizado</label>
+                <textarea name="procedimento" id="procedimento" class="form-control" rows="6" required placeholder="Descreva o procedimento completo, problemas encontrados, e a solução."></textarea>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100">
-                <i class="fas fa-save me-2"></i> Registrar Procedimento
-            </button>
+            <div class="form-actions d-flex justify-content-between align-items-center">
+                <a href="{{ url_for('consultar_registro') }}" class="btn btn-secondary">
+                    <i class="fas fa-table me-1"></i> Ir para Consulta
+                </a>
+                <button type="submit" class="btn btn-primary btn-submit">
+                    <i class="fas fa-save me-1"></i> Registrar Procedimento
+                </button>
+            </div>
+            
         </form>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='registrar.js') }}"></script>
+    <script>
+        // Função para mostrar/esconder o campo de destino da retaguarda
+        function toggleRetaguardaDestino(value) {
+            const div = document.getElementById('divRetaguardaDestino');
+            const select = document.getElementById('retaguarda_destino');
+            if (value === 'SIM') {
+                div.style.display = 'block';
+                select.setAttribute('required', 'required'); 
+            } else {
+                div.style.display = 'none';
+                select.removeAttribute('required');
+                select.value = ""; 
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            toggleRetaguardaDestino(document.getElementById('retaguarda_sim_nao').value);
+        });
+    </script>
 </body>
 </html>
