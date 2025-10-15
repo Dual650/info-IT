@@ -12,6 +12,7 @@
 </head>
 <body class="bg-light">
     
+    {# Exibição de mensagens flash (sucesso/erro) #}
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -39,7 +40,7 @@
                 <label for="posto" class="form-label">Posto:</label>
                 <select name="posto" id="posto" class="form-select" required>
                     <option value="" disabled selected>Selecione o Posto</option>
-                    {# Utiliza a lista 'postos' passada pelo app.py #}
+                    {# Popula com a lista 'postos' do config.py #}
                     {% for posto in postos %}
                         <option value="{{ posto }}">{{ posto }}</option>
                     {% endfor %}
@@ -72,7 +73,7 @@
                     <label for="numero_mesa" class="form-label">Número da mesa:</label>
                     <select name="numero_mesa" id="numero_mesa" class="form-select">
                         <option value="" disabled selected>Selecione o número</option>
-                        {# Usa a lista 'numeros_mesa' passada pelo app.py (gerada de 1 a 35) #}
+                        {# Popula com a lista 'numeros_mesa' (OPCOES_MESA_ATENDIMENTO) #}
                         {% for i in numeros_mesa %}
                             <option value="{{ i }}">{{ i }}</option>
                         {% endfor %}
@@ -83,8 +84,7 @@
                     <label for="local" class="form-label">Local?:</label>
                     <select name="local" id="local" class="form-select">
                         <option value="" disabled selected>Selecione o local</option>
-                        {# Utiliza a lista 'opcoes_locais' passada pelo app.py. #}
-                        {# O seu HTML original tinha opções fixas, atualizei para usar a lista do config. #}
+                        {# Popula com a lista 'opcoes_locais' do config.py #}
                         {% for local in opcoes_locais %}
                             <option value="{{ local }}">{{ local }}</option>
                         {% endfor %}
@@ -107,7 +107,7 @@
                         <label for="retaguarda_destino" class="form-label">Qual órgão?:</label>
                         <select name="retaguarda_destino" id="retaguarda_destino" class="form-select">
                             <option value="" disabled selected>Selecione o Destino</option>
-                            {# Utiliza a lista 'opcoes_retaguarda' passada pelo app.py #}
+                            {# Popula com a lista 'opcoes_retaguarda' (Destino) do config.py #}
                             {% for destino in opcoes_retaguarda %}
                                 <option value="{{ destino }}">{{ destino }}</option>
                             {% endfor %}
@@ -118,7 +118,7 @@
                         <label for="retaguarda_setor" class="form-label">Qual setor?:</label>
                         <select name="retaguarda_setor" id="retaguarda_setor" class="form-select">
                             <option value="" disabled selected>Selecione o Setor</option>
-                             {# Utiliza a lista 'opcoes_setores' passada pelo app.py #}
+                             {# Popula com a lista 'opcoes_setores' (Interno) do config.py #}
                             {% for setor in opcoes_setores %}
                                 <option value="{{ setor }}">{{ setor }}</option>
                             {% endfor %}
