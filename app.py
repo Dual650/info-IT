@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
 from datetime import datetime
 
-# Importações dos novos arquivos
+# Importações dos arquivos de configuração e modelo
 from config import POSTOS, OPCOES_MESA, OPCOES_RETAGUARDA_DESTINO, RESUMO_MAX_CARACTERES, SENHA_MESTRA, aplicar_filtros
 from models import db, Registro, init_db
 from export import exportar_registros_para_excel
@@ -19,7 +19,7 @@ init_db(app)
 # --- Rota 1: Registro de Novo Procedimento (Index) ---
 @app.route('/', methods=['GET', 'POST'])
 def formulario_registro():
-    # Formatando a data de hoje no padrão DD/MM/AAAA para o banco de dados
+    # Formata a data de hoje no padrão DD/MM/AAAA para o banco de dados
     data_de_hoje = datetime.now().strftime('%d/%m/%Y')
     
     if request.method == 'POST':
@@ -51,11 +51,11 @@ def formulario_registro():
                 hora_inicio=hora_inicio,
                 hora_termino=hora_termino,
                 procedimento=procedimento
+                # timestamp_registro é preenchido automaticamente pelo models.py
             )
             db.session.add(novo_registro)
             db.session.commit()
             
-            # ALTERAÇÃO: Redireciona de volta para a mesma página, limpando o formulário.
             flash('Procedimento registrado com sucesso! Você pode consultar o registro agora.', 'success')
             return redirect(url_for('formulario_registro'))
             
@@ -95,10 +95,9 @@ def registros_json():
     filtro_coleta = request.args.get('coleta')
 
     query = Registro.query
-    # A função aplicar_filtros já aplica o filtro e a ordenação (timestamp_registro.desc())
+    # Aplica filtros e, crucialmente, a ordenação pelo timestamp (do config.py)
     query = aplicar_filtros(query, filtro_posto, filtro_data_html, filtro_coleta)
     
-    # CORREÇÃO: Removida a ordenação redundante que estava aqui.
     registros = query.all()
 
     registros_formatados = []
@@ -109,11 +108,11 @@ def registros_json():
         if len(procedimento_completo) > RESUMO_MAX_CARACTERES:
             procedimento_resumo = procedimento_completo[:RESUMO_MAX_CARACTERES] + '...'
             
-        # FORMATO DE EXIBIÇÃO PARA CONSULTA: "Retaguarda Poupatempo" ou "NÃO"
+        # FORMATO DE EXIBIÇÃO PARA CONSULTA: "SIM (Destino)" ou "NÃO"
         if r.retaguarda_sim_nao == 'SIM' and r.retaguarda_destino:
-            retaguarda_display = f"Retaguarda {r.retaguarda_destino}"
+            retaguarda_display = f"{r.retaguarda_sim_nao} ({r.retaguarda_destino})"
         else:
-            retaguarda_display = "NÃO"
+            retaguarda_display = r.retaguarda_sim_nao
             
         registros_formatados.append({
             'posto': r.posto,
@@ -134,7 +133,6 @@ def registros_json():
 # --- Rota: Editar Ação Realizada (AJAX POST) ---
 @app.route('/editar_procedimento/<int:registro_id>', methods=['POST'])
 def editar_procedimento(registro_id):
-    # 1. Tenta receber os dados JSON do frontend
     try:
         data = request.get_json()
         novo_procedimento = data.get('procedimento_completo')
@@ -143,10 +141,8 @@ def editar_procedimento(registro_id):
             return jsonify({'success': False, 'message': 'Procedimento não fornecido.'}), 400
             
     except Exception as e:
-        print(f"Erro ao processar JSON: {e}")
         return jsonify({'success': False, 'message': 'Formato de dado inválido.'}), 400
 
-    # 2. Conecta ao banco de dados e atualiza o campo
     try:
         registro = Registro.query.get(registro_id)
         if not registro:
@@ -155,12 +151,10 @@ def editar_procedimento(registro_id):
         registro.procedimento = novo_procedimento
         db.session.commit()
         
-        # 3. Retorna sucesso para o JavaScript
         return jsonify({'success': True, 'message': 'Registro atualizado com sucesso!'}), 200
 
     except Exception as e:
         db.session.rollback()
-        print(f"Erro durante a atualização do BD (ID: {registro_id}): {e}")
         return jsonify({'success': False, 'message': 'Erro interno do servidor ao atualizar o BD.'}), 500
 
 
@@ -220,6 +214,7 @@ def exportar_registros():
 if __name__ == '__main__':
     # Cria as tabelas do BD, caso não existam
     with app.app_context():
-        db.create_all()
+        # Esta linha tentará criar a tabela, incluindo o campo timestamp_registro
+        db.create_all() 
         
     app.run(debug=True)
