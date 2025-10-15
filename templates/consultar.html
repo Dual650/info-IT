@@ -27,22 +27,22 @@
         <div class="header-section mb-4">
             <h2 class="header-titulo">Consulta e Filtro de Registros</h2>
             <div class="header-acoes">
-                 
-                 <a href="{{ url_for('formulario_registro') }}" class="btn btn-consulta me-2">
-                     <i class="fas fa-plus me-1"></i> Novo Registro
-                 </a>
+                    
+                   <a href="{{ url_for('formulario_registro') }}" class="btn btn-consulta me-2">
+                       <i class="fas fa-plus me-1"></i> Novo Registro
+                   </a>
 
-                 <a href="/exportar" id="btnExportar" class="btn icon-action btn-success" title="Exportar para Excel">
-                     <i class="fas fa-file-excel"></i>
-                 </a>
-                 
-                 <button type="button" class="btn icon-action btn-secondary" onclick="window.print()" title="Imprimir Registros">
-                     <i class="fas fa-print"></i>
-                 </button>
+                   <a href="/exportar" id="btnExportar" class="btn icon-action btn-success" title="Exportar para Excel">
+                       <i class="fas fa-file-excel"></i>
+                   </a>
+                   
+                   <button type="button" class="btn icon-action btn-secondary" onclick="window.print()" title="Imprimir Registros">
+                       <i class="fas fa-print"></i>
+                   </button>
 
-                 <button type="button" class="btn icon-action btn-danger ms-2" title="Apagar Todos os Registros" onclick="document.getElementById('modalApagarTudo').style.display='block';">
-                     <i class="fas fa-trash-alt"></i>
-                 </button>
+                   <button type="button" class="btn icon-action btn-danger ms-2" title="Apagar Todos os Registros" onclick="document.getElementById('modalApagarTudo').style.display='block';">
+                       <i class="fas fa-trash-alt"></i>
+                   </button>
 
             </div>
         </div>
@@ -91,7 +91,7 @@
                     <tr>
                         <th style="width: 10%;">Posto</th>
                         <th style="width: 10%;">Data</th>
-                        <th style="width: 15%;">Mesa</th>
+                        <th style="width: 15%;">Mesa (Coleta)</th>
                         <th style="width: 10%;">Retaguarda?</th>
                         <th style="width: 8%;">Horário de Início</th>
                         <th style="width: 8%;">Horário do Término</th>
@@ -129,10 +129,10 @@
                     <p class="modal-procedimento-content" id="modalProcedimentoContent"></p>
                 </div>
                 <div class="modal-footer">
-                    <form method="POST" action="/apagar/0" id="formApagarIndividual" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja apagar este registro?');">
-                         <button type="submit" class="btn btn-danger btn-sm">
-                            <i class="fas fa-trash me-1"></i> Apagar Registro
-                        </button>
+                    <form method="POST" action="/apagar/0" id="formApagarIndividual" style="display:inline;" onsubmit="return handleApagarRegistro(event, this);">
+                           <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash me-1"></i> Apagar Registro
+                            </button>
                     </form>
                     <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('modalVisualizacao').style.display='none';">Fechar</button>
                 </div>
@@ -143,7 +143,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Editar Procedimento</h5>
-                    <span class="close-button" onclick="tentarFecharEdicao()">&times;</span>
+                    <span class="close-button" onclick="modalEdicao.style.display='none';">&times;</span>
                 </div>
                 <form id="formEditarProcedimento" method="POST" action="">
                     <div class="modal-body">
@@ -153,7 +153,7 @@
                         <textarea id="editProcedimento" name="procedimento_completo" class="form-control" rows="8" required></textarea>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" onclick="tentarFecharEdicao()">Cancelar</button>
+                        <button type="button" class="btn btn-secondary" onclick="modalEdicao.style.display='none';">Cancelar</button>
                         <button type="submit" class="btn btn-success">
                             <i class="fas fa-save me-1"></i> Salvar Edição
                         </button>
