@@ -34,7 +34,7 @@ def exportar_registros_para_excel(filtro_posto, filtro_data_html, filtro_coleta)
     # 3. Cabeçalho
     cabecalho = [
         "Posto", "Data (Dia/Mês/Ano)", "Hora Início", "Hora Término", 
-        "Mesa/Local", "Coleta (SIM/NÃO)", "Destino Retaguarda", "Procedimento Completo"
+        "Mesa/Local", "Retaguarda (SIM/NÃO)", "Destino/Setor", "Procedimento Completo"
     ]
     ws.append(cabecalho)
     
@@ -48,27 +48,27 @@ def exportar_registros_para_excel(filtro_posto, filtro_data_html, filtro_coleta)
     # Definir larguras das colunas
     ws.column_dimensions['A'].width = 20 
     ws.column_dimensions['B'].width = 18 
-    ws.column_dimensions['C'].width = 12 
+    ws.column_dimensions['C'].width = 15 
     ws.column_dimensions['D'].width = 12 
     ws.column_dimensions['E'].width = 15 
     ws.column_dimensions['F'].width = 10 
-    ws.column_dimensions['G'].width = 20 
+    ws.column_dimensions['G'].width = 25 
     ws.column_dimensions['H'].width = 70 
 
     # 4. Inserir Dados
     for registro in registros:
         
         coleta_valor = registro.retaguarda_sim_nao
-        destino = registro.retaguarda_destino if registro.retaguarda_sim_nao == 'SIM' else ""
+        destino_ou_setor = registro.retaguarda_destino
         
         linha = [
             registro.posto,
             registro.data,
             registro.hora_inicio,
             registro.hora_termino,
-            registro.numero_mesa,
+            registro.numero_mesa, # Agora contém Mesa OU Local
             coleta_valor,
-            destino,
+            destino_ou_setor, # Agora contém Destino OU Setor
             registro.procedimento
         ]
         ws.append(linha)
