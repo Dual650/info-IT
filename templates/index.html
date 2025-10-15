@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de procedimento técnico</title>
+    <title>Registro de Procedimento - V2</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
@@ -43,7 +43,7 @@
             
             <div class="form-group">
                 <label for="numero_mesa">Número da Mesa/Local de Ação:</label>
-                <select id="numero_mesa" name="numero_mesa" class="listbox-filter" size="5" required>
+                <select id="numero_mesa" name="numero_mesa" class="form-control" size="5" required>
                     {% for mesa in opcoes_mesa %}
                     <option value="{{ mesa }}">{{ mesa }}</option>
                     {% endfor %}
