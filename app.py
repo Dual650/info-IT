@@ -289,7 +289,7 @@ def exportar_registros():
             retaguarda_export = f"Retaguarda {r.retaguarda_destino}"
         else:
             retaguarda_export = "NÃO"
-        
+            
         data_obj = r.data
         inicio_obj = r.hora_inicio
         termino_obj = r.hora_termino
