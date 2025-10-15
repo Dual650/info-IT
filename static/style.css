@@ -1,5 +1,5 @@
 /* ========================================= */
-/* ESTILOS GLOBAIS E DE LAYOUT (FORMAL/RESPONSIVO) */
+/* VARIÁVEIS DE COR E TEMA */
 /* ========================================= */
 
 :root {
@@ -12,6 +12,10 @@
     --text-dark: #343a40;
     --border-color: #e9ecef;
 }
+
+/* ========================================= */
+/* ESTILOS GLOBAIS E DE LAYOUT (FORMAL/RESPONSIVO) */
+/* ========================================= */
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -125,7 +129,7 @@ h1, h2, h3 {
     gap: 10px;
 }
 
-/* NOVO ESTILO: Botões de Ação Global (Exportar, Imprimir, Apagar Tudo) */
+/* ESTILO NOVO: Botões de Ação Global (Exportar, Imprimir, Apagar Tudo) */
 .icon-action {
     width: 40px; /* Largura e altura fixas */
     height: 40px;
@@ -235,6 +239,7 @@ h1, h2, h3 {
 .btn-acao:hover {
     background-color: var(--border-color);
 }
+/* Cores específicas para os ícones */
 .btn-warning { color: var(--warning-color); border: 1px solid var(--warning-color); }
 .btn-danger { color: var(--danger-color); border: 1px solid var(--danger-color); }
 
@@ -271,4 +276,112 @@ h1, h2, h3 {
 /* ========================================= */
 /* ESTILOS DE MODAL (Customizados Formal) */
 /* ========================================= */
-/* ... (Restante do CSS do Modal inalterado) ... */
+
+.modal {
+    display: none; /* Escondido por padrão */
+    position: fixed; /* Posição fixa */
+    z-index: 1060; /* Acima de tudo */
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; /* Habilita scroll se necessário */
+    background-color: rgba(0,0,0,0.5); /* Fundo preto com opacidade */
+    padding-top: 60px;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto; /* 5% do topo e centralizado */
+    padding: 0;
+    border: 1px solid #888;
+    width: 90%; 
+    max-width: 700px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from {opacity: 0;}
+    to {opacity: 1;}
+}
+
+.modal-header {
+    padding: 15px;
+    background-color: var(--primary-color);
+    color: white;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header.bg-danger {
+    background-color: var(--danger-color);
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.close-button {
+    color: #fff;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: #f1f1f1;
+    text-decoration: none;
+}
+
+.modal-body {
+    padding: 20px;
+    line-height: 1.6;
+}
+
+.modal-footer {
+    padding: 15px;
+    border-top: 1px solid var(--border-color);
+    text-align: right;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    border: 1px solid var(--border-color);
+    padding: 15px;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+}
+
+.modal-info-grid p {
+    margin: 0;
+    font-size: 0.95em;
+}
+
+.modal-procedimento-content {
+    white-space: pre-wrap; /* Mantém quebras de linha e formatação */
+    background-color: #f8f9fa;
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    border-radius: 4px;
+}
+
+/* Responsividade do Modal */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        margin: 10px auto;
+    }
+}
