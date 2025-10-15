@@ -1,18 +1,26 @@
 import os
 from datetime import datetime
+from sqlalchemy import desc
 
 # --- Configurações Gerais ---
 RESUMO_MAX_CARACTERES = 70
 SENHA_MESTRA = 'PPT.123' # Senha Mestra para Apagar Todos os Registros
 
-# --- Opções de Formulário ---
+# --- Opções de Formulário (Novas estruturas) ---
 POSTOS = [
     "Andradina", "Assis", "Avaré", "Bauru", "Birigui", "Botucatu",
     "Dracena", "Itapetininga", "Itu", "Jahu", "Marília",
     "Ourinhos", "Penápolis", "Presidente Prudente", "Tatuí", "Tupã"
 ]
-OPCOES_MESA = [str(i) for i in range(1, 41)] + ["Sala médica", "Exame teórico", "COREN", "Fazenda", "SERT", "Sabesp", "Recepção/Triagem", "Despachante"]
-OPCOES_RETAGUARDA_DESTINO = ["COREN", "Poupatempo", "Fazenda", "Sabesp"]
+# Localização: Mesa (SIM)
+OPCOES_MESA_ATENDIMENTO = [str(i) for i in range(1, 41)]
+# Localização: Local (NÃO)
+OPCOES_LOCAIS = ["Sala médica", "Exame teórico", "COREN", "Fazenda", "SERT", "Sabesp", "Recepção/Triagem", "Despachante", "Outro Local"]
+
+# Retaguarda: Destino (SIM)
+OPCOES_RETAGUARDA_DESTINO = ["COREN", "Poupatempo", "Fazenda", "Sabesp", "Outro Destino Externo"]
+# Retaguarda: Setor Interno (NÃO)
+OPCOES_SETORES_INTERNOS = ["RH", "Financeiro", "Comercial", "Outro Setor Interno"]
 
 
 # --- Função de Filtragem de Dados (Contém a Ordenação por Timestamp) ---
@@ -40,4 +48,4 @@ def aplicar_filtros(query, filtro_posto, filtro_data_html, filtro_coleta):
         query = query.filter(Registro.retaguarda_sim_nao == coleta_db_value)
             
     # ORDENAÇÃO CRÍTICA: Ordena pelo registro mais novo (timestamp_registro decrescente)
-    return query.order_by(Registro.timestamp_registro.desc())
+    return query.order_by(desc(Registro.timestamp_registro))
