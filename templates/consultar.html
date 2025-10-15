@@ -45,7 +45,7 @@
             <div class="filtro-container">
                 <div class="filtro-item">
                     <label for="posto">Posto:</label>
-                    <select id="posto" name="posto" class="form-control" **size="5"**> 
+                    <select id="posto" name="posto" class="form-control" **size="5"**>
                         <option value="Todos" {% if filtro_posto == 'Todos' %}selected{% endif %}>Todos os Postos</option>
                         {% for posto in postos %}
                         <option value="{{ posto }}" {% if filtro_posto == posto %}selected{% endif %}>{{ posto }}</option>
@@ -91,7 +91,7 @@
                 </thead>
                 <tbody id="corpoTabela">
                     </tbody>
-                    
+                
             </table>
             
             <div id="avisoVazio" class="aviso-vazio" style="display: none;">
