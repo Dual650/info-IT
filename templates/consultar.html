@@ -1,181 +1,175 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta de Registros - V2</title>
+    <title>Consulta de Registros</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <div class="header-section">
-            <h2 class="header-titulo">Registros Encontrados</h2>
-            <div class="header-acoes">
-                <a href="{{ url_for('formulario_registro') }}" class="btn-primary">
-                    <i class="fas fa-plus"></i>
-                    <span>Novo Registro</span>
-                </a>
-                
-                <a id="btnExportar" href="#" class="btn-acao" title="Exportar para Excel">
-                    <i class="fas fa-file-excel"></i>
-                    <span>Exportar</span>
-                </a>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                {% for category, message in messages %}
+                    <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
 
-                <button type="button" class="btn-acao" title="Imprimir" onclick="window.print();">
-                    <i class="fas fa-print"></i>
-                    <span>Imprimir</span>
-                </button>
+        <div class="header-section">
+            <div class="header-titulo">
+                <h2>Consulta e Exportação de Registros</h2>
+            </div>
+            <div class="header-acoes">
+                <a href="{{ url_for('formulario_registro') }}" class="btn-primary btn-consulta" title="Voltar para a página de registro">
+                    <i class="fas fa-arrow-left"></i> Novo Registro
+                </a>
                 
-                <button type="button" class="btn-acao btn-danger" title="Apagar Todos" onclick="document.getElementById('modalApagarTudo').style.display='block';">
-                    <i class="fas fa-trash-alt"></i>
-                    <span>Apagar Tudo</span>
+                <button class="btn-acao" onclick="window.print()" title="Imprimir a tabela">
+                    <i class="fas fa-print"></i> <span>Imprimir</span>
+                </button>
+                <a id="btnExportar" href="#" class="btn-acao" title="Exportar dados filtrados para Excel">
+                    <i class="fas fa-file-excel"></i> <span>Exportar (.xlsx)</span>
+                </a>
+                <button type="button" class="btn-acao btn-danger" onclick="document.getElementById('modalApagarTudo').style.display='block'" title="Apagar TODOS os registros (Atenção!)">
+                    <i class="fas fa-trash-alt"></i> <span>Apagar Tudo</span>
                 </button>
             </div>
         </div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <ul class="flashes">
-            {% for category, message in messages %}
-                <li class="{{ category }}">{{ message }}</li>
-            {% endfor %}
-            </ul>
-        {% endif %}
-        {% endwith %}
-
-        <form method="GET" action="{{ url_for('consultar_registro') }}">
+        <form id="formFiltro" method="GET" action="{{ url_for('consultar_registro') }}">
             <div class="filtro-container">
-                
                 <div class="filtro-item">
-                    <label for="posto">Posto de Trabalho:</label>
-                    <select id="posto" name="posto" class="form-control" size="5">
-                        <option value="Todos">Todos os Postos</option>
+                    <label for="posto">Posto:</label>
+                    <select id="posto" name="posto" class="form-control" **size="5"**> 
+                        <option value="Todos" {% if filtro_posto == 'Todos' %}selected{% endif %}>Todos os Postos</option>
                         {% for posto in postos %}
-                        <option value="{{ posto }}" {% if posto == filtro_posto %}selected{% endif %}>{{ posto }}</option>
+                        <option value="{{ posto }}" {% if filtro_posto == posto %}selected{% endif %}>{{ posto }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 
                 <div class="filtro-item">
-                    <label for="coleta">Coleta de Imagem:</label>
-                    <select id="coleta" name="coleta" class="form-control" size="3">
-                        <option value="Todos">Todas as Opções</option>
-                        <option value="SIM" {% if 'SIM' == filtro_coleta %}selected{% endif %}>SIM</option>
-                        <option value="NÃO" {% if 'NÃO' == filtro_coleta %}selected{% endif %}>NÃO</option>
-                    </select>
-                </div>
-
-                <div class="filtro-item">
-                    <label for="data">Filtrar por Data:</label>
+                    <label for="data">Data:</label>
                     <input type="date" id="data" name="data" class="form-control" value="{{ filtro_data }}">
                 </div>
 
+                <div class="filtro-item">
+                    <label for="coleta">Coleta de imagem?</label>
+                    <select id="coleta" name="coleta" class="form-control">
+                        <option value="Todos" {% if filtro_coleta == 'Todos' %}selected{% endif %}>Todos</option>
+                        <option value="SIM" {% if filtro_coleta == 'SIM' %}selected{% endif %}>SIM</option>
+                        <option value="NÃO" {% if filtro_coleta == 'NÃO' %}selected{% endif %}>NÃO</option>
+                    </select>
+                </div>
+
                 <div class="botoes-filtro">
-                    <button type="submit" class="btn-primary">
-                        <i class="fas fa-filter"></i>
-                        Filtrar
-                    </button>
-                    <a href="{{ url_for('consultar_registro') }}" class="btn-acao" style="border-color: #007bff; color: #007bff;">
-                        <i class="fas fa-times"></i>
-                        <span>Limpar</span>
-                    </a>
+                    <button type="submit" class="btn-primary"><i class="fas fa-filter"></i> Aplicar Filtros</button>
+                    <button type="button" class="btn-acao" onclick="window.location.href='{{ url_for('consultar_registro') }}'"><i class="fas fa-sync"></i> Limpar Filtros</button>
                 </div>
             </div>
         </form>
 
-        <div id="avisoVazio" class="aviso-vazio" style="display:none;">
-            Nenhum registro encontrado com os filtros aplicados.
-        </div>
-
         <div class="tabela-wrapper">
-            <table id="tabelaRegistros" style="display:none;">
+            <table id="tabelaRegistros">
                 <thead>
                     <tr>
-                        <th style="width: 10%;">Posto</th>
-                        <th style="width: 10%;">Mesa</th>
-                        <th style="width: 15%;">Retaguarda</th>
-                        <th style="width: 10%;">Coleta?</th>
-                        <th style="width: 10%;">Data</th>
-                        <th style="width: 7%;">Início</th>
-                        <th style="width: 7%;">Término</th>
-                        <th class="procedimento-header">Ação Realizada (Resumo)</th>
-                        <th style="width: 11%;">Ações</th>
+                        <th>Posto</th>
+                        <th>Mesa</th>
+                        <th>Retaguarda</th>
+                        <th>Coleta?</th>
+                        <th>Data</th>
+                        <th>Início</th>
+                        <th>Término</th>
+                        <th class="procedimento-header">Ação realizada</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody id="corpoTabela">
                     </tbody>
+                    
             </table>
+            
+            <div id="avisoVazio" class="aviso-vazio" style="display: none;">
+                Não há registros encontrados para os filtros aplicados.
+            </div>
         </div>
+
     </div>
 
     <div id="modalProcedimento" class="modal">
         <div class="modal-content">
-            <span class="close-button" onclick="document.getElementById('modalProcedimento').style.display='none';">&times;</span>
+            <span class="close-button" onclick="document.getElementById('modalProcedimento').style.display='none'">&times;</span>
             <h3 id="modalTitulo">Detalhes do Registro</h3>
+            
             <div class="modal-info-grid">
                 <p><strong>Posto:</strong> <span id="modalPosto"></span></p>
                 <p><strong>Mesa:</strong> <span id="modalMesa"></span></p>
                 <p><strong>Retaguarda:</strong> <span id="modalRetaguarda"></span></p>
-                <p><strong>Coleta:</strong> <span id="modalColeta"></span></p>
+                <p><strong>Coleta de Imagem:</strong> <span id="modalColeta"></span></p>
                 <p><strong>Data:</strong> <span id="modalData"></span></p>
                 <p><strong>Início:</strong> <span id="modalHoraInicio"></span></p>
                 <p><strong>Término:</strong> <span id="modalHoraTermino"></span></p>
+                <span id="modalId" style="display: none;"></span> 
             </div>
-            <h4>Procedimento Completo:</h4>
+
+            <h4>Ação realizada</h4>
             <div id="modalProcedimentoContent" class="modal-procedimento-content"></div>
             
-            <hr>
-            <div style="text-align: right; margin-top: 15px;">
-                <form id="formApagarIndividual" method="POST" action="/apagar/0" style="display:inline;">
-                    <button type="submit" class="btn-danger-individual">
-                        <i class="fas fa-trash-alt"></i> Apagar Registro
-                    </button>
-                </form>
-            </div>
+            <form id="formApagarIndividual" method="POST" action="">
+                <input type="hidden" name="_method" value="DELETE">
+                <button type="submit" class="btn-primary btn-danger-individual" style="margin-top: 15px;">
+                    <i class="fas fa-trash"></i> Apagar Este Registro
+                </button>
+            </form>
         </div>
     </div>
 
     <div id="modalEdicao" class="modal">
         <div class="modal-content">
-            <span class="close-button" onclick="tentarFecharEdicao()">&times;</span>
-            <h3>Editar Ação Realizada</h3>
-            <form id="formEditarProcedimento" method="POST" action="/editar_procedimento/0">
-                <input type="hidden" id="editIdHidden" name="id">
-                <div class="form-group-full" style="margin-top: 20px;">
-                    <label for="editProcedimento">Ação Realizada:</label>
-                    <textarea id="editProcedimento" name="procedimento_completo" class="form-control" rows="8" required></textarea>
+            <span class="close-button" onclick="tentarFecharEdicao()">&times;</span> 
+            <h3>Edição da Ação Realizada</h3>
+
+            <form id="formEditarProcedimento" method="POST" action="">
+                <input type="hidden" id="editIdHidden" name="id_registro">
+                
+                <div class="form-group form-group-full" style="margin-top: 20px;">
+                    <label for="editProcedimento">Ação realizada</label>
+                    <textarea id="editProcedimento" name="procedimento_completo" class="form-control" rows="8" required data-original-value=""></textarea> 
                 </div>
-                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 20px;">
-                    <i class="fas fa-save"></i>
-                    Salvar Alterações
+                
+                <button type="submit" class="btn-primary" style="margin-top: 20px;">
+                    <i class="fas fa-save"></i> Salvar Edição
                 </button>
             </form>
         </div>
     </div>
-
+    
     <div id="modalApagarTudo" class="modal">
-        <div class="modal-content" style="max-width: 500px;">
-            <span class="close-button" onclick="document.getElementById('modalApagarTudo').style.display='none';">&times;</span>
-            <h3 style="color: #dc3545;"><i class="fas fa-exclamation-triangle"></i> Atenção: Exclusão em Massa</h3>
-            <p>Esta ação apagará **TODOS** os registros do banco de dados.</p>
-            <p>Para confirmar, digite a senha mestra abaixo:</p>
-            <form method="POST" action="{{ url_for('apagar_todos_registros') }}" onsubmit="return confirm('ATENÇÃO! Confirme novamente que deseja apagar TODOS os registros!');">
+        <div class="modal-content">
+            <span class="close-button" onclick="document.getElementById('modalApagarTudo').style.display='none'">&times;</span>
+            <h3>Atenção: Exclusão Permanente!</h3>
+            <p>Tem certeza que deseja apagar **TODOS** os registros do banco de dados?</p>
+            <p style="color: red; font-weight: bold;">Essa ação é IRREVERSÍVEL.</p>
+
+            <form method="POST" action="{{ url_for('apagar_todos_registros') }}" style="margin-top: 20px;">
+                <label for="senha_confirmacao">Para confirmar, digite a senha mestra:</label>
+                <input type="password" id="senha_confirmacao" name="senha_confirmacao" class="form-control" required style="margin-bottom: 10px;">
+                
                 <input type="hidden" name="posto_filtro_hidden" value="{{ filtro_posto }}">
                 <input type="hidden" name="data_filtro_hidden" value="{{ filtro_data }}">
                 <input type="hidden" name="coleta_filtro_hidden" value="{{ filtro_coleta }}">
 
-                <div class="form-group">
-                    <input type="password" name="senha_confirmacao" class="form-control" placeholder="Digite a senha mestra" required>
-                </div>
-                <button type="submit" class="btn-primary" style="background-color: #dc3545; width: 100%; margin-top: 15px;">
-                    <i class="fas fa-bomb"></i>
-                    APAGAR TODOS OS REGISTROS
+                <button type="submit" class="btn-primary btn-danger">
+                    <i class="fas fa-exclamaqtion-triangle"></i> Sim, Apagar TUDO Agora
                 </button>
             </form>
         </div>
     </div>
-
 
     <script src="{{ url_for('static', filename='consultar.js') }}"></script>
 </body>
