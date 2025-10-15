@@ -1,7 +1,7 @@
+// static/consultar.js
+
 document.addEventListener('DOMContentLoaded', function() {
-    // 1. URL da API para buscar os dados.
-    // Usamos a URL da janela atual, que JÁ DEVE conter os filtros aplicados pelo Flask
-    // após o redirecionamento feito pela função aplicarFiltros().
+    // 1. URL da API para buscar os dados (usa os filtros da URL atual)
     const urlParams = new URLSearchParams(window.location.search);
     const queryString = urlParams.toString();
     const apiUrl = `/registros_json?${queryString}`;
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const editProcedimento = document.getElementById('editProcedimento'); 
     const formEditarProcedimento = document.getElementById('formEditarProcedimento');
     
-    // Referências do Modal de Visualização (mantidas)
+    // Referências do Modal de Visualização
     const modalTitulo = document.getElementById('modalTitulo');
     const modalPosto = document.getElementById('modalPosto');
     const modalMesa = document.getElementById('modalMesa');
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 4. Atualizar link de exportação com os filtros atuais
     btnExportar.href = `/exportar?${queryString}`;
     
-    // 5. Função para abrir o Modal de Edição (Inicializa o rastreamento)
+    // 5. Função para abrir o Modal de Edição (TORNDA GLOBAL)
     window.editarProcedimento = function(registroId, procedimentoAtual) {
         editIdHidden.value = registroId;
         editProcedimento.value = procedimentoAtual;
@@ -51,12 +51,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 6. Listener para rastrear alterações no campo de texto
-    editProcedimento.addEventListener('input', function() {
-        const originalValue = editProcedimento.getAttribute('data-original-value');
-        textoFoiAlterado = this.value !== originalValue;
-    });
+    if (editProcedimento) {
+        editProcedimento.addEventListener('input', function() {
+            const originalValue = editProcedimento.getAttribute('data-original-value');
+            textoFoiAlterado = this.value !== originalValue;
+        });
+    }
 
-    // 7. Função para tentar fechar o modal de edição (com confirmação)
+    // 7. Função para tentar fechar o modal de edição (com confirmação) (TORNDA GLOBAL)
     window.tentarFecharEdicao = function() {
         if (textoFoiAlterado) {
             const fechar = confirm("Você tem alterações não salvas. Deseja realmente fechar a janela e descartar as modificações?");
@@ -71,42 +73,45 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // 8. Listener para submissão do formulário de edição (AJAX)
-    formEditarProcedimento.addEventListener('submit', function(e) {
-        e.preventDefault(); 
-        
-        const registroId = editIdHidden.value;
-        const novoProcedimento = editProcedimento.value;
-        
-        fetch(`/editar_procedimento/${registroId}`, {
-            method: 'POST', 
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-                'procedimento_completo': novoProcedimento 
+    if (formEditarProcedimento) {
+        formEditarProcedimento.addEventListener('submit', function(e) {
+            e.preventDefault(); 
+            
+            const registroId = editIdHidden.value;
+            const novoProcedimento = editProcedimento.value;
+            
+            fetch(`/editar_procedimento/${registroId}`, {
+                method: 'POST', 
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    'procedimento_completo': novoProcedimento 
+                })
             })
-        })
-        .then(response => {
-            if (response.ok) {
-                document.getElementById('modalEdicao').style.display = 'none';
-                alert('Ação realizada atualizada com sucesso!');
-                textoFoiAlterado = false;
-                // Recarrega os registros sem redirecionar a página inteira
-                carregarRegistros(); 
-            } else {
-                alert('Erro ao atualizar. Verifique a conexão e o servidor.');
-            }
-        })
-        .catch(error => {
-            console.error('Erro de rede:', error);
-            alert('Erro de conexão ao tentar atualizar o registro.');
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('modalEdicao').style.display = 'none';
+                    alert('Ação realizada atualizada com sucesso!');
+                    textoFoiAlterado = false;
+                    carregarRegistros(); 
+                } else {
+                    alert('Erro ao atualizar. Verifique a conexão e o servidor.');
+                }
+            })
+            .catch(error => {
+                console.error('Erro de rede:', error);
+                alert('Erro de conexão ao tentar atualizar o registro.');
+            });
         });
-    });
+    }
 
 
-    // 9. Função para carregar e renderizar os dados
+    // 9. Função para carregar e renderizar os dados (TORNDA GLOBAL)
     window.carregarRegistros = function() {
-        fetch(apiUrl) // Usa a apiUrl definida com os filtros da URL
+        if (!corpoTabela) return; // Evita erro se o elemento não existir
+        
+        fetch(apiUrl)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Erro HTTP: ${response.status}`);
@@ -116,14 +121,15 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(registros => {
                 corpoTabela.innerHTML = ''; 
 
+                const tabelaRegistros = document.getElementById('tabelaRegistros');
                 if (registros.length === 0) {
                     avisoVazio.style.display = 'block';
-                    document.getElementById('tabelaRegistros').style.display = 'none';
+                    if(tabelaRegistros) tabelaRegistros.style.display = 'none';
                     return;
                 }
 
                 avisoVazio.style.display = 'none';
-                document.getElementById('tabelaRegistros').style.display = 'table';
+                if(tabelaRegistros) tabelaRegistros.style.display = 'table';
 
                 registros.forEach(registro => {
                     const row = corpoTabela.insertRow();
@@ -132,9 +138,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     const coletaCellClass = coletaSimNao ? 'fundo-sim' : 'fundo-nao';
                     const retaguardaCellClass = registro.retaguarda_display.toLowerCase().includes('sim') ? 'fundo-sim' : '';
                     
+                    // Escapa o procedimento para o onclick
                     const procedimentoEscapado = registro.procedimento_completo
                         .replace(/'/g, "\\'")
                         .replace(/"/g, '\\"');
+                    
+                    // Stringify e escape para passar o objeto completo no onclick de visualização
+                    const registroJsonEscapado = JSON.stringify(registro).replace(/"/g, '&quot;');
                     
                     row.innerHTML = `
                         <td>${registro.id}</td> 
@@ -148,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td class="procedimento-col">
                             <div class="procedimento-resumo" title="${registro.procedimento_completo}">
                                 <span>${registro.procedimento_resumo}</span>
-                                <button type="button" class="btn btn-sm btn-outline-secondary p-0 px-1" title="Ver detalhes" onclick="event.stopPropagation(); abrirModalVisualizacao(${JSON.stringify(registro).replace(/"/g, '&quot;')});">
+                                <button type="button" class="btn btn-sm btn-outline-secondary p-0 px-1" title="Ver detalhes" onclick="event.stopPropagation(); abrirModalVisualizacao('${registroJsonEscapado}');">
                                      <i class="fas fa-eye"></i>
                                 </button>
                             </div>
@@ -166,10 +176,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         </td>
                     `;
                     
+                    // Adiciona listener na linha para abrir o modal de visualização (se não for botão de ação)
                     row.addEventListener('click', function(event) {
-                        if (!event.target.closest('.btn-acao')) {
-                            // Chama a função global para abrir o modal de visualização
-                            abrirModalVisualizacao(registro);
+                        if (!event.target.closest('.btn-acao') && !event.target.closest('button')) {
+                            // Reverte o JSON escapado para objeto JS
+                            const registroObjeto = JSON.parse(registroJsonEscapado.replace(/&quot;/g, '"'));
+                            abrirModalVisualizacao(registroObjeto);
                         }
                     });
                 });
@@ -178,19 +190,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Erro ao buscar registros:', error);
                 corpoTabela.innerHTML = `<tr><td colspan="10">Erro ao carregar dados. Tente recarregar a página.</td></tr>`;
                 avisoVazio.style.display = 'none';
-                document.getElementById('tabelaRegistros').style.display = 'table';
+                if(tabelaRegistros) tabelaRegistros.style.display = 'table';
             });
     }
     
-    // 10. Função para aplicar filtros (Faz o redirecionamento com os filtros na URL)
+    // 10. Função para aplicar filtros (Faz o redirecionamento com os filtros na URL) (TORNDA GLOBAL)
     window.aplicarFiltros = function() {
         const posto = document.getElementById('filtroPosto').value;
         const data = document.getElementById('filtroData').value;
         const coleta = document.getElementById('filtroColeta').value;
 
-        // Note: Se você usa Flask, o ideal é que esse JS apenas monte a URL e o Flask
-        // faça a consulta no backend e renderize a página novamente com os dados.
-        let url = '/consultar'; // URL base para a view de consulta
+        let url = '/consultar';
         let params = [];
         if (posto !== 'Todos') params.push(`posto=${posto}`);
         if (data) params.push(`data=${data}`);
@@ -199,8 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.href = url + (params.length > 0 ? '?' + params.join('&') : '');
     }
 
-    // 11. Função para abrir o Modal de Visualização (corrigida)
-    // Tornada global para ser chamada no onclick dentro do row.innerHTML
+    // 11. Função para abrir o Modal de Visualização (TORNDA GLOBAL)
     window.abrirModalVisualizacao = function(registro) {
         modalTitulo.textContent = `Detalhes do Registro (ID: ${registro.id})`; 
         modalPosto.textContent = registro.posto;
@@ -217,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
         modalVisualizacao.style.display = 'block';
     }
 
-    // 12. Fechar modal ao clicar fora dele 
+    // 12. Fechar modal ao clicar fora dele (TORNDA GLOBAL)
     window.onclick = function(event) {
         if (event.target == modalVisualizacao) {
             modalVisualizacao.style.display = "none";
@@ -229,6 +238,18 @@ document.addEventListener('DOMContentLoaded', function() {
             modalApagarTudo.style.display = "none";
         }
     }
+
+    // 13. Lógica para fechar as Flash Messages automaticamente
+    const flashAlerts = document.querySelectorAll('.alert-flash');
+    flashAlerts.forEach(alert => {
+        if (typeof bootstrap !== 'undefined' && bootstrap.Alert) {
+            setTimeout(() => {
+                const bsAlert = bootstrap.Alert.getInstance(alert) || new bootstrap.Alert(alert);
+                bsAlert.close();
+            }, 5000); 
+        }
+    });
+
 
     // Inicia o carregamento dos registros ao carregar a página
     carregarRegistros();
