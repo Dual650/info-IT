@@ -102,7 +102,7 @@ async function carregarRegistros() {
             
             registros.forEach(registro => {
                 const row = corpoTabela.insertRow();
-                // O campo retaguarda_display já traz o SIM/NÃO e o destino
+                // O campo retaguarda_display já traz o SIM/NÃO e o destino/setor
                 row.innerHTML = `
                     <td>${registro.posto}</td>
                     <td>${registro.data}</td>
@@ -137,7 +137,7 @@ async function carregarRegistros() {
     }
 }
 
-// --- Funções da Modal de Visualização (Detalhes e Apagar) ---
+// --- Funções das Modals ---
 
 /**
  * Abre a modal de visualização e preenche com os dados do registro.
@@ -147,8 +147,9 @@ function abrirModalVisualizacao(id, element) {
     const cells = row.querySelectorAll('td');
 
     // Mapeamento dos dados para a modal
-    const mesa_coleta_split = cells[2].textContent.match(/(.*) \((.*)\)/); // Ex: Mesa (Coleta)
-    const retaguarda_split = cells[3].textContent.match(/(SIM|NÃO)(?: \((.*)\))?/); // Ex: SIM (Destino)
+    const mesa_coleta_split = cells[2].textContent.match(/(.*) \((.*)\)/); // Ex: Mesa/Local (Coleta)
+    // Extrai o SIM/NÃO e o Destino/Setor (o app.py já envia formatado, ex: SIM (COREN) ou NÃO (RH))
+    const retaguarda_split = cells[3].textContent.match(/(SIM|NÃO)(?: \((.*)\))?/); 
 
     document.getElementById('modalPosto').textContent = cells[0].textContent;
     document.getElementById('modalData').textContent = cells[1].textContent;
@@ -182,8 +183,6 @@ function handleApagarRegistro(event, form) {
     }
     return false;
 }
-
-// --- Funções da Modal de Edição ---
 
 /**
  * Abre a modal de edição.
