@@ -3,22 +3,47 @@
 document.addEventListener('DOMContentLoaded', function() {
     
     // ===========================================
-    // LÓGICA 1: RETAGUARDA
+    // LÓGICA 1: RETAGUARDA (ÓRGÃO OU SETOR)
     // ===========================================
 
-    // Função para exibir/ocultar o campo de destino da Retaguarda
+    // Função para exibir/ocultar o campo Qual Órgão OU o campo Qual Setor
     function toggleRetaguardaDestino() {
         var selectRetaguarda = document.getElementById('retaguarda_sim_nao');
+        
+        // Elementos SIM (Destino/Órgão)
         var divDestino = document.getElementById('retaguardaDestinoDiv');
         var selectDestino = document.getElementById('retaguarda_destino');
+        
+        // Elementos NÃO (Setor)
+        var divSetor = document.getElementById('retaguardaSetorDiv');
+        var selectSetor = document.getElementById('retaguarda_setor');
 
         if (selectRetaguarda.value === 'SIM') {
+            // Se SIM: Mostra Destino (Órgão), Oculta Setor
             divDestino.style.display = 'block';
             selectDestino.setAttribute('required', 'required');
-        } else {
+            
+            divSetor.style.display = 'none';
+            selectSetor.removeAttribute('required');
+            selectSetor.value = ''; // Reset
+            
+        } else if (selectRetaguarda.value === 'NÃO') {
+            // Se NÃO: Oculta Destino (Órgão), Mostra Setor
             divDestino.style.display = 'none';
             selectDestino.removeAttribute('required');
-            selectDestino.value = ''; 
+            selectDestino.value = ''; // Reset
+            
+            divSetor.style.display = 'block';
+            selectSetor.setAttribute('required', 'required');
+        } else {
+            // Default ou Vazio: Oculta ambos
+            divDestino.style.display = 'none';
+            selectDestino.removeAttribute('required');
+            selectDestino.value = '';
+
+            divSetor.style.display = 'none';
+            selectSetor.removeAttribute('required');
+            selectSetor.value = '';
         }
     }
     
@@ -26,12 +51,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectRetaguardaSimNao = document.getElementById('retaguarda_sim_nao');
     if (selectRetaguardaSimNao) {
         selectRetaguardaSimNao.addEventListener('change', toggleRetaguardaDestino);
-        toggleRetaguardaDestino(); // Chama no carregamento
+        toggleRetaguardaDestino(); // Chama no carregamento para definir o estado inicial ("NÃO" -> mostra Setor)
     }
 
 
     // ===========================================
-    // LÓGICA 2: MESA DE ATENDIMENTO / LOCAL
+    // LÓGICA 2: MESA DE ATENDIMENTO / LOCAL (Inalterada)
     // ===========================================
     
     // Função para exibir o campo Número da Mesa ou o campo Local
@@ -82,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     
     // ===========================================
-    // LÓGICA 3: FLASH MESSAGES
+    // LÓGICA 3: FLASH MESSAGES (Inalterada)
     // ===========================================
 
     // Lógica para fechar as Flash Messages automaticamente 
