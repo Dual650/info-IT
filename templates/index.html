@@ -77,7 +77,7 @@
                     </select>
                 </div>
 
-                <div class="col-12 mb-4" id="localDiv">
+                <div class="col-12 mb-4" id="localDiv" style="display: none;">
                     <label for="local" class="form-label">Local?:</label>
                     <select name="local" id="local" class="form-select">
                         <option value="" disabled selected>Selecione o local</option>
@@ -100,14 +100,27 @@
                     </select>
                 </div>
                 
-                <div class="col-md-6 mb-4" id="retaguardaDestinoDiv" style="display: none;">
-                    <label for="retaguarda_destino" class="form-label">Qual órgão?:</label>
-                    <select name="retaguarda_destino" id="retaguarda_destino" class="form-select">
-                        <option value="" disabled selected>Selecione o Destino</option>
-                        {% for destino in opcoes_retaguarda %}
-                            <option value="{{ destino }}">{{ destino }}</option>
-                        {% endfor %}
-                    </select>
+                <div class="col-md-6 mb-4">
+                    <div id="retaguardaDestinoDiv" style="display: none;">
+                        <label for="retaguarda_destino" class="form-label">Qual órgão?:</label>
+                        <select name="retaguarda_destino" id="retaguarda_destino" class="form-select">
+                            <option value="" disabled selected>Selecione o Destino</option>
+                            {% for destino in opcoes_retaguarda %}
+                                <option value="{{ destino }}">{{ destino }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div id="retaguardaSetorDiv" style="display: none;">
+                        <label for="retaguarda_setor" class="form-label">Qual setor?:</label>
+                        <select name="retaguarda_setor" id="retaguarda_setor" class="form-select">
+                            <option value="" disabled selected>Selecione o Setor</option>
+                            <option value="Atendimento">Atendimento</option>
+                            <option value="COREN">COREN</option>
+                            <option value="Sabesp">Sabesp</option>
+                            <option value="Fazenda">Fazenda</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
