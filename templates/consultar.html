@@ -63,11 +63,21 @@
                 <button type="button" class="btn btn-primary" onclick="aplicarFiltros()">
                     <i class="fas fa-filter"></i> <span>Aplicar Filtros</span>
                 </button>
-                <a href="/exportar" id="btnExportar" class="btn btn-success" title="Exportar para Excel">
-                    <i class="fas fa-file-excel"></i> <span>Exportar</span> 
+                
+                <button type="button" class="btn btn-secondary" onclick="limparFiltros()">
+                    <i class="fas fa-eraser"></i> <span>Limpar Filtros</span>
+                </button>
+                
+                <a href="/exportar" id="btnExportar" class="btn icon-action btn-success" title="Exportar para Excel">
+                    <i class="fas fa-file-excel"></i>
                 </a>
-                <button type="button" class="btn btn-danger" title="Apagar Todos os Registros" onclick="document.getElementById('modalApagarTudo').style.display='block';">
-                    <i class="fas fa-trash-alt"></i> <span>Apagar</span>
+                
+                <button type="button" class="btn icon-action btn-secondary" onclick="window.print()" title="Imprimir Registros">
+                    <i class="fas fa-print"></i>
+                </button>
+                
+                <button type="button" class="btn icon-action btn-danger" title="Apagar Todos os Registros" onclick="document.getElementById('modalApagarTudo').style.display='block';">
+                    <i class="fas fa-trash-alt"></i>
                 </button>
             </div>
 
