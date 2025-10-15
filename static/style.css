@@ -60,23 +60,20 @@ h1, h2, h3 {
 }
 
 /* =====================================================
-CORREÇÃO CRUCIAL DO DROPDOWN (SELECT COM ATRIBUTO size)
-VERSÃO EXTREMA: Garante a visualização como lista rolável e controla a largura.
-=====================================================
-*/
+    CORREÇÃO DO DROPDOWN (SELECT COM ATRIBUTO size) 
+    (Estas são as regras que você precisava para o SELECT que estava "comprido")
+=====================================================*/
+
+/* Regras que forçam o select[size] a se comportar como uma lista rolável, 
+   anulando estilos de dropdown padrões de frameworks. */
 .form-control[size] {
-    /* Largura: Força a largura a se limitar ao layout da coluna (importante para "comprido") */
-    width: 100% !important; 
-    max-width: 100% !important;
-    
-    /* Altura e Overflow: Garante o formato de lista de 5 opções */
+    /* Altura e Overflow: Garante o formato de lista de N opções e rolagem */
     height: auto !important;
     min-height: 0 !important;
-    /* max-height de 150px é uma segurança para 5-6 opções com padding */
-    max-height: 150px !important; 
+    max-height: 150px !important; /* Altura máxima para 5-6 opções */
     overflow-y: scroll !important; /* Força a barra de rolagem vertical */
     
-    /* Zera o padding e margem para cálculo de altura correto */
+    /* Zera padding/margin para cálculo de altura correto */
     padding: 0 !important;
     margin: 0 !important;
     
@@ -85,52 +82,17 @@ VERSÃO EXTREMA: Garante a visualização como lista rolável e controla a largu
     -moz-appearance: none !important;
     appearance: none !important;
     background-image: none !important; 
-    
-    /* Estilos Visuais */
-    font-size: 14px !important; 
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); 
 }
 
 /* Regra extra para as opções dentro do select para controlar o espaçamento */
 .form-control[size] option {
     padding: 8px 10px !important; /* Padding ajustado para cada opção */
-    white-space: nowrap !important; /* Impede que o texto da opção quebre, mantendo a altura previsível */
+    white-space: nowrap !important; /* Impede que o texto da opção quebre */
 }
 
 /* =====================================================
-ESTILO DA CLASSE ISOLADA (listbox-filter) - RECOMENDADA NO HTML
-Use esta classe nos seus selects com size="5" para isolar a correção.
-=====================================================
-*/
-.listbox-filter {
-    /* Estilos Básicos (copiados do .form-control) */
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-size: 14px;
-    width: 100%;
-    
-    /* Correção de Altura/Largura (forçada) */
-    padding: 0;
-    margin: 0;
-    height: auto;
-    min-height: 0;
-    max-height: 150px; /* Altura máxima para 5-6 opções */
-    overflow-y: scroll; 
-    
-    /* Remove a aparência de dropdown */
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background-image: none;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); 
-}
-
-.listbox-filter option {
-    padding: 8px 10px;
-    white-space: nowrap;
-}
-
+    FIM DAS CORREÇÕES ESPECÍFICAS
+=====================================================*/
 
 .disabled-input {
     background-color: #e9ecef !important;
@@ -194,10 +156,8 @@ textarea {
 .btn-acao {
     background: none;
     border: 1px solid #ccc;
-    /* Ajuste para ícone puro */
     padding: 8px 10px; 
-    font-size: 1.2em; /* Aumenta o tamanho do ícone */
-    /* Fim do Ajuste */
+    font-size: 1.2em; 
     cursor: pointer;
     border-radius: 4px;
     transition: background-color 0.3s, color 0.3s, border-color 0.3s;
@@ -214,26 +174,21 @@ textarea {
 }
 
 /* NOVO: Regras para colorir ícones de forma específica */
-
-/* 1. Ícone de Exportar (Excel) - Verde */
 .btn-acao .fa-file-excel {
-    color: #217346; /* Verde escuro do Excel */
-    transition: color 0.3s;
+    color: #217346; 
 }
 .btn-acao:hover .fa-file-excel {
-    color: #1a5c38; /* Verde um pouco mais escuro no hover */
+    color: #1a5c38; 
 }
 
-/* 2. Ícone de Imprimir - Preto/Cinza */
 .btn-acao .fa-print {
-    color: #495057; /* Cinza escuro */
-    transition: color 0.3s;
+    color: #495057; 
 }
 .btn-acao:hover .fa-print {
-    color: #343a40; /* Preto mais forte no hover */
+    color: #343a40; 
 }
 
-/* Ocultar o texto do botão de exportar, imprimir e apagar no consultar.html */
+/* Ocultar o texto do botão de exportar, imprimir e apagar no consultar.html (em mobile) */
 .header-acoes .btn-acao span {
     display: none;
 }
@@ -252,10 +207,10 @@ textarea {
     color: #0056b3;
 }
 
-/* Botão de Exclusão (Perigo) - EM MASSA (estilo compacto) */
+/* Botão de Exclusão (Perigo) - EM MASSA */
 .btn-acao.btn-danger {
     background-color: #dc3545 !important; 
-    color: white !important; /* Cor branca para o ÍCONE dentro de btn-danger */
+    color: white !important; 
     border-color: #dc3545 !important;
 }
 .btn-acao.btn-danger:hover {
@@ -263,11 +218,11 @@ textarea {
     border-color: #bd2130 !important;
 }
 
-/* Estilo para o botão de Edição (NOVO) */
+/* Estilo para o botão de Edição */
 .btn-edit {
-    border-color: #ffc107; /* Amarelo/Atenção */
+    border-color: #ffc107; 
     color: #ffc107;
-    margin-right: 5px; /* Adiciona um pequeno espaço entre os botões de ação */
+    margin-right: 5px; 
 }
 
 .btn-edit:hover {
@@ -301,10 +256,10 @@ textarea {
     background-color: #f9f9f9; 
 }
 
-/* REGRA DE CORREÇÃO: Garante que o label fique acima do campo em TODOS os form-groups */
+/* Garante que o label fique acima do campo */
 .form-registro .form-group {
     display: flex;
-    flex-direction: column; /* FORÇA o empilhamento vertical (Label acima do Input) */
+    flex-direction: column; 
     gap: 5px; 
 }
 
@@ -378,7 +333,6 @@ textarea {
     padding: 10px;
     border: 1px solid #dee2e6; 
     font-size: 14px;
-    /* Remover cor de texto (deixando apenas o padrão #333 do body) */
     color: inherit; 
 }
 #tabelaRegistros th {
@@ -394,18 +348,18 @@ textarea {
     background-color: #f0f0f0; 
 }
 
-/* NOVO: Classe para SIM (Fundo Verde + Negrito) */
+/* Classe para SIM (Fundo Verde + Negrito) */
 .fundo-sim {
-    background-color: #C6EFCE !important; /* Verde claro */
+    background-color: #C6EFCE !important; 
     font-weight: bold;
-    color: #155724; /* Cor de texto verde escura para contraste */
+    color: #155724; 
 }
 
-/* NOVO: Classe para NÃO (Fundo Vermelho + Negrito) */
+/* Classe para NÃO (Fundo Vermelho + Negrito) */
 .fundo-nao {
-    background-color: #FFC7CE !important; /* Vermelho claro */
+    background-color: #FFC7CE !important; 
     font-weight: bold;
-    color: #721c24; /* Cor de texto vermelha escura para contraste */
+    color: #721c24; 
 }
 
 /* Estilo para Resumo de Procedimento */
@@ -418,6 +372,18 @@ textarea {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap; 
+}
+
+/* Estilo para Célula de Ações */
+.acoes-cell {
+    display: flex;
+    gap: 5px; 
+    justify-content: center;
+    align-items: center;
+}
+.acoes-cell form {
+    display: flex;
+    margin: 0;
 }
 
 
@@ -439,17 +405,14 @@ textarea {
 
 .modal-content {
     background-color: #fff;
-    /* Ajuste para aumentar o tamanho e centralizar melhor */
-    margin: 5% auto; /* Margem reduzida para dar mais espaço vertical */
+    margin: 5% auto; 
     padding: 20px;
     border: 1px solid #888;
-    width: 90%; /* Aumenta a largura base */
-    max-width: 800px; /* Aumenta o limite máximo de largura */
-    /* Fim do Ajuste */
+    width: 90%; 
+    max-width: 800px; 
     border-radius: 8px;
     position: relative;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    /* Altura será automática (auto) para se ajustar ao conteúdo */
 }
 
 .close-button {
@@ -468,7 +431,6 @@ textarea {
 /* Estilos de Organização para os Detalhes no Modal */
 .modal-info-grid {
     display: grid;
-    /* Ajusta a largura da coluna para telas pequenas */
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
     gap: 10px;
     margin-bottom: 20px;
@@ -502,16 +464,15 @@ textarea {
 /* ESTILOS DE IMPRESSÃO (MEDIA QUERY) */
 /* ========================================= */
 @media print {
-    /* 1. Ocultar elementos desnecessários na impressão */
     body > *:not(.container) {
-        display: none !important; /* Esconde tudo fora do container principal */
+        display: none !important; 
     }
 
     .container {
-        width: 100%; /* Ocupa toda a largura da página impressa */
+        width: 100%; 
         margin: 0;
         padding: 0;
-        box-shadow: none; /* Remove a sombra do container */
+        box-shadow: none; 
     }
     
     /* Ocultar elementos de navegação e controle */
@@ -525,7 +486,7 @@ textarea {
         display: none !important;
     }
 
-    /* 2. Mostrar apenas a tabela e o título */
+    /* Mostrar apenas a tabela e o título */
     .header-section {
         border-bottom: 1px solid #333; 
         display: block; 
@@ -537,7 +498,7 @@ textarea {
         text-align: center;
     }
 
-    /* 3. Estilos da Tabela para Impressão */
+    /* Estilos da Tabela para Impressão */
     #tabelaRegistros {
         box-shadow: none;
         font-size: 10pt;
@@ -557,73 +518,37 @@ textarea {
         text-align: left;
     }
     
-    /* Faz a tabela caber sem a coluna de ações */
+    /* Ajusta a largura da coluna para impressão sem a coluna de ações */
     .procedimento-header {
         width: 45%; 
     }
 }
 
 /* ================================================= */
-/* NOVO: REGRAS DE RESPONSIVIDADE (Mobile) */
+/* REGRAS DE RESPONSIVIDADE (Mobile) */
 /* ================================================= */
 
-/* 1. Otimização da Tabela para Mobile */
-
-/* Reduz o padding das células em telas menores para economizar espaço */
+/* Otimização da Tabela para Mobile */
 #tabelaRegistros th,
 #tabelaRegistros td {
-    padding: 8px 6px; /* Ajustado de 10px para 8px 6px */
-    font-size: 0.8em; /* Fonte um pouco menor para caber mais conteúdo */
-    /* Mantém o white-space: nowrap para a tabela ser rolável horizontalmente */
+    padding: 8px 6px; 
+    font-size: 0.8em; 
 }
 
-/* Otimiza a coluna de Procedimento para telas pequenas, permitindo que ela quebre */
 #tabelaRegistros td.procedimento-resumo {
-    white-space: normal; /* Permite que o texto do resumo quebre a linha */
-    max-width: 150px; /* Define uma largura máxima para não monopolizar a tela */
+    white-space: normal; 
+    max-width: 150px; 
 }
 
 
-/* 2. Correção da Coluna "Ações" (Ações Cell) em Mobile */
-
-/* Usa Flexbox para controlar o espaçamento e alinhamento dos botões na coluna */
-.acoes-cell {
-    display: flex;
-    gap: 5px; /* Espaço de 5px entre os botões */
-    justify-content: center;
-    align-items: center;
-    padding: 8px 4px !important; /* Padding ajustado para a célula de botões */
-    min-width: 75px; /* Garante que a célula tenha espaço mínimo */
-}
-
-/* Estiliza os botões de ação dentro da célula */
-.acoes-cell .btn-acao {
-    flex-shrink: 0; /* Impede que os botões diminuam de tamanho */
-    width: 30px; /* Largura fixa para o botão (ícone) */
-    height: 30px; /* Altura fixa para o botão (ícone) */
-    padding: 0; /* Remove padding interno, pois o tamanho já está fixo */
-    line-height: 30px; /* Centraliza o ícone verticalmente */
-    font-size: 1em;
-    margin: 0; /* Remove margens extras */
-}
-
-/* Garante que o formulário de exclusão individual não atrapalhe o Flexbox */
-.acoes-cell form {
-    display: flex;
-    margin: 0;
-}
-
-
-/* 3. Media Query para Telas de Celular (Ajustes de Layout e Ocultação de Colunas) */
-
+/* Media Query para Telas de Celular */
 @media (max-width: 768px) {
     .container {
         padding: 10px;
     }
 
-    /* Ajusta a exibição do cabeçalho */
     .header-section {
-        flex-direction: column; /* Coloca o título e as ações em colunas */
+        flex-direction: column; 
         gap: 10px;
         align-items: flex-start;
     }
@@ -631,20 +556,18 @@ textarea {
     .header-acoes {
         width: 100%;
         display: flex;
-        flex-wrap: wrap; /* Permite que os botões de ação quebrem a linha */
+        flex-wrap: wrap; 
         gap: 8px;
         justify-content: space-between;
     }
 
-    /* Força os botões de ação a serem um pouco maiores para facilitar o toque */
     .header-acoes .btn-acao,
     .header-acoes .btn-primary {
-        flex-grow: 1; /* Faz com que os botões cresçam e ocupem a largura disponível */
+        flex-grow: 1; 
         font-size: 0.9em;
         padding: 8px 10px;
     }
 
-    /* Filtros: Garante que os filtros fiquem em colunas (um por linha) */
     .filtro-container {
         flex-direction: column;
         gap: 15px;
@@ -662,14 +585,14 @@ textarea {
     }
 }
 
-/* Oculta colunas menos prioritárias em telas MUITO pequenas (Ex: iPhone 5/SE) */
+/* Oculta colunas menos prioritárias em telas MUITO pequenas */
 @media (max-width: 480px) {
     /* Oculta as colunas de Data, Início e Término */
-    #tabelaRegistros th:nth-child(5), /* Coluna Data */
+    #tabelaRegistros th:nth-child(5), 
     #tabelaRegistros td:nth-child(5),
-    #tabelaRegistros th:nth-child(6), /* Coluna Início */
+    #tabelaRegistros th:nth-child(6), 
     #tabelaRegistros td:nth-child(6),
-    #tabelaRegistros th:nth-child(7), /* Coluna Término */
+    #tabelaRegistros th:nth-child(7), 
     #tabelaRegistros td:nth-child(7) {
         display: none;
     }
