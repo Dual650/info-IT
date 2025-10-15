@@ -1,397 +1,294 @@
-/* ========================================= */
-/* VARIÁVEIS DE COR E TEMA */
-/* ========================================= */
-
-:root {
-    --primary-color: #004080; /* Azul Marinho Institucional */
-    --secondary-color: #007bff; /* Azul Claro/Botão */
-    --success-color: #28a745; /* Verde para exportação/sucesso */
-    --danger-color: #dc3545; /* Vermelho para apagar */
-    --warning-color: #ffc107; /* Amarelo para edição */
-    --background-color: #f4f6f9; /* Fundo Levemente Cinza */
-    --text-dark: #343a40;
-    --border-color: #e9ecef;
-}
-
-/* ========================================= */
-/* ESTILOS GLOBAIS E DE LAYOUT (FORMAL/RESPONSIVO) */
-/* ========================================= */
-
+/* --- Estilos Gerais --- */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--background-color);
-    color: var(--text-dark);
+    font-family: 'Inter', sans-serif;
+    background-color: #f8f9fa;
 }
 
-h1, h2, h3 {
-    color: var(--primary-color);
-    font-weight: 600;
-}
-
-/* Containers Centrais */
 .container-formal {
-    padding: 30px;
-    background-color: #fff;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.08); /* Sombra suave para elevação */
-    margin: 30px auto;
-    border-radius: 8px;
-    border-top: 5px solid var(--secondary-color); /* Detalhe institucional */
+    max-width: 1400px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-top: 20px;
+    margin-bottom: 20px;
 }
 
-/* Index (Formulário) */
-.container-index { 
-    max-width: 700px;
-}
-
-/* Header da Página (Título e Botões) */
-.header-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: center; 
-    margin-bottom: 25px;
+.header-titulo {
+    color: #337ab7;
+    font-weight: 700;
+    border-bottom: 3px solid #f0f0f0;
     padding-bottom: 10px;
-    border-bottom: 2px solid var(--border-color); 
-}
-
-/* Garante que os botões dentro do header fiquem na horizontal e alinhados */
-.header-acoes {
-    display: flex; 
+    display: flex;
     align-items: center;
-    gap: 10px; /* Adiciona espaçamento entre os botões */
 }
 
-/* Flash Messages */
+/* --- Mensagens Flash (Alertas) --- */
 .alert-flash {
     position: fixed;
     top: 20px;
     right: 20px;
     z-index: 1050;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    border-radius: 5px;
+    width: auto;
+    max-width: 400px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    animation: fadeInOut 5s ease-in-out forwards;
 }
 
-/* Formulário e Inputs */
-.form-control, .form-select {
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    transition: border-color 0.2s;
-}
-.form-control:focus, .form-select:focus {
-    border-color: var(--secondary-color);
-    box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
-}
-.disabled-input {
-    background-color: #f8f9fa !important;
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(-20px); }
+    10% { opacity: 1; transform: translateY(0); }
+    90% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-20px); }
 }
 
-/* Botões */
-.btn-primary {
-    background-color: var(--secondary-color); 
-    border-color: var(--secondary-color);
-    font-weight: 600;
+/* --- Formulário e Ações --- */
+.form-label.required::after {
+    content: " *";
+    color: #dc3545;
 }
-.btn-primary:hover {
-    background-color: #0056b3;
-    border-color: #0056b3;
+
+.btn-submit {
+    background-color: #4CAF50;
+    border-color: #4CAF50;
+    transition: background-color 0.3s;
 }
+
+.btn-submit:hover {
+    background-color: #43a047;
+    border-color: #43a047;
+}
+
+.form-actions {
+    padding-top: 15px;
+    border-top: 1px solid #f0f0f0;
+}
+
+/* --- Consulta e Filtros --- */
+.header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.header-acoes {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
 .btn-consulta {
-    background-color: #f8f9fa;
-    color: var(--primary-color); 
-    border: 1px solid var(--primary-color);
-    font-weight: 600;
-    transition: background-color 0.2s;
+    background-color: #5bc0de;
+    border-color: #5bc0de;
+    color: white;
 }
+
 .btn-consulta:hover {
-    background-color: var(--border-color);
+    background-color: #31b0d5;
+    border-color: #31b0d5;
+    color: white;
 }
 
-
-/* ========================================= */
-/* ESTILOS DA CONSULTAR.HTML (Filtros e Tabela) */
-/* ========================================= */
+.icon-action {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+}
 
 .filtro-container {
     display: flex;
-    flex-wrap: wrap; 
     gap: 15px;
-    align-items: flex-end;
     margin-bottom: 25px;
-    padding: 20px;
-    border: 1px solid var(--border-color);
+    padding: 15px;
+    background-color: #f0f8ff;
+    border: 1px solid #dcdcdc;
     border-radius: 8px;
-    background-color: #ffffff;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    flex-wrap: wrap;
+    align-items: flex-end;
 }
 
 .filtro-item {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1; 
-    min-width: 150px; 
+    min-width: 150px;
+    flex-grow: 1;
 }
 
 .botoes-filtro {
-    align-self: flex-end; 
     display: flex;
     gap: 10px;
 }
 
-/* ESTILO NOVO: Botões de Ação Global (Exportar, Imprimir, Apagar Tudo) */
-.icon-action {
-    width: 40px; /* Largura e altura fixas */
-    height: 40px;
-    padding: 0 !important;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 50%; /* Torna-os redondos */
-    font-size: 1.1em;
-    border: none !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-.icon-action.btn-success { background-color: var(--success-color); color: white; }
-.icon-action.btn-danger { background-color: var(--danger-color); color: white; }
-.icon-action.btn-secondary { background-color: #6c757d; color: white; }
-
-
-/* Oculta o texto nos botões de filtro em telas pequenas */
-@media (max-width: 768px) {
-    .botoes-filtro .btn:not(.icon-action) span {
-        display: none;
-    }
-    .botoes-filtro .btn:not(.icon-action) {
-        padding: 8px 12px;
-        font-size: 14px;
-    }
-    .filtro-item {
-        min-width: 100%;
-    }
-    .header-acoes {
-        flex-wrap: wrap; /* Permite que os botões quebrem a linha em telas muito pequenas */
-    }
-}
-
-
-/* Tabela */
-.table-responsive {
-    max-height: 75vh; 
-    overflow-y: auto;
-    border: 1px solid var(--border-color);
+/* --- Tabela --- */
+.table {
+    margin-top: 15px;
     border-radius: 8px;
-}
-#tabelaRegistros {
-    width: 100%; 
-    margin-bottom: 0;
+    overflow: hidden; 
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .tabela-cabecalho th {
-    position: sticky;
-    top: 0;
-    background-color: var(--primary-color); 
+    background-color: #337ab7;
     color: white;
-    z-index: 10;
     font-weight: 600;
-    border: 1px solid #003366 !important;
-    white-space: nowrap; 
-    text-align: center;
-    padding: 10px 8px;
-}
-
-#tabelaRegistros td {
-    padding: 10px 8px;
-    font-size: 0.95em;
     vertical-align: middle;
-}
-#tabelaRegistros tbody tr:hover {
-    background-color: #e6f3ff; 
-    cursor: pointer;
+    text-align: center;
+    padding: 12px 8px;
 }
 
-/* Conteúdo se ajustando automaticamente */
-.procedimento-col {
-    max-width: 300px;
-    min-width: 150px;
-    text-align: left !important;
-    overflow-wrap: break-word; 
-}
-
-/* Classes de cor SIM/NÃO */
-.fundo-sim {
-    background-color: #d4edda !important; 
-    font-weight: bold;
-    color: #155724;
-}
-
-.fundo-nao {
-    background-color: #f8d7da !important; 
-    font-weight: bold;
-    color: #721c24;
-}
-
-/* Células de Ações (Ajuste para caber) */
-.acoes-cell {
-    white-space: nowrap; 
-    width: 1%; 
-}
-
-/* Botões de Ação na Tabela (Individual) */
-.btn-acao {
-    padding: 6px 8px;
+#tabelaRegistros tbody td {
+    vertical-align: middle;
     font-size: 0.9em;
-    margin: 0 2px;
-    border: 1px solid #ced4da;
-    background-color: #fff;
-    border-radius: 4px;
-    /* Ajuste de cores */
-    color: var(--text-dark); 
-    border: none !important;
-}
-.btn-acao:hover {
-    background-color: var(--border-color);
-}
-/* Cores específicas para os ícones */
-.btn-warning { color: var(--warning-color); border: 1px solid var(--warning-color); }
-.btn-danger { color: var(--danger-color); border: 1px solid var(--danger-color); }
-
-/* Botão de Visualização dentro da célula */
-.procedimento-resumo {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-}
-.procedimento-resumo span {
-    flex-grow: 1;
-    overflow: hidden; 
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2; /* Limita a 2 linhas para resumo */
-    -webkit-box-orient: vertical;
-    line-height: 1.4;
-    max-height: 2.8em;
 }
 
+.acoes-cell {
+    white-space: nowrap;
+    text-align: center;
+}
 
-/* Aviso Vazio */
 .aviso-vazio {
-    padding: 40px;
-    border: 2px dashed #adb5bd;
-    border-radius: 8px;
     margin-top: 30px;
-    font-size: 1.2em;
-    color: #6c757d;
+    padding: 20px;
+    border: 1px solid #ffcc00;
+    background-color: #fffacd;
+    color: #856404;
+    border-radius: 8px;
+    font-weight: 500;
 }
 
-
-/* ========================================= */
-/* ESTILOS DE MODAL (Customizados Formal) */
-/* ========================================= */
-
+/* --- Modal Global --- */
 .modal {
-    display: none; /* Escondido por padrão */
-    position: fixed; /* Posição fixa */
-    z-index: 1060; /* Acima de tudo */
+    display: none; 
+    position: fixed; 
+    z-index: 1050; 
     left: 0;
     top: 0;
     width: 100%; 
     height: 100%; 
-    overflow: auto; /* Habilita scroll se necessário */
-    background-color: rgba(0,0,0,0.5); /* Fundo preto com opacidade */
-    padding-top: 60px;
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.4); 
 }
 
 .modal-content {
     background-color: #fefefe;
-    margin: 5% auto; /* 5% do topo e centralizado */
-    padding: 0;
+    margin: 5% auto; 
+    padding: 20px;
     border: 1px solid #888;
     width: 90%; 
-    max-width: 700px;
-    border-radius: 8px;
+    max-width: 800px;
+    border-radius: 10px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    animation: fadeIn 0.3s;
-}
-
-@keyframes fadeIn {
-    from {opacity: 0;}
-    to {opacity: 1;}
+    position: relative;
 }
 
 .modal-header {
-    padding: 15px;
-    background-color: var(--primary-color);
-    color: white;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-
-.modal-header.bg-danger {
-    background-color: var(--danger-color);
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 15px;
 }
 
 .modal-title {
-    margin: 0;
-    font-size: 1.25rem;
+    color: #337ab7;
+    font-weight: 600;
 }
 
 .close-button {
-    color: #fff;
+    color: #aaa;
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
-    transition: color 0.2s;
 }
 
 .close-button:hover,
 .close-button:focus {
-    color: #f1f1f1;
+    color: black;
     text-decoration: none;
-}
-
-.modal-body {
-    padding: 20px;
-    line-height: 1.6;
+    cursor: pointer;
 }
 
 .modal-footer {
-    padding: 15px;
-    border-top: 1px solid var(--border-color);
-    text-align: right;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    margin-top: 15px;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
 }
 
+/* Detalhes da Modal de Visualização */
 .modal-info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 10px;
-    border: 1px solid var(--border-color);
-    padding: 15px;
-    border-radius: 5px;
-    background-color: #f8f9fa;
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #f0f0f0;
+    border-radius: 6px;
 }
 
-.modal-info-grid p {
-    margin: 0;
-    font-size: 0.95em;
+.modal-info-grid strong {
+    color: #555;
 }
 
 .modal-procedimento-content {
-    white-space: pre-wrap; /* Mantém quebras de linha e formatação */
-    background-color: #f8f9fa;
-    border: 1px solid var(--border-color);
+    white-space: pre-wrap; /* Mantém quebras de linha */
     padding: 10px;
-    border-radius: 4px;
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
 }
 
-/* Responsividade do Modal */
+
+/* --- Responsividade --- */
 @media (max-width: 768px) {
-    .modal-content {
-        width: 95%;
-        margin: 10px auto;
+    .container-formal {
+        margin: 10px;
+        padding: 10px;
+    }
+
+    .header-section {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .header-acoes {
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .btn-consulta {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    .filtro-container {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .filtro-item {
+        min-width: 100%;
+    }
+    
+    .botoes-filtro {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .botoes-filtro button {
+        flex-grow: 1;
+    }
+    
+    /* Oculta colunas menos essenciais em telas pequenas */
+    #tabelaRegistros th:nth-child(5), 
+    #tabelaRegistros td:nth-child(5),
+    #tabelaRegistros th:nth-child(6), 
+    #tabelaRegistros td:nth-child(6) {
+        display: none;
     }
 }
