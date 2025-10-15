@@ -1,37 +1,51 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from config import DATABASE_URL # Mantém a importação da URL aqui
+import os
 
-# 1. Cria a instância do SQLAlchemy SEM a aplicação (app)
 db = SQLAlchemy()
 
-# 2. Definição do Modelo (Tabela) do Banco de Dados (Permanece igual)
 class Registro(db.Model):
+    # Identificador único do registro (Chave Primária)
     id = db.Column(db.Integer, primary_key=True)
-    posto = db.Column(db.String(50), nullable=False)
-    computador_coleta = db.Column(db.String(3), nullable=False) # 'SIM' ou 'NÃO'
     
-    # NOVOS CAMPOS ADICIONADOS
-    numero_mesa = db.Column(db.String(50), nullable=False)
-    retaguarda_sim_nao = db.Column(db.String(4), nullable=False)
-    retaguarda_destino = db.Column(db.String(50), nullable=True)
+    # CAMPO DE ORDENAÇÃO CRÍTICO: Registra o momento exato da criação (GMT/UTC)
+    # ESSENCIAL para a ordenação correta na consulta.
+    timestamp_registro = db.Column(db.DateTime, default=datetime.utcnow) 
     
-    data = db.Column(db.String(10), nullable=False) # 'DD/MM/YYYY'
-    hora_inicio = db.Column(db.String(5), nullable=False)
-    hora_termino = db.Column(db.String(5), nullable=False)
+    # Dados de Coleta e Ambiente
+    posto = db.Column(db.String(100), nullable=False)
+    computador_coleta = db.Column(db.String(100), nullable=False)
+    
+    # Dados do Procedimento
+    numero_mesa = db.Column(db.String(20))
+    retaguarda_sim_nao = db.Column(db.String(10), default='NÃO') # SIM ou NÃO
+    retaguarda_destino = db.Column(db.String(100), nullable=True) # Nome do destino
+    
+    # Dados de Tempo
+    data = db.Column(db.String(10), nullable=False) # Ex: 01/05/2024
+    hora_inicio = db.Column(db.String(5), nullable=False) # Ex: 09:00
+    hora_termino = db.Column(db.String(5)) # Ex: 09:30
+    
+    # Detalhes da Ação
     procedimento = db.Column(db.Text, nullable=False)
-    timestamp_registro = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        return f"Registro('{self.posto}', '{self.data}', '{self.hora_inicio}')"
+        return f"Registro(ID={self.id}, Posto='{self.posto}', Data='{self.data}')"
 
-# 3. Função para inicializar o DB que será chamada em app.py
 def init_db(app):
-    app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+    """
+    Configura e inicializa o SQLAlchemy no aplicativo Flask.
+    """
+    database_url = os.environ.get('DATABASE_URL')
+    
+    if database_url:
+        # Substitui "postgres://" por "postgresql+psycopg2://" para compatibilidade moderna do SQLAlchemy
+        if database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql+psycopg2://", 1)
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    else:
+        # SQLite para ambiente local (desenvolvimento)
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+    
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    db.init_app(app) # Conecta a instância db com a aplicação Flask
-
-    with app.app_context():
-        db.create_all()
-
-    return db
+    db.init_app(app)
